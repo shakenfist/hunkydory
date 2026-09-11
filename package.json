@@ -1,0 +1,81 @@
+{
+  "name": "hunkydory",
+  "displayName": "Hunky Dory",
+  "description": "Keeps the @@ hunk headers in a patch file correct while you edit it.",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "publisher": "shakenfist",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shakenfist/hunkydory"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "keywords": [
+    "diff",
+    "patch",
+    "unified diff",
+    "hunk",
+    "quilt"
+  ],
+  "activationEvents": [
+    "onLanguage:diff"
+  ],
+  "main": "./out/src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "hunkydory.recount",
+        "title": "Hunky Dory: Recount hunk headers",
+        "category": "Hunky Dory"
+      }
+    ],
+    "configuration": {
+      "title": "Hunky Dory",
+      "properties": {
+        "hunkydory.mode": {
+          "type": "string",
+          "enum": [
+            "live",
+            "onSave",
+            "manual"
+          ],
+          "enumDescriptions": [
+            "Fix headers as you type.",
+            "Fix headers when the file is saved.",
+            "Only fix headers when the Recount command is run."
+          ],
+          "default": "live",
+          "markdownDescription": "When to correct `@@` hunk headers."
+        },
+        "hunkydory.diagnostics": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Report a stale `@@` header as a warning in the Problems panel. Useful alongside `manual` mode."
+        },
+        "hunkydory.statusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the hunk you are inside, and its line counts, in the status bar."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "watch": "tsc -p . --watch",
+    "test": "tsc -p . && node --test out/test/*.test.js",
+    "corpus": "tsc -p . && node out/test/corpus.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  }
+}
