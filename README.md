@@ -66,11 +66,13 @@ HUNKYDORY_CORPUS=/path/to/patches npm run corpus # regression corpus
 
 ## Documentation
 
-- [Hunk header format](docs/hunk-format.md) — what the numbers mean and every
-  rule that turned out to matter.
-- [The ambiguous case](docs/ambiguity.md) — why one blank line cannot be
-  resolved from the body alone, and what we do about it.
-- [Architecture](ARCHITECTURE.md) — how the pieces fit together.
+- [Hunk header format](https://github.com/shakenfist/hunkydory/blob/develop/docs/hunk-format.md)
+  — what the numbers mean and every rule that turned out to matter.
+- [The ambiguous case](https://github.com/shakenfist/hunkydory/blob/develop/docs/ambiguity.md) —
+  why one blank line cannot be resolved from the body alone, and what we do
+  about it.
+- [Architecture](https://github.com/shakenfist/hunkydory/blob/develop/ARCHITECTURE.md) — how the
+  pieces fit together.
 
 ## Related
 

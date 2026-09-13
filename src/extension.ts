@@ -8,7 +8,7 @@
 import * as vscode from 'vscode';
 
 import { formatRange, parseHunks } from './diff';
-import { computeFixes, HeaderFix } from './recount';
+import { computeFixes, type HeaderFix } from './recount';
 
 /** How long to wait after a keystroke before rewriting headers. */
 const DEBOUNCE_MS = 200;
@@ -95,7 +95,7 @@ function refreshDiagnostics(document: vscode.TextDocument): void {
     const diagnostic = new vscode.Diagnostic(
       range,
       `Hunk header does not match its body; should be ${fix.corrected.split(' @@')[0]} @@`,
-      vscode.DiagnosticSeverity.Warning
+      vscode.DiagnosticSeverity.Warning,
     );
     diagnostic.source = 'hunkydory';
     found.push(diagnostic);
@@ -143,7 +143,7 @@ function scheduleRecount(document: vscode.TextDocument): void {
       const fixes = excludeCursorLine(computeFixes(documentLines(document)), editor);
       await applyFixes(document, fixes);
       refreshDiagnostics(document);
-    }, DEBOUNCE_MS)
+    }, DEBOUNCE_MS),
   );
 }
 
@@ -165,7 +165,7 @@ async function recountCommand(): Promise<void> {
   vscode.window.showInformationMessage(
     applied === 0
       ? 'Hunky Dory: all hunk headers were already correct.'
-      : `Hunky Dory: corrected ${applied} hunk header${applied === 1 ? '' : 's'}.`
+      : `Hunky Dory: corrected ${applied} hunk header${applied === 1 ? '' : 's'}.`,
   );
 }
 
@@ -187,7 +187,7 @@ export function activate(context: vscode.ExtensionContext): void {
       } else {
         refreshDiagnostics(document);
       }
-    })
+    }),
   );
 
   context.subscriptions.push(
@@ -201,18 +201,18 @@ export function activate(context: vscode.ExtensionContext): void {
       event.waitUntil(
         Promise.resolve(
           fixes.map((fix) =>
-            vscode.TextEdit.replace(event.document.lineAt(fix.line).range, fix.corrected)
-          )
-        )
+            vscode.TextEdit.replace(event.document.lineAt(fix.line).range, fix.corrected),
+          ),
+        ),
       );
-    })
+    }),
   );
 
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument(refreshDiagnostics),
     vscode.workspace.onDidCloseTextDocument((document) => diagnostics.delete(document.uri)),
     vscode.window.onDidChangeActiveTextEditor(refreshStatusBar),
-    vscode.window.onDidChangeTextEditorSelection((event) => refreshStatusBar(event.textEditor))
+    vscode.window.onDidChangeTextEditorSelection((event) => refreshStatusBar(event.textEditor)),
   );
 
   for (const document of vscode.workspace.textDocuments) {

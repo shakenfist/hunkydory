@@ -10,7 +10,8 @@
     "url": "https://github.com/shakenfist/hunkydory"
   },
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.85.0",
+    "node": ">=20"
   },
   "categories": [
     "Programming Languages",
@@ -71,9 +72,12 @@
     "watch": "tsc -p . --watch",
     "test": "tsc -p . && node --test out/test/*.test.js",
     "corpus": "tsc -p . && node out/test/corpus.js",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
     "package": "vsce package"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.13",
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.85.0",
     "typescript": "^5.3.0"
