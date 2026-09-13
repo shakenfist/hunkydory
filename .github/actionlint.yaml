@@ -1,0 +1,20 @@
+# Declare the self-hosted runner labels this repository's workflows
+# name, so actionlint does not flag them as unknown.
+#
+# hunkydory runs on `static`: the build, the tests and Biome all need
+# node, which the static pool gained in 2026-09, and nothing here needs
+# a docker daemon. `vm` and `debian-13` are here for secret-scan.yml,
+# which needs a runner carrying gitleaks; `claude-code` for
+# pr-re-review.yml.
+#
+# The bookworm labels are deliberately absent, matching
+# shakenfist/development. Debian 12 went end of life on 2026-06-10, and
+# leaving `debian-12` undeclared is what gives actionlint something to
+# say if it ever creeps into a workflow here.
+self-hosted-runner:
+  labels:
+    - static
+    - claude-code
+    - vm
+    - debian-13
+    - s
