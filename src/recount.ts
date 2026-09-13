@@ -5,7 +5,7 @@
  * be tested without launching an editor host.
  */
 
-import { formatHeader, Hunk, measureBody, parseHeader, resolveCounts, HUNK_RE } from './diff';
+import { formatHeader, HUNK_RE, type Hunk, measureBody, parseHeader, resolveCounts } from './diff';
 
 /** A single header line that disagrees with its body. */
 export interface HeaderFix {

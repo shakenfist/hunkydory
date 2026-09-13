@@ -135,7 +135,7 @@ export function measureBody(lines: string[], start: number): BodyCounts {
 export function resolveCounts(
   counts: BodyCounts,
   declaredOld: number,
-  declaredNew: number
+  declaredNew: number,
 ): { oldCount: number; newCount: number } {
   for (const candidate of counts.byTrailingBlanks) {
     if (candidate.oldCount === declaredOld && candidate.newCount === declaredNew) {

@@ -8,7 +8,7 @@
  */
 
 import assert from 'node:assert/strict';
-import { test, describe } from 'node:test';
+import { describe, test } from 'node:test';
 
 import { formatRange, parseHunks } from '../src/diff';
 import { computeFixes, recountText } from '../src/recount';
@@ -54,12 +54,21 @@ describe('recountText', () => {
   });
 
   test('creating a file starts the new side at 1', () => {
-    const patch = ['--- /dev/null', '+++ b/new.txt', '@@ -0,0 +9,9 @@', '+alpha', '+beta', ''].join('\n');
+    const patch = ['--- /dev/null', '+++ b/new.txt', '@@ -0,0 +9,9 @@', '+alpha', '+beta', ''].join(
+      '\n',
+    );
     assert.match(recountText(patch), /^@@ -0,0 \+1,2 @@$/m);
   });
 
   test('deleting a file starts the new side at 0', () => {
-    const patch = ['--- a/gone.txt', '+++ /dev/null', '@@ -1,9 +1,9 @@', '-alpha', '-beta', ''].join('\n');
+    const patch = [
+      '--- a/gone.txt',
+      '+++ /dev/null',
+      '@@ -1,9 +1,9 @@',
+      '-alpha',
+      '-beta',
+      '',
+    ].join('\n');
     assert.match(recountText(patch), /^@@ -1,2 \+0,0 @@$/m);
   });
 
@@ -69,7 +78,9 @@ describe('recountText', () => {
   });
 
   test('does not count the no-newline marker on either side', () => {
-    const patch = ['@@ -1,9 +1,9 @@', '-alpha', '\\ No newline at end of file', '+beta', ''].join('\n');
+    const patch = ['@@ -1,9 +1,9 @@', '-alpha', '\\ No newline at end of file', '+beta', ''].join(
+      '\n',
+    );
     assert.match(recountText(patch), /^@@ -1 \+1 @@$/m);
   });
 
@@ -148,7 +159,15 @@ describe('trailing blank ambiguity', () => {
   });
 
   test('counts every line once the header no longer matches', () => {
-    const patch = ['@@ -7,99 +7,99 @@', ' alpha', '+inserted', ' beta', ' ', 'diff --git a/b b/b', ''].join('\n');
+    const patch = [
+      '@@ -7,99 +7,99 @@',
+      ' alpha',
+      '+inserted',
+      ' beta',
+      ' ',
+      'diff --git a/b b/b',
+      '',
+    ].join('\n');
     // Falls back to counting the trailing blank, which is the safe direction:
     // an over-large count is rejected loudly, an under-large one truncates.
     assert.match(recountText(patch), /^@@ -7,3 \+7,4 @@$/m);

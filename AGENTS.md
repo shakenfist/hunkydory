@@ -20,7 +20,12 @@ npm test                                         # unit tests
 HUNKYDORY_CORPUS=/path/to/_patches npm run corpus # real-world regression
 ```
 
-Both must pass before a commit.
+Both must pass before a commit. `pre-commit run --all-files` covers the first
+(via `tools/check-node.sh`, which also runs the build and Biome) but not the
+corpus check, which depends on a sibling checkout — run it by hand.
+
+Before pushing a pull request, work through [PUSH-AUDIT.md](PUSH-AUDIT.md),
+the pre-push review runbook.
 
 The corpus check is the important one and is easy to under-value: it runs the
 recounter over a directory of real patches and requires every one to round
