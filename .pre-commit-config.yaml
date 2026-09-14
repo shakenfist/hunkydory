@@ -1,4 +1,19 @@
 repos:
+  # This repository now ships seven workflows and nothing else checks
+  # them. actionlint earned its place here immediately: it caught a
+  # job-level `env:` block reading the `runner` context, which is not
+  # available there and would have resolved to an empty cache path at
+  # runtime rather than failing loudly.
+  #
+  # -config-file points at .github/actionlint.yaml, which declares the
+  # fleet's self-hosted labels; without it every `runs-on` here is an
+  # unknown label and the hook is noise.
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+        args: ['-config-file', '.github/actionlint.yaml']
+
   - repo: local
     hooks:
       - id: check-node

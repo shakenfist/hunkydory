@@ -1,0 +1,109 @@
+# CI for hunkydory.
+#
+# Two jobs because the two failures are different. build-test-lint
+# exercises tools/check-node.sh -- the build, the unit tests and Biome
+# -- which is exactly what pre-commit runs locally, so this job cannot
+# drift from what a contributor sees before pushing. pre-commit runs
+# every hook in .pre-commit-config.yaml (shellcheck, gitleaks,
+# skillsaw and check-node itself), which is what closes the CI half of
+# the fleet's llm-context-lint-ci criterion: a hook nobody remembers to
+# `pre-commit install` for still gates a pull request.
+#
+# npm_config_cache is pointed at runner.temp on both jobs. The static
+# runners are a shared, non-ephemeral pool -- other repositories run on
+# the same machine -- so a job writing the default ~/.npm would pollute
+# state those repositories depend on. runner.temp is per-job and
+# per-runner, so it never leaks between jobs or repositories.
+#
+# npm ci, not npm install: the lockfile is committed, and the fleet's
+# npm-pin-indirect-dependencies criterion checks that CI honours it.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-lint:
+    name: Build, test and lint
+    runs-on: [self-hosted, static]
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-build-test-lint
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      # The runner context is not available in a job-level env: block
+      # (actionlint catches this; GitHub's own context-availability
+      # table confirms it), so the cache path is exported to
+      # GITHUB_ENV instead, from a step where the context is valid.
+      # Every later step in this job inherits it.
+      - name: Point npm's cache at runner.temp
+        run: echo "npm_config_cache=${{ runner.temp }}/npm-cache" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build, test and Biome
+        run: tools/check-node.sh check
+
+  pre-commit:
+    name: Pre-commit hooks
+    runs-on: [self-hosted, static]
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-pre-commit
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      # See the same step in build-test-lint: a job-level env: block
+      # cannot see the runner context.
+      - name: Point npm's cache at runner.temp
+        run: echo "npm_config_cache=${{ runner.temp }}/npm-cache" >> "$GITHUB_ENV"
+
+      # The check-node hook shells out to `npm run build` and
+      # `npm test`, so node_modules has to exist before pre-commit runs
+      # it -- pre-commit itself only manages its own Python/Go/etc.
+      # hook environments, not this repository's own npm install.
+      - name: Install dependencies
+        run: npm ci
+
+      # A venv for the same reason development's own ci.yml uses one:
+      # the runners enforce PEP 668 and refuse a bare `pip install`.
+      #
+      # It lives under runner.temp rather than at a fixed /tmp path,
+      # for the same reason npm's cache does. development's ci.yml
+      # uses /tmp/venv-lint, and on a shared non-ephemeral pool that
+      # races: two jobs on one runner share the path, and whichever
+      # finishes first deletes the venv the other is still running
+      # from. The concurrency group above does not help, because it
+      # scopes to this workflow and ref rather than to the machine.
+      # runner.temp is per job, so there is nothing to collide with.
+      - name: Install pre-commit
+        run: |
+          python3 -m venv "${{ runner.temp }}/venv-lint"
+          "${{ runner.temp }}/venv-lint/bin/pip" install --quiet \
+              --disable-pip-version-check pre-commit
+
+      # The venv's bin goes on PATH rather than the hooks being run
+      # through an absolute path. Quoting that path would put a `"`
+      # between "pre-commit" and "run", and the fleet's
+      # llm-context-lint-ci criterion looks for `pre-commit\s+run` in a
+      # workflow to decide this repository lints its agent context in
+      # CI. Leaving the path unquoted instead would match, but only by
+      # being sloppy about a path that happens not to contain spaces.
+      - name: Run pre-commit hooks
+        run: |
+          export PATH="${{ runner.temp }}/venv-lint/bin:$PATH"
+          pre-commit run --all-files --show-diff-on-failure

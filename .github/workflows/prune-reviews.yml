@@ -1,0 +1,53 @@
+name: Prune stale review marks
+
+# Review marks attest to exact file content, so any push to develop
+# can make some of them stale. Prune those marks and commit the
+# regenerated review state straight back as the bot: prune only ever
+# removes marks, so the commit does not need to be signed -- the
+# attestations live in the signed commits that introduced the stamps.
+# The push authenticates as shakenfist-bot (DEPENDENCIES_TOKEN),
+# matching the rest of the fleet's bot-push workflows. A PAT push
+# retriggers this workflow once; that is safe, not a loop -- the
+# second run finds nothing to prune. See the steady state section of
+# https://github.com/shakenfist/development/blob/main/docs/code-review-tracking.md
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions: {}
+
+# Serialise runs so overlapping merges cannot race the push.
+concurrency:
+  group: prune-reviews
+
+jobs:
+  prune:
+    name: Prune stale review marks
+    # ci-prune-reviews.sh rebases onto develop and pushes to develop
+    # unconditionally, whatever ref was checked out. Dispatched on a
+    # branch it would therefore try to push that branch's unmerged
+    # commits straight to develop, skipping review entirely. The push
+    # trigger already only fires on develop; this guard makes
+    # workflow_dispatch match, mirroring ryll's prune-reviews.yml.
+    if: github.ref == 'refs/heads/develop'
+    runs-on: [self-hosted, static]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout hunkydory
+        uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.DEPENDENCIES_TOKEN }}
+
+      - name: Clone the development repository
+        run: |
+          rm -rf "${RUNNER_TEMP}/development"
+          git clone --depth 1 https://github.com/shakenfist/development \
+              "${RUNNER_TEMP}/development"
+
+      - name: Prune stale review marks
+        run: tools/ci-prune-reviews.sh
+        env:
+          SHAKENFIST_DEVELOPMENT: ${{ runner.temp }}/development
