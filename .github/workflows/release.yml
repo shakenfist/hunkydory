@@ -1,0 +1,205 @@
+# Release workflow for hunkydory.
+#
+# Adapted from shakenfist/development/templates/release-automation/release.yml
+# rather than copied verbatim -- that template is written for a Python
+# project publishing to PyPI with setuptools_scm and trusted publishers.
+# hunkydory is a VS Code extension publishing a .vsix to the VS Code
+# Marketplace with a long-lived personal access token (VSCE_PAT), so this
+# file keeps the template's job shape and reasoning where it still applies
+# and deviates where it does not. The deviations:
+#
+# * Only three jobs, not the template's four. The template's sign-tag job
+#   Sigstore-signs the release tag with gitsign before publishing. Phase 7
+#   of this project's onboarding plan decided a three-job shape (build,
+#   publish-marketplace, github-release) and did not consider sign-tag.
+#   That is a known gap, not an oversight: hunkydory's release tags are
+#   therefore UNSIGNED, where the rest of the fleet's release tags are
+#   signed with Sigstore. Revisit this if/when the fleet's tag-signing
+#   convention gets applied here.
+#
+# * publish-marketplace runs on [self-hosted, vm, debian-13, s] rather
+#   than the template's [self-hosted, static]. static is a shared,
+#   persistent bare-metal pool -- other repositories' jobs run on the
+#   same machines between releases. This job holds VSCE_PAT, a token
+#   that can publish under the shakenfist publisher id, so it runs on an
+#   ephemeral VM runner instead, matching the same reasoning
+#   .github/actionlint.yaml already documents for secret-scan.yml's use
+#   of vm + debian-13.
+#
+# * publish-marketplace runs `npm ci --ignore-scripts` rather than the
+#   template's PyPI job, which runs no install step comparable to this at
+#   all. See the comment on that step below for why --ignore-scripts
+#   specifically, since the plan text this workflow implements says
+#   simply "no npm ci".
+#
+# See RELEASE-SETUP.md for one-time configuration steps.
+#
+# Template source: shakenfist/development/templates/release-automation/
+
+name: Release
+
+permissions: {}
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+  # Allow manual trigger for testing. github.event_name == 'push' in the
+  # guards below means a workflow_dispatch run only ever exercises the
+  # build job -- it never publishes, whether or not it's aimed at a tag.
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build the .vsix
+    runs-on: [self-hosted, static]
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # vsce publishes whatever version is inside the .vsix, and nothing
+      # here derives that version from the tag the way the template's
+      # setuptools_scm does. So a tag of v0.2.0 pushed while package.json
+      # still says 0.1.0 would quietly publish 0.1.0 again -- or fail on
+      # the Marketplace as a duplicate, long after the mistake. Check the
+      # two agree before anything is built. Skipped on workflow_dispatch,
+      # which has no tag to check against.
+      - name: Check the tag matches package.json
+        if: github.event_name == 'push'
+        run: |
+          want="${GITHUB_REF#refs/tags/v}"
+          have="$(node -p 'require("./package.json").version')"
+          [ "$want" = "$have" ] || { echo "tag v$want != package.json $have"; exit 1; }
+
+      # Same idiom as ci.yml: the runner context isn't available in a
+      # job-level env: block, so the cache path is exported to
+      # GITHUB_ENV from a step instead. Keeps this shared, persistent
+      # runner pool from polluting the default ~/.npm that other
+      # repositories' jobs on the same machine also use.
+      - name: Point npm's cache at runner.temp
+        run: echo "npm_config_cache=${{ runner.temp }}/npm-cache" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # vscode:prepublish runs `npm run build` first, so this both
+      # compiles and packages.
+      - name: Build .vsix package
+        run: npm run package
+
+      - name: Upload .vsix artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: vsix
+          path: '*.vsix'
+
+  publish-marketplace:
+    name: Publish to the VS Code Marketplace
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: [self-hosted, vm, debian-13, s]
+    environment: release
+    timeout-minutes: 10
+
+    # Least privilege: this job never writes to the repository. It only
+    # needs to read it (for package.json / package-lock.json, to install
+    # the pinned vsce) and to publish, which VSCE_PAT authorizes out of
+    # band.
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # See the same step in build, and in ci.yml, for why this can't be
+      # a job-level env: block.
+      - name: Point npm's cache at runner.temp
+        run: echo "npm_config_cache=${{ runner.temp }}/npm-cache" >> "$GITHUB_ENV"
+
+      # The plan this workflow implements says this job "runs no npm
+      # ci". Its actual concern, from the same paragraph, is that a bare
+      # `npm ci` executes dependency lifecycle scripts (preinstall,
+      # postinstall, and friends) from every package in the tree, and
+      # this job holds VSCE_PAT -- a token that can publish under the
+      # shakenfist publisher id -- so an untrusted lifecycle script
+      # running here is a real supply-chain risk. `--ignore-scripts`
+      # removes exactly that lifecycle-script execution while still
+      # installing the lockfile-pinned @vscode/vsce, which is what this
+      # job actually needs. That's preferred over `npx @vscode/vsce`,
+      # which would fetch whatever the latest published version is at
+      # publish time rather than the version this repository has tested
+      # against.
+      #
+      # Risk to revisit: @vscode/vsce declares engines.node ">= 20", and
+      # this runner carries Debian 13's node 20, so that's satisfied
+      # today. But several of vsce's transitive Azure dependencies
+      # (@azure/identity and friends, used for Marketplace auth) declare
+      # engines.node ">=22.0.0". npm currently only warns (EBADENGINE)
+      # and installs anyway, and @vscode/vsce/out/auth.js does load and
+      # run on node 20.19.2 as of this writing -- but a future
+      # @azure/identity update could start actually requiring node 22,
+      # and the failure would only show up here, at publish time, months
+      # after the fact.
+      - name: Install dependencies (no lifecycle scripts)
+        run: npm ci --ignore-scripts
+
+      - name: Download .vsix artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: vsix
+          path: ${{ runner.temp }}/vsix/
+
+      # --packagePath, never a bare `vsce publish`: a bare `vsce
+      # publish` repackages from the working tree, which would ship
+      # something other than the artifact the build job actually built
+      # and that github-release below attaches to the release.
+      - name: Publish to the VS Code Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          vsix=( "${RUNNER_TEMP}"/vsix/*.vsix )
+          [ "${#vsix[@]}" -eq 1 ] || { echo "expected one .vsix, got ${#vsix[@]}"; exit 1; }
+          node_modules/.bin/vsce publish --packagePath "${vsix[0]}"
+
+  github-release:
+    name: Create GitHub Release
+    needs: [build, publish-marketplace]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: [self-hosted, static]
+    timeout-minutes: 5
+
+    permissions:
+      contents: write
+
+    steps:
+      # Unlike publish-marketplace above, this job does not check out.
+      # action-gh-release is a JavaScript action running on the host, so
+      # it reads an absolute runner.temp path happily, and downloading
+      # into runner.temp is the cheaper way to get a directory nothing
+      # else has written to, without paying for a checkout to clean one.
+      #
+      # fail_on_unmatched_files is the other half -- action-gh-release
+      # treats a glob that matches nothing as a warning, so without it a
+      # release that attached no files at all would still report
+      # success.
+      - name: Download .vsix artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: vsix
+          path: ${{ runner.temp }}/vsix/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          generate_release_notes: true
+          files: ${{ runner.temp }}/vsix/*.vsix
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

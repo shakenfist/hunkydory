@@ -1,9 +1,26 @@
-.gitignore
-.vscode/**
-docs/**
-test/**
-out/test/**
-src/**
-tsconfig.json
-**/*.map
-**/*.ts
+# Ship the extension, not the repository.
+#
+# An allow-list rather than a deny-list, because the deny-list this
+# replaced shipped every workflow, every tools/ script,
+# .pre-commit-config.yaml, .github/actionlint.yaml, AGENTS.md,
+# ARCHITECTURE.md, PUSH-AUDIT.md, REVIEWS.md, RELEASE-SETUP.md,
+# renovate.json and biome.json to every user: 24 of the 27 packaged
+# files were repository infrastructure rather than the extension.
+# Phase 7 is the phase that makes the .vsix public, so it is the phase
+# that has to decide what is in it.
+#
+# The consequence to know about: a new file has to be named here to
+# reach a user. That is the point -- the failure mode of a deny-list is
+# silent, and this one's was.
+**
+
+!package.json
+!README.md
+!LICENSE
+!out/src/*.js
+
+# Note the allow rule is *.js, not out/src/**. A trailing "**/*.map"
+# deny does NOT override an earlier "!" allow in vsce's matcher -- it
+# was tried, and the maps shipped anyway. Naming only the .js is what
+# actually keeps them out, and a map is useless here regardless, since
+# the .ts sources it points at are not in the package.
