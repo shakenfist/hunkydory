@@ -74,12 +74,14 @@
     "corpus": "tsc -p . && node out/test/corpus.js",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
+    "vscode:prepublish": "npm run build",
     "package": "vsce package"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.13",
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.9.2",
     "typescript": "^5.3.0"
   }
 }
