@@ -3,8 +3,8 @@
 A VS Code extension that keeps the `@@` hunk headers in a patch file correct
 while you edit it.
 
-If you maintain patches as source — a `_patches/` directory, a quilt series, a
-distribution package — then editing one means updating arithmetic by hand:
+If you maintain patches as source -- a `_patches/` directory, a quilt series, a
+distribution package -- then editing one means updating arithmetic by hand:
 
 ```diff
 @@ -86,11 +86,12 @@ jpeg_compression = {{ nova_spice_jpeg_compression }}
@@ -31,7 +31,7 @@ code --install-extension hunkydory-0.1.0.vsix
 ## Use
 
 Open any `.patch` or `.diff` file and edit it. Headers correct themselves
-about 200ms after you stop typing, except the one your cursor is sitting on —
+about 200ms after you stop typing, except the one your cursor is sitting on --
 that one is left alone until you move away, so it never fights you.
 
 - **Hunky Dory: Recount hunk headers** fixes the whole file, cursor line
@@ -56,7 +56,7 @@ So the test suite uses git itself as the oracle. It builds throwaway
 repositories, has git generate canonical patches, scrambles every count, and
 requires the recounted result to match git's own output byte for byte. On top
 of that, `npm run corpus` runs the recounter over a directory of real patches
-and requires all of them to round trip unchanged — 175/175 on the OpenStack
+and requires all of them to round trip unchanged -- 175/175 on the OpenStack
 patch set it was developed against.
 
 ```bash
@@ -67,18 +67,18 @@ HUNKYDORY_CORPUS=/path/to/patches npm run corpus # regression corpus
 ## Documentation
 
 - [Hunk header format](https://github.com/shakenfist/hunkydory/blob/develop/docs/hunk-format.md)
-  — what the numbers mean and every rule that turned out to matter.
-- [The ambiguous case](https://github.com/shakenfist/hunkydory/blob/develop/docs/ambiguity.md) —
+  -- what the numbers mean and every rule that turned out to matter.
+- [The ambiguous case](https://github.com/shakenfist/hunkydory/blob/develop/docs/ambiguity.md) --
   why one blank line cannot be resolved from the body alone, and what we do
   about it.
-- [Architecture](https://github.com/shakenfist/hunkydory/blob/develop/ARCHITECTURE.md) — how the
+- [Architecture](https://github.com/shakenfist/hunkydory/blob/develop/ARCHITECTURE.md) -- how the
   pieces fit together.
 
 ## Related
 
 `patchutils` solves the same problem from a shell: `recountdiff` recomputes
 counts, `editdiff` fixes up after `$EDITOR`, and `rediff` uses the pre-edit
-patch as a reference — which lets it detect a deleted *context* line, the one
+patch as a reference -- which lets it detect a deleted *context* line, the one
 thing no after-the-fact recounter can see.
 
 ## License
