@@ -118,6 +118,19 @@ jobs:
         with:
           persist-credentials: false
 
+      # Phase 4 put nodejs and npm on the *static* runners and said
+      # nothing about this lane, and nothing in 33fl, shakenfist/actions
+      # or private-ci establishes that an ephemeral debian-13 VM runner
+      # carries either -- the only other consumers of this lane want
+      # gitleaks and pip. The plan carries the open question and the
+      # options. Until it is settled this step is what turns a silent
+      # "npm: command not found" into a diagnosis, and it runs before
+      # anything else so the answer is at the top of the log.
+      - name: Report the node and npm this lane carries
+        run: |
+          node --version
+          npm --version
+
       # See the same step in build, and in ci.yml, for why this can't be
       # a job-level env: block.
       - name: Point npm's cache at runner.temp
