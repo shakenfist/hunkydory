@@ -3,32 +3,47 @@
 # fnmatch-style against repo-relative paths; '*' matches across
 # directory separators.
 #
-# This phase (see "Human review onboarding" in
+# The first phase (see "Human review onboarding" in
 # https://github.com/shakenfist/development/blob/main/docs/plans/PLAN-typescript-onboarding.md,
-# a plan in the development repository rather than this one) scopes
-# review deliberately narrowly to hunkydory's
-# TypeScript source and its tests, because that is the code an agent
-# wrote start to finish and the operator has not read any of it yet.
-# Everything else is excluded below, not because it does not matter,
-# but so the review queue starts as exactly the files that need a
-# first pass. Widening scope later is a one-line addition here and
-# needs no migration -- a newly in-scope file simply has no review
-# mark and joins the `next` queue like any other unreviewed file.
-include = ['src/*.ts', 'test/*.ts']
+# a plan in the development repository rather than this one) scoped
+# review deliberately narrowly to hunkydory's TypeScript source and
+# its tests, because that is the code an agent wrote start to finish
+# and the operator had not read any of it. Scope has since widened to
+# the files that decide what ships and how: everything under
+# `.github/` (the CI and release workflows, and the actionlint config
+# that constrains them), the README that is the project's pitch, and
+# RELEASE-SETUP.md, which is the runbook for the credentials and
+# environment protections behind Marketplace publishing.
+include = [
+    'src/*.ts',
+    'test/*.ts',
+    '.github/*',
+    'README.md',
+    'RELEASE-SETUP.md',
+]
 
 # Named by category, not left for `include` to decide by omission: a
 # file type matching neither list fails review-scope-completeness, so
-# a new one still has to be a decision. CI workflow YAML, the docs
-# tree, and the tools/ shell scripts are all plausible candidates for
-# a later phase to bring into scope; for now they are out. LICENSE is
-# verbatim upstream text and would never move to `include`.
+# a new one still has to be a decision. The docs tree and the tools/
+# shell scripts remain plausible candidates for a later phase; for now
+# they are out. LICENSE is verbatim upstream text and would never move
+# to `include`.
+#
+# The '!' entries are re-includes, putting back a file that a broader
+# pattern on this list takes away: README.md and RELEASE-SETUP.md are
+# reviewed despite the blanket '*.md' that keeps AGENTS.md,
+# ARCHITECTURE.md and PUSH-AUDIT.md out, and .github/actionlint.yaml
+# is reviewed despite the blanket '*.yaml' that keeps
+# .pre-commit-config.yaml out.
 exclude = [
-    '.github/*',
     'docs/*',
     'tools/*',
     '*.md',
+    '!README.md',
+    '!RELEASE-SETUP.md',
     '*.json',
     '*.yaml',
+    '!.github/*',
     '.gitignore',
     '.vscodeignore',
     'LICENSE',
