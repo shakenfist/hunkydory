@@ -11,23 +11,46 @@
 # and the operator had not read any of it. Scope has since widened to
 # the files that decide what ships and how: everything under
 # `.github/` (the CI and release workflows, and the actionlint config
-# that constrains them), the README that is the project's pitch, and
+# that constrains them), the README that is the project's pitch,
 # RELEASE-SETUP.md, which is the runbook for the credentials and
-# environment protections behind Marketplace publishing.
+# environment protections behind Marketplace publishing, and the
+# `tools/` shell scripts. The shell scripts are executable artifacts
+# in the same sense the TypeScript is, and ci-prune-reviews.sh in
+# particular runs in CI against develop and commits back to it, so it
+# belongs with the workflows that invoke it rather than a tier below
+# them.
 include = [
     'src/*.ts',
     'test/*.ts',
     '.github/*',
     'README.md',
     'RELEASE-SETUP.md',
+    'tools/*',
 ]
 
 # Named by category, not left for `include` to decide by omission: a
 # file type matching neither list fails review-scope-completeness, so
-# a new one still has to be a decision. The docs tree and the tools/
-# shell scripts remain plausible candidates for a later phase; for now
-# they are out. LICENSE is verbatim upstream text and would never move
-# to `include`.
+# a new one still has to be a decision. The docs tree remains a
+# plausible candidate for a later phase; for now it is out. LICENSE is
+# verbatim upstream text and would never move to `include`.
+#
+# 'out/*' is the tsc build output, and is named here even though
+# .gitignore means review-scope-completeness would never ask about it,
+# because "it is generated" is not the whole reason and the next
+# person to look at out/src/diff.js deserves to find the rest of it
+# written down. The attestation cannot work there: the model binds
+# reviewer, date and blob SHA in a signed commit, and an untracked
+# file has no blob, so `stamp` records nothing and `prune` can never
+# expire the mark. A review of generated JS would therefore survive
+# every recompile forever, which is a worse claim than no claim at
+# all. Nor is it the code that ships -- the release workflow's `npm
+# run package` runs vscode:prepublish, so the .vsix is compiled fresh
+# from src/*.ts, which is in scope, by a workflow which is also in
+# scope. Any defect visible in out/ is either a defect in the
+# TypeScript or a tsc bug. Half the tree is .js.map besides, which is
+# base64 VLQ and readable by nobody. The right control for the
+# supply-chain worry here is a reproducible-build check, not a human
+# reading compiler output.
 #
 # The '!' entries are re-includes, putting back a file that a broader
 # pattern on this list takes away: README.md and RELEASE-SETUP.md are
@@ -37,7 +60,7 @@ include = [
 # .pre-commit-config.yaml out.
 exclude = [
     'docs/*',
-    'tools/*',
+    'out/*',
     '*.md',
     '!README.md',
     '!RELEASE-SETUP.md',

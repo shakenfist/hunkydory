@@ -5,6 +5,14 @@
       "sha": "b544a14c5755e4db653822a2d6ffe8a20d141280",
       "date": "2026-09-15"
     },
+    ".github/exported-config/repository-settings.json": {
+      "sha": "e1e9f80b8dfc29fbc9440143fd2f804d43bace80",
+      "date": "2026-09-16"
+    },
+    ".github/exported-config/rulesets-summary.json": {
+      "sha": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
+      "date": "2026-09-16"
+    },
     ".github/workflows/ci.yml": {
       "sha": "bcd97f6ca16798b75d1ee4ab650d4826dd548a70",
       "date": "2026-09-15"
@@ -48,6 +56,38 @@
     "RELEASE-SETUP.md": {
       "sha": "f8032420ec1c9ba65928b0235ef9cb820eb273c5",
       "date": "2026-09-15"
+    },
+    "src/diff.ts": {
+      "sha": "9b7e57b9f045e09c8b28b0732c6ece7d84a9ddee",
+      "date": "2026-09-16"
+    },
+    "src/extension.ts": {
+      "sha": "436daac122b07374e701c8cf39dcddd4e285b494",
+      "date": "2026-09-16"
+    },
+    "src/recount.ts": {
+      "sha": "1cbe09acb1997ac57c83d061d1edabc5b1916ef2",
+      "date": "2026-09-16"
+    },
+    "test/corpus.ts": {
+      "sha": "32ebffc509c05b3ff1649857d1df1ff4b8dcb3ac",
+      "date": "2026-09-16"
+    },
+    "test/recount.test.ts": {
+      "sha": "b08ba2256df3653e95b86ef6c7bee4147504a0de",
+      "date": "2026-09-16"
+    },
+    "tools/check-node.sh": {
+      "sha": "a03f2a09b518a5cb1c42405e48df5cdafcdf7281",
+      "date": "2026-09-16"
+    },
+    "tools/ci-prune-reviews.sh": {
+      "sha": "6daef1e07eb05d46b0a13745d5338cf1aea23cd8",
+      "date": "2026-09-16"
+    },
+    "tools/review-tracking.sh": {
+      "sha": "e63705ac5c57fd6d9fd0da21e18f399e3f88e4a4",
+      "date": "2026-09-16"
     }
   }
 }

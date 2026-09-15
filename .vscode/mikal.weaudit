@@ -59,6 +59,66 @@
     {
       "path": ".github",
       "author": "mikal"
+    },
+    {
+      "path": "src/extension.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "src/diff.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "src/recount.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "src",
+      "author": "mikal"
+    },
+    {
+      "path": "test/corpus.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test/recount.test.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/check-node.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/ci-prune-reviews.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/review-tracking.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "tools",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/exported-config/rulesets-summary.json",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/exported-config/repository-settings.json",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/exported-config",
+      "author": "mikal"
+    },
+    {
+      "path": ".github",
+      "author": "mikal"
     }
   ],
   "partiallyAuditedFiles": [],
