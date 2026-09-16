@@ -19,20 +19,30 @@
 # particular runs in CI against develop and commits back to it, so it
 # belongs with the workflows that invoke it rather than a tier below
 # them.
+#
+# `docs/` joins them now. It is the prose half of the same artifact:
+# docs/hunk-format.md and docs/ambiguity.md are what someone reads
+# before touching `resolveCounts`, and AGENTS.md sends them there by
+# name. Prose that has drifted from the code misleads precisely the
+# reader the code is hardest on, and nothing else catches that --
+# there is no test or linter for a stale explanation, only somebody
+# reading it against the source. Review marks expire on change, so a
+# doc edited to match new behaviour comes back for a fresh read the
+# same way src/diff.ts does.
 include = [
     'src/*.ts',
     'test/*.ts',
     '.github/*',
     'README.md',
     'RELEASE-SETUP.md',
+    'docs/*',
     'tools/*',
 ]
 
 # Named by category, not left for `include` to decide by omission: a
 # file type matching neither list fails review-scope-completeness, so
-# a new one still has to be a decision. The docs tree remains a
-# plausible candidate for a later phase; for now it is out. LICENSE is
-# verbatim upstream text and would never move to `include`.
+# a new one still has to be a decision. LICENSE is verbatim upstream
+# text and would never move to `include`.
 #
 # 'out/*' is the tsc build output, and is named here even though
 # .gitignore means review-scope-completeness would never ask about it,
@@ -53,17 +63,17 @@ include = [
 # reading compiler output.
 #
 # The '!' entries are re-includes, putting back a file that a broader
-# pattern on this list takes away: README.md and RELEASE-SETUP.md are
-# reviewed despite the blanket '*.md' that keeps AGENTS.md,
-# ARCHITECTURE.md and PUSH-AUDIT.md out, and .github/actionlint.yaml
-# is reviewed despite the blanket '*.yaml' that keeps
-# .pre-commit-config.yaml out.
+# pattern on this list takes away: README.md, RELEASE-SETUP.md and the
+# docs/ tree are reviewed despite the blanket '*.md' that keeps
+# AGENTS.md, ARCHITECTURE.md and PUSH-AUDIT.md out, and
+# .github/actionlint.yaml is reviewed despite the blanket '*.yaml'
+# that keeps .pre-commit-config.yaml out.
 exclude = [
-    'docs/*',
     'out/*',
     '*.md',
     '!README.md',
     '!RELEASE-SETUP.md',
+    '!docs/*',
     '*.json',
     '*.yaml',
     '!.github/*',
