@@ -45,6 +45,10 @@
       "sha": "52a8457d0e6b52934d56175c9593bb4e6774b25c",
       "date": "2026-09-15"
     },
+    ".github/workflows/runner-probe.yml": {
+      "sha": "8052d7a9e77e7bf194eb5f6b2bf998b39b0e5bc8",
+      "date": "2026-09-17"
+    },
     ".github/workflows/secret-scan.yml": {
       "sha": "50f8e9027318ae590250421cf55ba39290a299f1",
       "date": "2026-09-15"
@@ -56,6 +60,18 @@
     "RELEASE-SETUP.md": {
       "sha": "f8032420ec1c9ba65928b0235ef9cb820eb273c5",
       "date": "2026-09-15"
+    },
+    "docs/ambiguity.md": {
+      "sha": "c7dd342504e7c00761e256ff7cec0a4048c8b9f3",
+      "date": "2026-09-17"
+    },
+    "docs/hunk-format.md": {
+      "sha": "39d6be7bae31b2a0d36a8e28a628939c9d4c4802",
+      "date": "2026-09-17"
+    },
+    "docs/index.md": {
+      "sha": "8d7b953fb531274a1c50cf06ccd1ba3b36a01571",
+      "date": "2026-09-17"
     },
     "src/diff.ts": {
       "sha": "9b7e57b9f045e09c8b28b0732c6ece7d84a9ddee",

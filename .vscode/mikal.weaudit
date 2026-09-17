@@ -119,6 +119,34 @@
     {
       "path": ".github",
       "author": "mikal"
+    },
+    {
+      "path": ".github/workflows/runner-probe.yml",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/workflows",
+      "author": "mikal"
+    },
+    {
+      "path": ".github",
+      "author": "mikal"
+    },
+    {
+      "path": "docs/index.md",
+      "author": "mikal"
+    },
+    {
+      "path": "docs/ambiguity.md",
+      "author": "mikal"
+    },
+    {
+      "path": "docs/hunk-format.md",
+      "author": "mikal"
+    },
+    {
+      "path": "docs",
+      "author": "mikal"
     }
   ],
   "partiallyAuditedFiles": [],
