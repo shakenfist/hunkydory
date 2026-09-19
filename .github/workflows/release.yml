@@ -164,6 +164,13 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
+          # nullglob first: without it bash leaves a glob that matched
+          # nothing as its own literal text, so the array below has one
+          # element and the count check passes on zero .vsix files. The
+          # run then fails at vsce, reporting that it cannot open a file
+          # called '*.vsix' -- a check that cannot fail in the case it
+          # exists for, and a confusing error in place of a clear one.
+          shopt -s nullglob
           vsix=( "${RUNNER_TEMP}"/vsix/*.vsix )
           [ "${#vsix[@]}" -eq 1 ] || { echo "expected one .vsix, got ${#vsix[@]}"; exit 1; }
           node_modules/.bin/vsce publish --packagePath "${vsix[0]}"

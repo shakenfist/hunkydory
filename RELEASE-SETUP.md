@@ -80,10 +80,10 @@ unchanged.
 **Do this before pushing the first release tag.** The environment's tag
 restriction is what stops a workflow run on an arbitrary branch from reading
 `VSCE_PAT`. If a `v*` tag is pushed before this environment (and its tag
-rule) exists, the `publish` job either fails outright (no `release`
-environment to satisfy `environment: release`) or, if the environment gets
-created carelessly afterwards without the tag restriction, runs with the
-secret exposed to any ref. Set this up first; the first tag this repository
+rule) exists, the `publish-marketplace` job either fails outright (no
+`release` environment to satisfy `environment: release`) or, if the
+environment gets created carelessly afterwards without the tag restriction,
+runs with the secret exposed to any ref. Set this up first; the first tag this repository
 pushes will be `v0.1.0`.
 
 1. Go to **Settings** > **Environments** on
@@ -111,29 +111,40 @@ restricting the `release` environment to `v*` tags.
 
 ## What the Workflow Then Does
 
-`release.yml` triggers on push of a tag matching `v*` and runs two jobs:
+`release.yml` triggers on push of a tag matching `v*` and runs three jobs:
 
-1. **`build`**, on `[self-hosted, static]`: checks out the tag, runs `npm ci`
-   and `npm run package` (`vsce package`), and uploads the resulting `.vsix`
-   as a workflow artifact.
-2. **`publish`**, on `[self-hosted, vm, debian-13, s]`, with
+1. **`build`**, on `[self-hosted, static]`: checks out the tag, checks that
+   the tag matches the version in `package.json`, runs `npm ci` and `npm run
+   package` (`vsce package`), and uploads the resulting `.vsix` as a workflow
+   artifact.
+2. **`publish-marketplace`**, on `[self-hosted, vm, debian-13, s]`, with
    `environment: release`: downloads the artifact from `build` and runs
-   `vsce publish --packagePath <the downloaded .vsix>`, then attaches the
-   same file to a GitHub Release.
+   `vsce publish --packagePath <the downloaded .vsix>`. It is the only job
+   that can read `VSCE_PAT`.
+3. **`github-release`**, on `[self-hosted, static]`: attaches the same
+   artifact to a GitHub Release, and runs only once the Marketplace publish
+   has succeeded.
 
 Two details are deliberate:
 
-- **The runner split.** The `static` pool that `build` runs on is a shared,
-  non-ephemeral runner used by every repository in both the `shakenfist` and
-  `mach33labs` GitHub organisations. A secret placed in a job's environment
-  on that pool is exposed to every other repository's jobs that happen to
-  land on the same machine. `publish` — the only job that touches
-  `VSCE_PAT` — runs instead on the `debian-13`/`vm` pool, where that
-  exposure doesn't apply. `publish` also runs no `npm ci` and no package
-  lifecycle scripts of any kind, because `npm ci` executes dependency
-  install scripts, which is exactly the kind of arbitrary code a shared
-  credential should not be anywhere near. It only unpacks the already-built
-  artifact and runs `vsce`.
+- **The runner split.** The `static` pool that `build` and `github-release`
+  run on is a shared, non-ephemeral runner used by every repository in both
+  the `shakenfist` and `mach33labs` GitHub organisations. A secret placed in
+  a job's environment on that pool is exposed to every other repository's
+  jobs that happen to land on the same machine. `publish-marketplace` — the
+  only job that touches `VSCE_PAT` — runs instead on the `debian-13`/`vm`
+  pool, where that exposure doesn't apply.
+
+  That job installs with `npm ci --ignore-scripts`, not a bare `npm ci`. The
+  concern is lifecycle scripts: a bare `npm ci` runs `preinstall`,
+  `postinstall` and friends from every package in the tree, which is exactly
+  the kind of arbitrary code a shared credential should not be anywhere
+  near. `--ignore-scripts` removes that while still installing the
+  lockfile-pinned `vsce` the job then runs — which is why it installs at all
+  rather than reaching for `npx @vscode/vsce`, since that would fetch
+  whatever version is newest at publish time rather than the one this
+  repository has tested against. Beyond that install, the job only unpacks
+  the already-built artifact and runs `vsce`.
 - **`--packagePath`, never bare `vsce publish`.** Bare `vsce publish`
   repackages the working tree at publish time. Using `--packagePath` against
   the artifact `build` produced means the exact bytes that were built (and
@@ -153,8 +164,8 @@ Two details are deliberate:
    git push origin v0.1.0
    ```
 3. Watch the `release.yml` run in the Actions tab. `build` produces the
-   `.vsix`; `publish` ships it to the Marketplace and attaches it to a new
-   GitHub Release.
+   `.vsix`, `publish-marketplace` ships it to the Marketplace, and
+   `github-release` attaches it to a new GitHub Release.
 4. Confirm the new version shows up on the
    [Marketplace listing](https://marketplace.visualstudio.com/items?itemName=shakenfist.hunkydory)
    — Marketplace indexing can lag a few minutes behind a successful
@@ -162,14 +173,14 @@ Two details are deliberate:
 
 ## Troubleshooting
 
-### Publish job fails with an authentication error months after this was set up
+### `publish-marketplace` fails with an authentication error months later
 
 This is the PAT expiring, and it is the most likely failure mode of this
 whole setup — Azure DevOps PATs are not renewed automatically. Generate a new
 token (step 2 above) and update the `VSCE_PAT` secret on the `release`
 environment (step 4). You do not need to touch the workflow or re-run the
-tag push; re-running the failed `publish` job after updating the secret is
-enough. If the token was created before 1 December 2026 and suddenly stops
+tag push; re-running the failed `publish-marketplace` job after updating the
+secret is enough. If the token was created before 1 December 2026 and suddenly stops
 working with no expiration in sight, that is the global-PAT retirement, not
 a normal expiry — see the note in step 2.
 
@@ -183,7 +194,7 @@ a normal expiry — see the note in step 2.
 - Confirm the PAT's scope includes **Marketplace** > **Manage**, not just
   **Marketplace** > **Publish** or **Marketplace** > **Acquire**.
 
-### `publish` job can't find the `release` environment, or runs unprotected
+### `publish-marketplace` can't find the `release` environment, or runs unprotected
 
 Both symptoms trace back to setup ordering. If the environment doesn't exist
 yet, the job fails outright. If the environment exists but its tag rule was

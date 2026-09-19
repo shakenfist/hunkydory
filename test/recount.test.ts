@@ -1,17 +1,22 @@
 /**
  * Tests for the recounter.
  *
- * The interesting cases here were all found by running an equivalent
+ * Most of the interesting cases here were found by running an equivalent
  * implementation over a real corpus of several hundred OpenStack patches, so
- * each one corresponds to something that actually went wrong rather than
- * something that theoretically could.
+ * they correspond to something that actually went wrong rather than something
+ * that theoretically could.
+ *
+ * The line-endings block is the exception, and is the argument for not relying
+ * on a corpus alone: that patch set is entirely LF, so it could never have
+ * shown that a CRLF patch was being ignored outright. A push audit found that
+ * by reading the expression rather than by running anything.
  */
 
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { formatRange, parseHunks } from '../src/diff';
-import { computeFixes, recountText } from '../src/recount';
+import { formatRange, parseHunks, splitPatch } from '../src/diff';
+import { computeFixes, looksLikeDiff, recountText } from '../src/recount';
 
 /** Break every count in a patch, leaving the bodies alone. */
 function scramble(patch: string): string {
@@ -171,6 +176,89 @@ describe('trailing blank ambiguity', () => {
     // Falls back to counting the trailing blank, which is the safe direction:
     // an over-large count is rejected loudly, an under-large one truncates.
     assert.match(recountText(patch), /^@@ -7,3 \+7,4 @@$/m);
+  });
+});
+
+describe('line endings', () => {
+  // A CRLF patch used to be a total silent no-op: recountText split on '\n'
+  // alone, so every line kept its CR, '@@ ... @@\r' matched no header, and the
+  // file came back byte for byte as it arrived with nothing reported. The
+  // regression corpus could never have caught it -- a no-op round trips
+  // perfectly -- so the coverage has to live here.
+  const crlf = (lines: string[]) => lines.join('\r\n');
+
+  test('corrects a header in a CRLF patch', () => {
+    const patch = crlf(['@@ -1,2 +1,2 @@', ' alpha', '-beta', '+gamma', ' delta', '']);
+    assert.equal(
+      recountText(patch),
+      crlf(['@@ -1,3 +1,3 @@', ' alpha', '-beta', '+gamma', ' delta', '']),
+      'the header should be corrected and every CRLF left alone',
+    );
+  });
+
+  test('leaves a correct CRLF patch byte identical', () => {
+    const patch = crlf(['@@ -1,3 +1,3 @@', ' alpha', '-beta', '+gamma', ' delta', '']);
+    assert.equal(recountText(patch), patch);
+  });
+
+  test('counts a blank context line in a CRLF patch', () => {
+    // The CRLF form of the line whose leading space was stripped. Read as
+    // content, a lone CR would end the body here and the header would be
+    // recounted too small, which is the direction git truncates silently.
+    const patch = crlf(['@@ -1,9 +1,9 @@', ' alpha', '', '-beta', '+gamma', ' delta', '']);
+    assert.match(recountText(patch), /^@@ -1,4 \+1,4 @@\r$/m);
+  });
+
+  test('preserves a CRLF patch with no final terminator', () => {
+    const patch = crlf(['@@ -1,9 +1,9 @@', '-a', '+b']);
+    assert.equal(recountText(patch), crlf(['@@ -1 +1 @@', '-a', '+b']));
+  });
+
+  test('preserves mixed line endings rather than choosing one', () => {
+    // A patch assembled by hand from two sources. Rejoining with a single
+    // detected ending would rewrite every line in the file to fix one header.
+    const patch = '@@ -1,9 +1,9 @@\n alpha\r\n-beta\r\n+gamma\r\n delta\r\n';
+    assert.equal(recountText(patch), '@@ -1,3 +1,3 @@\n alpha\r\n-beta\r\n+gamma\r\n delta\r\n');
+  });
+
+  test('looksLikeDiff recognises a CRLF patch', () => {
+    assert.ok(looksLikeDiff(crlf(['@@ -1 +1 @@', '-a', '+b'])));
+  });
+
+  // The rules also have to cope with a caller that splits on '\n' itself and
+  // hands us lines that still carry their CR. Recognising the header but
+  // rewriting it without the CR would leave the file with mixed endings, which
+  // is worse than the no-op it replaced.
+  test('recognises a header that still carries its CR, and keeps it', () => {
+    const lines = ['@@ -1,9 +1,9 @@\r', ' alpha\r', '-beta\r', '+gamma\r', ' delta\r'];
+    const fixes = computeFixes(lines);
+    assert.equal(fixes.length, 1);
+    assert.equal(fixes[0].corrected, '@@ -1,3 +1,3 @@\r');
+  });
+
+  test('counts a lone CR as the blank context line it is', () => {
+    const lines = ['@@ -1,9 +1,9 @@\r', ' alpha\r', '\r', '-beta\r', '+gamma\r', ' delta\r'];
+    assert.equal(computeFixes(lines)[0].corrected, '@@ -1,4 +1,4 @@\r');
+  });
+});
+
+describe('splitPatch', () => {
+  test('splits on CRLF, LF and a bare CR', () => {
+    const { lines, endings } = splitPatch('a\r\nb\nc\rd');
+    assert.deepEqual(lines, ['a', 'b', 'c', 'd']);
+    assert.deepEqual(endings, ['\r\n', '\n', '\r', '']);
+  });
+
+  test('does not invent a line after a final terminator', () => {
+    // The phantom element a bare split() leaves behind counts as a blank
+    // context line, which silently adds one to both sides of the last hunk.
+    assert.deepEqual(splitPatch('a\n').lines, ['a']);
+  });
+
+  test('round trips any text it is given', () => {
+    const text = 'a\r\n\r\nb\nc\r\n';
+    const { lines, endings } = splitPatch(text);
+    assert.equal(lines.map((line, i) => line + endings[i]).join(''), text);
   });
 });
 

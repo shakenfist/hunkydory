@@ -3,9 +3,76 @@
  *
  * This module is deliberately free of any vscode import so that it can be
  * exercised by a plain node test runner.
+ *
+ * Everything here reads an array of lines whose terminators have already been
+ * removed, which is what vscode's TextLine.text gives us and what splitPatch
+ * produces from a string. A caller that splits on '\n' alone instead leaves
+ * the CR of a CRLF file on the end of every line, so the rules below tolerate
+ * a trailing CR rather than quietly recognising nothing: the failure they
+ * replace is invisible, because nothing matches, nothing is counted, and the
+ * file is handed back exactly as it arrived.
  */
 
-export const HUNK_RE = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)$/;
+/**
+ * A hunk header, and everything after the closing @@ as the heading.
+ *
+ * The `\r?` is not decoration. A CRLF patch split on '\n' alone reaches us as
+ * '@@ ... @@\r', and neither `.` nor `$` matches a CR -- `$` is not multiline
+ * here and has no line to end at anyway -- so without it every header in such
+ * a file fails to match and the whole file becomes a silent no-op. The CR is
+ * deliberately outside the heading capture, so it can never be copied into a
+ * rewritten header.
+ */
+export const HUNK_RE = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*?)\r?$/;
+
+/** A patch split into lines, each remembering how it ended. */
+export interface SplitPatch {
+  /** Line content, with no terminator characters. */
+  lines: string[];
+  /**
+   * The terminator that followed each line: '\r\n', '\n', '\r', or '' for a
+   * final line that the file ends without terminating.
+   */
+  endings: string[];
+}
+
+/**
+ * Split a patch into lines without losing how each one ended.
+ *
+ * Splitting on '\n' alone is what made CRLF patches a no-op: it leaves a CR
+ * on the end of every line, and a CR is content as far as the counting rules
+ * are concerned. A bare '\r' is not the empty string, so it is not the blank
+ * context line it looks like, and '@@ ... @@\r' is not a header.
+ *
+ * The terminators are returned rather than a single detected line ending
+ * because recounting must not rewrite a byte it was not asked to. A file with
+ * mixed terminators -- which is a real thing in a patch assembled by hand from
+ * two sources -- keeps its mixture, and one that ends without a terminator
+ * still does.
+ */
+export function splitPatch(text: string): SplitPatch {
+  // Constructed here rather than at module scope: a global regexp carries
+  // lastIndex between calls, and sharing that across callers is a bug waiting
+  // for a second one.
+  const terminator = /\r\n|\n|\r/g;
+  const lines: string[] = [];
+  const endings: string[] = [];
+
+  let start = 0;
+  let match = terminator.exec(text);
+  while (match !== null) {
+    lines.push(text.slice(start, match.index));
+    endings.push(match[0]);
+    start = terminator.lastIndex;
+    match = terminator.exec(text);
+  }
+  if (start < text.length) {
+    lines.push(text.slice(start));
+    endings.push('');
+  }
+
+  return { lines, endings };
+}
 
 /** Lines that end a hunk body even though they may start with a diff marker. */
 const FILE_START = ['--- ', 'diff --git ', 'index ', 'Index: '];
@@ -88,9 +155,12 @@ export function measureBody(lines: string[], start: number): BodyCounts {
     } else if (marker === '+') {
       newCount += 1;
       perLine.push({ line, old: 0, nw: 1 });
-    } else if (marker === ' ' || line === '') {
+    } else if (marker === ' ' || line === '' || line === '\r') {
       // Context. A bare empty line is a context line whose single leading
-      // space was stripped, which some editors and mail paths do.
+      // space was stripped, which some editors and mail paths do. A lone CR
+      // is that same line in a CRLF file a caller split on '\n' alone: read
+      // as content it would end the body here, and the header would then be
+      // recounted too small, which is the direction git truncates silently.
       oldCount += 1;
       newCount += 1;
       perLine.push({ line, old: 1, nw: 1 });

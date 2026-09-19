@@ -26,13 +26,17 @@ Guidance for agents working in this repository. See
 ## Testing
 
 ```bash
-npm test                                         # unit tests
+npm test                                          # unit tests
 HUNKYDORY_CORPUS=/path/to/_patches npm run corpus # real-world regression
+tools/check-package-contents.sh                   # what the .vsix would hold
 ```
 
-Both must pass before a commit. `pre-commit run --all-files` covers the first
-(via `tools/check-node.sh`, which also runs the build and Biome) but not the
-corpus check, which depends on a sibling checkout — run it by hand.
+The first two must pass before a commit. `pre-commit run --all-files` covers
+`npm test` (via `tools/check-node.sh`, which also runs the build and Biome)
+but not the corpus, whose external half depends on a sibling checkout — run
+that by hand. The packaging check runs in CI on every pull request; run it
+yourself if you touch `.vscodeignore` or add a module under `src/`, because
+what ships is decided by vsce's matcher and no test can reach it.
 
 Before pushing a pull request, work through [PUSH-AUDIT.md](PUSH-AUDIT.md),
 the pre-push review runbook.
@@ -43,6 +47,11 @@ trip **byte identically**. Most of the edge cases in `diff.ts` were found that
 way rather than by reasoning. If you change counting behaviour, run it against
 a real patch set — the OpenStack set in `shakenfist/kerbside-patches/_patches`
 is what it was developed against.
+
+`test/fixtures/` is the committed half of that check and always runs. Each
+fixture must round trip *and* come back correct after its counts are
+scrambled, so do not add one that turns on the trailing-blank ambiguity;
+`test/corpus.ts` explains why.
 
 ## The thing that will catch you out
 
@@ -57,6 +66,10 @@ are easy to miss, each of which broke a real patch:
 - File creation is `-0,0 +1,N`; deletion is `-1,N +0,0`.
 - One case is genuinely ambiguous. Read [docs/ambiguity.md](docs/ambiguity.md)
   before touching `resolveCounts`.
+- Lines reach the rules with their terminators already removed. Split a patch
+  string with `splitPatch`, never `split('\n')`: the leftover CR of a CRLF
+  file is content as far as the rules are concerned, and reading it as such
+  made every CRLF patch a silent no-op for four pull requests.
 
 A header that is too large makes git reject a patch loudly. One that is too
 small makes git *silently truncate the hunk* and apply the wrong content. When

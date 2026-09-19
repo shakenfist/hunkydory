@@ -8,7 +8,7 @@
 import * as vscode from 'vscode';
 
 import { formatRange, parseHunks } from './diff';
-import { computeFixes, type HeaderFix } from './recount';
+import { computeFixes, type HeaderFix, looksLikeDiff } from './recount';
 
 /** How long to wait after a keystroke before rewriting headers. */
 const DEBOUNCE_MS = 200;
@@ -30,9 +30,24 @@ function config() {
   return vscode.workspace.getConfiguration('hunkydory');
 }
 
-/** True if this document is a patch we should be looking after. */
+/**
+ * True if this document is a patch we should look after on our own initiative.
+ *
+ * The language id, and nothing else. Matching the file name as well claimed
+ * files this extension is not even loaded for: activationEvents is
+ * `onLanguage:diff`, so whether a `.patch` file opened as something other than
+ * a diff got rewritten depended on whether an unrelated diff had already woken
+ * us up. Under `hunkydory.mode: onSave` that means rewriting bytes on disk in
+ * a file the user had explicitly told the editor was not a diff -- the one
+ * thing a patch tool must never do to a file it was not invited into.
+ *
+ * VS Code's built-in diff language already claims `.patch`, `.diff` and
+ * `.rej`, so this costs nothing in the ordinary case. The explicit command is
+ * the escape hatch for a file whose language has been set to something else on
+ * purpose: it looks at the content instead. See recountCommand.
+ */
 function isPatch(document: vscode.TextDocument): boolean {
-  return document.languageId === 'diff' || document.fileName.endsWith('.patch');
+  return document.languageId === 'diff';
 }
 
 function documentLines(document: vscode.TextDocument): string[] {
@@ -152,7 +167,11 @@ async function recountCommand(): Promise<void> {
   if (!editor) {
     return;
   }
-  if (!isPatch(editor.document)) {
+  // Asked for by name, so the content decides rather than the language id.
+  // isPatch deliberately ignores a file named like a patch but opened as
+  // something else; running the command on one is the user saying they meant
+  // it, and a buffer holding hunk headers is a patch whatever it is called.
+  if (!isPatch(editor.document) && !looksLikeDiff(editor.document.getText())) {
     vscode.window.showWarningMessage('Hunky Dory: this does not look like a patch file.');
     return;
   }
