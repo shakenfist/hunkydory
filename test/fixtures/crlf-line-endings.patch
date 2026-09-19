@@ -1,0 +1,25 @@
+Fixture: a correct patch whose line endings are CRLF throughout.
+
+The regression corpus is an OpenStack patch set and is entirely LF, so
+nothing outside this directory would notice if recounting rewrote a CRLF
+file's line endings, or read its CRs as content. Both headers below are
+right, so this file must come back byte for byte. See test/corpus.ts.
+
+diff --git a/src/hello.c b/src/hello.c
+index 1234567..89abcde 100644
+--- a/src/hello.c
++++ b/src/hello.c
+@@ -1,6 +1,7 @@
+ #include <stdio.h>
+-/* beta */
++/* beta and more */
+
+ int main(void)
++/* inserted */
+ {
+     return 0;
+@@ -20,3 +21,4 @@ int other(void)
+ {
++    int x = 1;
+     return 1;
+ }

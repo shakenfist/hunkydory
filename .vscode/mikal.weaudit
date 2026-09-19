@@ -5,18 +5,6 @@
   "treeEntries": [],
   "auditedFiles": [
     {
-      "path": "README.md",
-      "author": "mikal"
-    },
-    {
-      "path": "RELEASE-SETUP.md",
-      "author": "mikal"
-    },
-    {
-      "path": ".github/workflows/ci.yml",
-      "author": "mikal"
-    },
-    {
       "path": ".github/workflows/codeql-analysis.yml",
       "author": "mikal"
     },
@@ -37,10 +25,6 @@
       "author": "mikal"
     },
     {
-      "path": ".github/workflows/release.yml",
-      "author": "mikal"
-    },
-    {
       "path": ".github/workflows/renovate.yml",
       "author": "mikal"
     },
@@ -49,43 +33,7 @@
       "author": "mikal"
     },
     {
-      "path": ".github/workflows",
-      "author": "mikal"
-    },
-    {
       "path": ".github/actionlint.yaml",
-      "author": "mikal"
-    },
-    {
-      "path": ".github",
-      "author": "mikal"
-    },
-    {
-      "path": "src/extension.ts",
-      "author": "mikal"
-    },
-    {
-      "path": "src/diff.ts",
-      "author": "mikal"
-    },
-    {
-      "path": "src/recount.ts",
-      "author": "mikal"
-    },
-    {
-      "path": "src",
-      "author": "mikal"
-    },
-    {
-      "path": "test/corpus.ts",
-      "author": "mikal"
-    },
-    {
-      "path": "test/recount.test.ts",
-      "author": "mikal"
-    },
-    {
-      "path": "test",
       "author": "mikal"
     },
     {
@@ -101,10 +49,6 @@
       "author": "mikal"
     },
     {
-      "path": "tools",
-      "author": "mikal"
-    },
-    {
       "path": ".github/exported-config/rulesets-summary.json",
       "author": "mikal"
     },
@@ -114,22 +58,6 @@
     },
     {
       "path": ".github/exported-config",
-      "author": "mikal"
-    },
-    {
-      "path": ".github",
-      "author": "mikal"
-    },
-    {
-      "path": ".github/workflows/runner-probe.yml",
-      "author": "mikal"
-    },
-    {
-      "path": ".github/workflows",
-      "author": "mikal"
-    },
-    {
-      "path": ".github",
       "author": "mikal"
     },
     {

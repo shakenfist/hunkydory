@@ -5,7 +5,15 @@
  * be tested without launching an editor host.
  */
 
-import { formatHeader, HUNK_RE, type Hunk, measureBody, parseHeader, resolveCounts } from './diff';
+import {
+  formatHeader,
+  HUNK_RE,
+  type Hunk,
+  measureBody,
+  parseHeader,
+  resolveCounts,
+  splitPatch,
+} from './diff';
 
 /** A single header line that disagrees with its body. */
 export interface HeaderFix {
@@ -63,7 +71,14 @@ export function computeFixes(lines: string[]): HeaderFix[] {
       heading: declared.heading,
     };
 
-    const corrected = formatHeader(hunk);
+    // A caller that split on '\n' alone leaves a CRLF file's CR on the end of
+    // the header line, and HUNK_RE tolerates that rather than ignoring the
+    // file. Put the CR back on the replacement: handing back a header without
+    // one would leave the file with mixed line endings, which is a worse
+    // outcome than the no-op it replaced. recountText never reaches this --
+    // splitPatch hands it terminator-free lines.
+    const carriageReturn = lines[i].endsWith('\r') ? '\r' : '';
+    const corrected = formatHeader(hunk) + carriageReturn;
     if (corrected !== lines[i]) {
       fixes.push({ line: i, current: lines[i], corrected });
     }
@@ -83,19 +98,26 @@ export function recount(lines: string[]): string[] {
   return out;
 }
 
-/** Recount a patch held as a single string, preserving its trailing newline. */
+/**
+ * Recount a patch held as a single string, preserving its line endings.
+ *
+ * Each line is rejoined with the terminator it arrived with, so CRLF stays
+ * CRLF, a file with no final newline still has none, and a header we correct
+ * is the only thing that changes. Rejoining with one terminator chosen for the
+ * whole file would be a silent rewrite of every other line.
+ */
 export function recountText(text: string): string {
-  const trailingNewline = text.endsWith('\n');
-  const lines = text.split('\n');
-  if (trailingNewline) {
-    // split leaves a phantom empty element after the final newline, which
-    // would otherwise count as a context line.
-    lines.pop();
+  const { lines, endings } = splitPatch(text);
+  const fixed = recount(lines);
+
+  const out: string[] = [];
+  for (let i = 0; i < fixed.length; i += 1) {
+    out.push(fixed[i], endings[i]);
   }
-  return recount(lines).join('\n') + (trailingNewline ? '\n' : '');
+  return out.join('');
 }
 
 /** True if the text contains at least one hunk header. */
 export function looksLikeDiff(text: string): boolean {
-  return text.split('\n').some((line) => HUNK_RE.test(line));
+  return splitPatch(text).lines.some((line) => HUNK_RE.test(line));
 }

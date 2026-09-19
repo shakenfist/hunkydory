@@ -29,9 +29,18 @@
 # reading it against the source. Review marks expire on change, so a
 # doc edited to match new behaviour comes back for a fresh read the
 # same way src/diff.ts does.
+#
+# `test/fixtures/*` is in for the same reason the TypeScript is, even
+# though the files are data rather than code. A fixture asserts that an
+# exact sequence of bytes survives recounting untouched, so its value
+# is entirely in whether it is right -- nothing catches a fixture that
+# encodes the wrong answer except somebody counting it by hand. The
+# first one is a CRLF patch, and the whole point of it is bytes that do
+# not show up in a diff.
 include = [
     'src/*.ts',
     'test/*.ts',
+    'test/fixtures/*',
     '.github/*',
     'README.md',
     'RELEASE-SETUP.md',

@@ -52,12 +52,13 @@ creation and deletion, the elided `,1`, git's `-- ` signature line, missing
 trailing newlines, blank context lines that lost their leading space, and one
 case that is genuinely ambiguous.
 
-So the test suite uses git itself as the oracle. It builds throwaway
-repositories, has git generate canonical patches, scrambles every count, and
-requires the recounted result to match git's own output byte for byte. On top
-of that, `npm run corpus` runs the recounter over a directory of real patches
-and requires all of them to round trip unchanged -- 175/175 on the OpenStack
-patch set it was developed against.
+So the tests are concrete cases rather than opinions. Most of them are
+patches that actually broke, down to scrambling every count in one and
+requiring the recounter to put it back exactly; the rest cover what a real
+patch set never happens to contain, such as CRLF line endings. On top of that,
+`npm run corpus` runs the recounter over a directory of real patches -- the
+OpenStack set it was developed against, 187 of them as this is written -- and
+requires every one to round trip byte identically.
 
 ```bash
 npm test                                         # unit tests

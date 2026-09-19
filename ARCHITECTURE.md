@@ -11,7 +11,8 @@ they agree with the body beneath them.
 | `src/recount.ts` | Turns a document into the list of headers that are wrong. No vscode import. |
 | `src/extension.ts` | Decides *when* to recount and applies the edits. All vscode contact lives here. |
 | `test/recount.test.ts` | Unit tests for the rules. |
-| `test/corpus.ts` | Round-trip check over a directory of real patches. |
+| `test/corpus.ts` | Round-trip check over the committed fixtures and a directory of real patches. |
+| `test/fixtures/` | Patches that must survive recounting untouched, covering what a real patch set does not contain. |
 
 The split matters: the interesting logic is pure string-to-string, so it runs
 under a plain `node --test` without an editor host. Only scheduling and edit

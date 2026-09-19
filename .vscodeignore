@@ -17,10 +17,20 @@
 !package.json
 !README.md
 !LICENSE
-!out/src/*.js
+!out/src/**/*.js
 
-# Note the allow rule is *.js, not out/src/**. A trailing "**/*.map"
-# deny does NOT override an earlier "!" allow in vsce's matcher -- it
-# was tried, and the maps shipped anyway. Naming only the .js is what
-# actually keeps them out, and a map is useless here regardless, since
-# the .ts sources it points at are not in the package.
+# Note the allow rule ends in *.js, not out/src/**. A trailing
+# "**/*.map" deny does NOT override an earlier "!" allow in vsce's
+# matcher -- it was tried, and the maps shipped anyway. Naming only the
+# .js is what actually keeps them out, and a map is useless here
+# regardless, since the .ts sources it points at are not in the package.
+#
+# The "**/" is equally load bearing, and was missing until a push audit
+# measured what the rule actually selects. A single-segment "*" does not
+# cross a directory separator, so "!out/src/*.js" allowed
+# out/src/diff.js and excluded out/src/anything/else.js. The first
+# module added under a subdirectory of src/ would have compiled, tested
+# and packaged without complaint, and then failed at require() time on
+# every user's machine and nowhere else. tools/check-package-contents.sh
+# packages a nested probe module and fails if it does not ship, so this
+# cannot quietly come back.

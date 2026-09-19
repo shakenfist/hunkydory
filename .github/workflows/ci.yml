@@ -17,6 +17,33 @@
 #
 # npm ci, not npm install: the lockfile is committed, and the fleet's
 # npm-pin-indirect-dependencies criterion checks that CI honours it.
+#
+# Neither job runs for a pull request from a fork. Both check out the
+# pull request's own code and then execute it -- its package-lock.json
+# through npm ci, and its .pre-commit-config.yaml through pre-commit,
+# which fetches and runs hooks the pull request names -- on
+# [self-hosted, static], the shared non-ephemeral pool every repository
+# in both the shakenfist and mach33labs organisations runs on. Opening
+# a fork pull request needs no permission at all, so without the guard
+# that is arbitrary code execution on a machine other repositories'
+# jobs land on next, offered to anyone with a GitHub account.
+#
+# pr-re-review.yml carries the same restriction for the same reason,
+# there as same-repo from pr-bot-trigger, which an issue_comment event
+# needs; a pull_request event can compare the head repository against
+# this one directly, which is how the fleet's
+# pin-indirect-dependencies.yml spells it.
+#
+# Like both of those, this guards against outsiders and accident
+# rather than being a trust boundary against someone who already has
+# write access: for a pull_request event the workflow is read from the
+# pull request's own copy, so an author who can push a branch here can
+# edit the guard. Branch protection is the server-side control for
+# that, not this line.
+#
+# The consequence to know about: a fork pull request gets no CI at all,
+# and has to be pushed as a branch in this repository before anything
+# tests it.
 name: CI
 
 on:
@@ -31,6 +58,8 @@ permissions:
 jobs:
   build-test-lint:
     name: Build, test and lint
+    # No fork pull requests on the shared pool; see the header.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, static]
     permissions:
       contents: read
@@ -55,8 +84,20 @@ jobs:
       - name: Build, test and Biome
         run: tools/check-node.sh check
 
+      # Not part of check-node.sh, which is also the pre-commit hook: this
+      # runs vsce over the built output, which needs devDependencies
+      # installed and takes seconds rather than milliseconds. What it
+      # catches -- an allow-list in .vscodeignore that drops a compiled
+      # module from the package -- is invisible until a user installs the
+      # extension, so it belongs somewhere that runs on every pull request
+      # rather than nowhere.
+      - name: Check what the .vsix would contain
+        run: tools/check-package-contents.sh
+
   pre-commit:
     name: Pre-commit hooks
+    # No fork pull requests on the shared pool; see the header.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, static]
     permissions:
       contents: read
