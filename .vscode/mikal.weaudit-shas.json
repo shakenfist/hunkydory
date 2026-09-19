@@ -45,10 +45,6 @@
       "sha": "52a8457d0e6b52934d56175c9593bb4e6774b25c",
       "date": "2026-09-15"
     },
-    ".github/workflows/runner-probe.yml": {
-      "sha": "8052d7a9e77e7bf194eb5f6b2bf998b39b0e5bc8",
-      "date": "2026-09-17"
-    },
     ".github/workflows/secret-scan.yml": {
       "sha": "50f8e9027318ae590250421cf55ba39290a299f1",
       "date": "2026-09-15"
