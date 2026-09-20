@@ -55,7 +55,18 @@ die() {
 # container's command a single path rather than a shell one-liner embedded
 # in a docker run, which is the same reason the fleet keeps CI logic in
 # tools/ rather than in workflow steps.
-if [ "${HUNKYDORY_PUBLISH_STAGE:-host}" = "host" ]; then
+#
+# The dispatch is exhaustive on purpose. This file is deliberately two
+# programs, and an unrecognised stage -- a typo, or the variable surviving
+# in an exported environment -- must not fall through to the container half
+# and run it against paths that exist only inside a container.
+stage="${HUNKYDORY_PUBLISH_STAGE:-host}"
+case "${stage}" in
+    host|container) ;;
+    *) die "unknown stage: ${stage}" ;;
+esac
+
+if [ "${stage}" = "host" ]; then
     [ "$#" -eq 1 ] || die "usage: $0 <directory containing one .vsix>"
     vsix_dir=$(cd "$1" 2>/dev/null && pwd) || die "no such directory: $1"
 
@@ -76,7 +87,13 @@ if [ "${HUNKYDORY_PUBLISH_STAGE:-host}" = "host" ]; then
         [ -n "${!required:-}" ] || die "${required} is not set"
     done
 
-    repo_root=$(git rev-parse --show-toplevel)
+    # Derived from this file's own location rather than from
+    # `git rev-parse`, matching tools/check-node.sh. It needs no external
+    # tool and does not care about the caller's directory -- and git is
+    # exactly the class of assumption this file's header is about:
+    # actions/checkout falls back to a REST tarball when git is missing or
+    # too old, which leaves no .git at all.
+    repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 
     echo "publish-marketplace: publishing $(basename "${vsix[0]}") via ${IMAGE_TAG}"
 
@@ -99,32 +116,54 @@ if [ "${HUNKYDORY_PUBLISH_STAGE:-host}" = "host" ]; then
         /src/tools/publish-marketplace.sh /vsix
 fi
 
-# From here down we are inside the container.
+# From here down we are inside the container, where the host stage passes
+# the mount point as the single argument.
+vsix_dir="${1:-/vsix}"
 shopt -s nullglob
-vsix=( /vsix/*.vsix )
-[ "${#vsix[@]}" -eq 1 ] || die "expected one .vsix in /vsix, got ${#vsix[@]}"
+vsix=( "${vsix_dir}"/*.vsix )
+[ "${#vsix[@]}" -eq 1 ] || die "expected one .vsix in ${vsix_dir}, got ${#vsix[@]}"
+
+# Mint first, before anything else runs, so that the two ACTIONS_ variables
+# can be stripped from everything after it. They are a credential in their
+# own right -- they are what mints this token, and they keep minting for the
+# life of the job -- and the code most worth keeping them away from is vsce
+# and its 291 packages, not `npm ci --ignore-scripts`, which executes no
+# package code at all. An earlier revision of this script had the order the
+# other way round, which applied the protection to the harmless command and
+# dropped it for the risky one.
+#
+# marketplace-token.mjs uses only node 22's global fetch, so it needs no
+# node_modules and can run before the install.
+#
+# `token` is a plain shell variable, deliberately not exported: a child
+# process does not inherit it, so it reaches vsce only where it is named
+# explicitly below.
+token=$(node tools/marketplace-token.mjs)
+
+# Ask the Actions runner to redact it from the log. GitHub auto-masks
+# values that came from the `secrets` context, and this one deliberately
+# never does, so nothing would redact it otherwise -- it would be an
+# unmasked credential with publish rights under the shakenfist publisher
+# id, one stray `set -x` or verbose HTTP error away from a public log.
+# Stdout from inside the container is still the step's log, so the workflow
+# command is honoured here.
+echo "::add-mask::${token}"
 
 # --ignore-scripts, not a bare npm ci: a bare npm ci runs preinstall,
-# postinstall and friends from every package in the tree, and this
-# container is about to hold a Marketplace credential. The install happens
-# at all, rather than `npx @vscode/vsce`, so that the version published
-# with is the lockfile-pinned one this repository tested against.
-#
-# The two ACTIONS_ variables are removed for the install. They are a
-# credential in their own right -- they are what mints the Entra token
-# below -- so nothing that runs before the token is needed should be able
-# to reach them.
+# postinstall and friends from every package in the tree. The install
+# happens at all, rather than `npx @vscode/vsce`, so that the version
+# published with is the lockfile-pinned one this repository tested against.
 env -u ACTIONS_ID_TOKEN_REQUEST_URL -u ACTIONS_ID_TOKEN_REQUEST_TOKEN \
     npm ci --ignore-scripts
 
-# VSCE_PAT is vsce's env var for -p and the name survives, but what it
-# holds is an Entra access token good for about an hour, not an Azure
-# DevOps personal access token. Passed by environment rather than on the
-# command line so it does not appear in the container's process list.
-VSCE_PAT=$(node tools/marketplace-token.mjs)
-export VSCE_PAT
-
+# VSCE_PAT is vsce's environment variable for -p and the name survives, but
+# what it holds is an Entra access token good for about an hour, not an
+# Azure DevOps personal access token. Passed by environment rather than on
+# the command line so it does not appear in the process list.
+#
 # --packagePath, never a bare `vsce publish`: a bare publish repackages
 # from the working tree, which would ship something other than the artifact
 # the build job built and the github-release job attaches.
-node_modules/.bin/vsce publish --packagePath "${vsix[0]}"
+VSCE_PAT="${token}" \
+    env -u ACTIONS_ID_TOKEN_REQUEST_URL -u ACTIONS_ID_TOKEN_REQUEST_TOKEN \
+    node_modules/.bin/vsce publish --packagePath "${vsix[0]}"

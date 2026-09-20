@@ -59,29 +59,49 @@ function required(name) {
   return value;
 }
 
+// Both calls time out rather than hanging. The publish job has a
+// 15-minute budget and a stalled connection to login.microsoftonline.com
+// would spend all of it before failing, which is a worse diagnostic than a
+// refused connection.
+const TIMEOUT_MS = 30_000;
+
 // Errors from either endpoint are reported by status and body. Neither body
 // carries the assertion or the access token -- Entra returns an error code
-// and a correlation id -- but nothing here prints a token deliberately, and
-// the caller redacts stdout rather than trusting that.
+// and a correlation id -- and the caller masks the token in the Actions log
+// with ::add-mask:: before anything else runs, so a body that surprises us
+// is safe to print.
 async function postForm(url, fields) {
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams(fields),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   const body = await response.text();
   if (!response.ok) {
     throw new Error(`${url} returned ${response.status}: ${body}`);
   }
-  return JSON.parse(body);
+  // Parsed inside a guard: a 200 carrying something that is not JSON -- a
+  // captive portal, an outage page -- would otherwise surface as a bare
+  // "Unexpected token" with the body discarded, losing the one diagnostic
+  // the rest of this function works to preserve.
+  try {
+    return JSON.parse(body);
+  } catch {
+    throw new Error(
+      `${url} returned ${response.status} with a non-JSON body: ${body.slice(0, 200)}`,
+    );
+  }
 }
 
 async function githubIdToken() {
   // ACTIONS_ID_TOKEN_REQUEST_URL already carries a query string, so the
   // audience is appended with & rather than ?.
-  const url = `${required('ACTIONS_ID_TOKEN_REQUEST_URL')}&audience=${encodeURIComponent(EXCHANGE_AUDIENCE)}`;
+  const requestUrl = required('ACTIONS_ID_TOKEN_REQUEST_URL');
+  const url = `${requestUrl}&audience=${encodeURIComponent(EXCHANGE_AUDIENCE)}`;
   const response = await fetch(url, {
     headers: { authorization: `Bearer ${required('ACTIONS_ID_TOKEN_REQUEST_TOKEN')}` },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   if (!response.ok) {
     throw new Error(
@@ -109,7 +129,7 @@ async function main() {
     throw new Error('Entra returned no access_token');
   }
   // No trailing newline handling beyond this: the caller captures stdout
-  // through $(...), which strips it.
+  // through $(...), which strips it, and then masks the result.
   process.stdout.write(token.access_token);
 }
 
