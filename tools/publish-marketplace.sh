@@ -21,10 +21,14 @@
 # dependencies declare engines.node ">=22.0.0" against a fleet running
 # node 20, and the container is node 22.
 #
-# It mints its own credential. There is no VSCE_PAT and no stored secret of
-# any kind -- see tools/marketplace-token.mjs for why the token is fetched
-# by hand rather than by `vsce publish --azure-credential`, and
-# RELEASE-SETUP.md for what has to exist in Entra for it to work.
+# It mints its own credential. There is no stored secret of any kind. The
+# VSCE_PAT environment variable below is vsce's token-passing mechanism and
+# holds the exchanged Entra access token, which lives about an hour -- it is
+# not the Azure DevOps personal access token this replaced, and there is no
+# secrets.VSCE_PAT in the workflow any more. See tools/marketplace-token.mjs
+# for why the token is fetched by hand rather than by `vsce publish
+# --azure-credential`, and for the two files to re-read when vsce is next
+# bumped; and RELEASE-SETUP.md for what has to exist in Entra.
 #
 # Usage:
 #   tools/publish-marketplace.sh <directory containing one .vsix>

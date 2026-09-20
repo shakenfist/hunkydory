@@ -20,10 +20,19 @@
 // -p or VSCE_PAT is given and the Entra access token when --azure-credential
 // is, into the same variable, used the same way.
 //
-// WHEN VSCE IS NEXT BUMPED, re-read node_modules/@vscode/vsce/out/auth.js.
-// If WorkloadIdentityCredential appears in that chain, delete this file and
-// use --azure-credential with AZURE_FEDERATED_TOKEN_FILE instead. Reading
-// the chain is the check; release notes are not.
+// WHEN VSCE IS NEXT BUMPED, re-read TWO files, not one.
+//
+// out/auth.js, for whether WorkloadIdentityCredential has joined the chain.
+// If it has, delete this file and use --azure-credential with
+// AZURE_FEDERATED_TOKEN_FILE instead.
+//
+// out/publish.js's getPAT(), for whether -p (and so VSCE_PAT) still accepts
+// an Entra access token. That seam is the more fragile of the two: a
+// release could split the auth handler so the flag sends a bearer token and
+// -p sends a PAT, which would leave the flag surface identical and this
+// file broken with no signal from auth.js at all.
+//
+// Reading both is the check; release notes are not.
 //
 // Usage: node tools/marketplace-token.mjs
 // Requires node 18 or newer for global fetch; the container this runs in is

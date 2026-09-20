@@ -18,10 +18,11 @@ The release process uses:
   GitHub, so there is nothing to rotate and nothing to leak. See
   [Why not a Personal Access Token](#why-not-a-personal-access-token).
 - **A tag-protected `release` GitHub environment**: it holds no secrets,
-  only two identifiers. Its `v*` tag restriction still matters, and now
-  matters twice: GitHub will not run the job on another ref, and the subject
-  claim GitHub puts in the OIDC token names the environment, so Entra
-  refuses to mint a token for a run that reached the job any other way.
+  only two identifiers. Its `v*` tag restriction is the **only** thing
+  gating which refs can publish, and removing the stored token did not
+  change that. An environment-scoped OIDC subject names the environment and
+  carries no ref, so Entra cannot distinguish one ref from another; it will
+  mint a publishing token for any run GitHub admitted to the environment.
 - **Split build/publish jobs**: Building the `.vsix` and publishing it happen
   in different jobs on different runner pools, so the publishing credential
   is never present on the repository's shared static runner pool. See
@@ -152,10 +153,15 @@ before this environment exists, GitHub auto-creates the environment
 *unprotected* to satisfy `environment: release`, and the run proceeds
 against an environment with no tag rule and no variables.
 
-With the Entra setup above, an unprotected environment no longer leaks
-anything — there is no secret on it, and Entra refuses a token to a subject
-that does not match. The failure is a confusing broken release rather than a
-disclosure. Set it up first anyway; there is no reason to find out.
+Removing the stored token does **not** make that harmless. There is no
+secret sitting on the environment to be read, which is a real improvement,
+but the OIDC subject GitHub mints for this job names the environment and
+carries no ref. Entra therefore cannot tell a run on `main` from a run on a
+tag, and will mint a genuine publishing token for any run that reaches the
+job. On an unprotected environment — combined with no tag ruleset, see step
+6 — that is a successful publish of arbitrary content under the
+`shakenfist` publisher id. Create the environment, with its tag rule,
+first.
 
 1. Go to **Settings** > **Environments** on
    `github.com/shakenfist/hunkydory`.
@@ -180,10 +186,12 @@ together.
 
 ### 6. Protect the repository's tags
 
-`release.yml` triggers on any `v*` tag. Without a ruleset, anyone who can
-push to the repository can start a publish under the `shakenfist` publisher
-id from any ref. Add a tag ruleset restricting who may create `v*` tags.
-This is tracked as issue #21.
+`release.yml` triggers on any `v*` tag, and step 5 explained why the
+environment's tag rule is the only thing deciding which refs reach the
+publish job. This is the other half of that: without a ruleset, anyone who
+can push to the repository can create a `v*` tag and so start a publish
+under the `shakenfist` publisher id. Add a tag ruleset restricting who may
+create `v*` tags. Tracked as issue #21.
 
 ## What the Workflow Then Does
 

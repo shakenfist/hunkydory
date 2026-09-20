@@ -165,9 +165,12 @@ jobs:
       # identify the app registration, they do not authenticate as it.
       # What authenticates is the OIDC token GitHub mints for this job,
       # which Entra accepts only for the subject
-      # repo:shakenfist/hunkydory:environment:release -- which is also
-      # why the environment's `v*` tag rule now gates this job twice
-      # over rather than once. See RELEASE-SETUP.md.
+      # repo:shakenfist/hunkydory:environment:release. Note what that
+      # subject does NOT contain: a ref. An environment-scoped subject
+      # names the environment and nothing else, so Entra cannot tell
+      # one ref from another and the `release` environment's `v*` tag
+      # rule is the only thing gating which refs reach this job. It is
+      # load-bearing, not belt-and-braces. See RELEASE-SETUP.md.
       - name: Publish to the VS Code Marketplace
         env:
           AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
