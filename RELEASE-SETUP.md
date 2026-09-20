@@ -18,11 +18,15 @@ The release process uses:
   GitHub, so there is nothing to rotate and nothing to leak. See
   [Why not a Personal Access Token](#why-not-a-personal-access-token).
 - **A tag-protected `release` GitHub environment**: it holds no secrets,
-  only two identifiers. Its `v*` tag restriction is the **only** thing
-  gating which refs can publish, and removing the stored token did not
-  change that. An environment-scoped OIDC subject names the environment and
-  carries no ref, so Entra cannot distinguish one ref from another; it will
-  mint a publishing token for any run GitHub admitted to the environment.
+  only two identifiers. Three separate things bind publishing to `v*` tags:
+  the workflow's `on: push: tags` trigger, the job's own `if:` guard, and
+  the environment's tag rule. The first two are one edit away from being
+  changed by anyone who can change the workflow; the environment rule is
+  the one that survives that, which is why it exists. What none of them
+  constrain is *who* may create the tag — an environment-scoped OIDC
+  subject names the environment and carries no ref, so Entra cannot
+  distinguish one ref from another, and the ability to create a `v*` tag is
+  therefore the ability to publish. Step 6 is where that is addressed.
 - **Split build/publish jobs**: Building the `.vsix` and publishing it happen
   in different jobs on different runner pools, so the publishing credential
   is never present on the repository's shared static runner pool. See
@@ -48,8 +52,8 @@ existing in the pinned version. See the header of
 
 ## One-Time Setup Steps
 
-These steps are ordered. Step 5 must be last: the `release` environment must
-exist, with its tag rule, before any `v*` tag is pushed.
+These steps are ordered, and steps 5 and 6 must both be complete before any
+`v*` tag is pushed.
 
 The Azure and Marketplace web interfaces are re-arranged from time to time,
 so treat the menu names below as a description of what you are looking for
@@ -150,18 +154,22 @@ is added there as a service principal instead.
 
 **Do this before pushing the first release tag.** If a `v*` tag is pushed
 before this environment exists, GitHub auto-creates the environment
-*unprotected* to satisfy `environment: release`, and the run proceeds
-against an environment with no tag rule and no variables.
+*unprotected* to satisfy `environment: release`.
 
-Removing the stored token does **not** make that harmless. There is no
-secret sitting on the environment to be read, which is a real improvement,
-but the OIDC subject GitHub mints for this job names the environment and
-carries no ref. Entra therefore cannot tell a run on `main` from a run on a
-tag, and will mint a genuine publishing token for any run that reaches the
-job. On an unprotected environment — combined with no tag ruleset, see step
-6 — that is a successful publish of arbitrary content under the
-`shakenfist` publisher id. Create the environment, with its tag rule,
-first.
+That particular case fails closed, and it is worth knowing which way round
+this goes before you need to reason about it during an incident. An
+auto-created environment has no variables either, so `vars.AZURE_CLIENT_ID`
+and `vars.AZURE_TENANT_ID` arrive empty and
+`tools/publish-marketplace.sh` exits with `AZURE_CLIENT_ID is not set`
+before docker is even invoked. No token is minted and nothing is published.
+
+The case that does bite is an environment created *carelessly later* —
+variables added so that publishing works, tag rule forgotten. Then the
+OIDC subject GitHub mints names the environment and carries no ref, Entra
+cannot tell a run on `main` from a run on a tag, and any run that reaches
+the job gets a genuine publishing token. Create the environment with its
+tag rule in the same sitting, and never add the variables to an
+environment whose protection rules you have not already saved.
 
 1. Go to **Settings** > **Environments** on
    `github.com/shakenfist/hunkydory`.
@@ -192,6 +200,14 @@ publish job. This is the other half of that: without a ruleset, anyone who
 can push to the repository can create a `v*` tag and so start a publish
 under the `shakenfist` publisher id. Add a tag ruleset restricting who may
 create `v*` tags. Tracked as issue #21.
+
+**Do this before the first release, not after.** Until it exists, the
+authority to publish under the `shakenfist` publisher id is held by
+everyone with write access to the repository. The credential is
+short-lived; the ability to mint one is not rationed. This was equally
+true of the PAT setup — it is not a regression introduced by moving to
+Entra — but moving to Entra is what makes it the *only* remaining
+distinction between "a release" and "anyone with push".
 
 ## What the Workflow Then Does
 

@@ -167,10 +167,15 @@ jobs:
       # which Entra accepts only for the subject
       # repo:shakenfist/hunkydory:environment:release. Note what that
       # subject does NOT contain: a ref. An environment-scoped subject
-      # names the environment and nothing else, so Entra cannot tell
-      # one ref from another and the `release` environment's `v*` tag
-      # rule is the only thing gating which refs reach this job. It is
-      # load-bearing, not belt-and-braces. See RELEASE-SETUP.md.
+      # names the environment and nothing else, so Entra cannot tell one
+      # ref from another.
+      #
+      # Three things bind this job to `v*` tags -- the trigger above, this
+      # job's `if:`, and the `release` environment's tag rule -- and the
+      # third is the one an edit to this file cannot remove. But none of
+      # them constrain who may create the tag, and since Entra cannot see
+      # the ref, tag-creation permission is publish permission. That is a
+      # repository ruleset, tracked as issue #21. See RELEASE-SETUP.md.
       - name: Publish to the VS Code Marketplace
         env:
           AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}

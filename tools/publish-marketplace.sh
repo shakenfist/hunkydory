@@ -39,9 +39,13 @@ set -euo pipefail
 # shakenfist/development: a tag is mutable, and this runs a third-party
 # container on a runner with a docker daemon. The tag is for a human
 # reading this; the digest is what pins. trixie rather than bookworm so
-# the container's libc matches the Debian 13 host it runs on. Renovate's
-# stock managers do not read a docker reference out of a shell script, so
-# this moves when somebody moves it.
+# the container's libc matches the Debian 13 host it runs on.
+#
+# Renovate's stock managers do not read a docker reference out of a shell
+# script, so renovate.json carries a customManager that does. It matches
+# these two lines as an adjacent pair: keep them adjacent, keep the
+# quoting, and do not put a blank line or a comment between them, or the
+# digest silently stops being updated.
 IMAGE_TAG="node:22-trixie-slim"
 IMAGE="${IMAGE_TAG}@sha256:c5849ff9c9ebcd66615412f0b548ca5b8ecaef84003dc9ac2e077ebe46aaa3f6"
 

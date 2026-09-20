@@ -18,7 +18,7 @@
       "description": "The Entra publishing path reads two files inside vsce that no public API covers, so a bump can break releases silently. This note reaches the reviewer of the bump, which the script headers do not: a bump touches package.json, not tools/.",
       "matchPackageNames": ["@vscode/vsce"],
       "prBodyNotes": [
-        ":warning: Before merging, re-read two files in the new version. `out/auth.js`: if `WorkloadIdentityCredential` has joined the `ChainedTokenCredential`, `tools/marketplace-token.mjs` can be deleted in favour of `vsce publish --azure-credential`. `out/publish.js`: if `getPAT()` no longer routes `-p`/`VSCE_PAT` and `--azure-credential` into the same value, publishing is broken and there will be no other signal until a release is attempted. See `tools/marketplace-token.mjs` and RELEASE-SETUP.md."
+        ":warning: Before merging, re-read two files in the new version. `out/auth.js`: if `WorkloadIdentityCredential` has joined the `ChainedTokenCredential`, `tools/marketplace-token.mjs` can be deleted in favour of `vsce publish --azure-credential`. `out/publish.js`: if `getPAT()` no longer routes `-p`/`VSCE_PAT` and `--azure-credential` into the same value, publishing is broken and there will be no other signal until a release is attempted. Also confirm `out/auth.js` still requests the scope `499b84ac-1321-427f-aa17-267ca6975798/.default`, which `tools/marketplace-token.mjs` holds a copy of. See that file and RELEASE-SETUP.md."
       ]
     }
   ],

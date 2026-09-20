@@ -20,11 +20,16 @@
 // -p or VSCE_PAT is given and the Entra access token when --azure-credential
 // is, into the same variable, used the same way.
 //
-// WHEN VSCE IS NEXT BUMPED, re-read TWO files, not one.
+// WHEN VSCE IS NEXT BUMPED, re-read TWO files and check THREE things.
 //
 // out/auth.js, for whether WorkloadIdentityCredential has joined the chain.
 // If it has, delete this file and use --azure-credential with
 // AZURE_FEDERATED_TOKEN_FILE instead.
+//
+// out/auth.js again, for whether the scope it requests is still
+// 499b84ac-1321-427f-aa17-267ca6975798/.default. MARKETPLACE_SCOPE below is
+// a copy of that value, so a change there would otherwise first surface as
+// a failed release.
 //
 // out/publish.js's getPAT(), for whether -p (and so VSCE_PAT) still accepts
 // an Entra access token. That seam is the more fragile of the two: a
@@ -38,8 +43,10 @@
 // Requires node 18 or newer for global fetch; the container this runs in is
 // pinned to node 22 by tools/publish-marketplace.sh.
 
-// The Marketplace's own resource id, taken from the scope auth.js requests
-// rather than from documentation, so the two cannot drift apart silently.
+// The Marketplace's own resource id. Copied from the scope auth.js requests
+// rather than taken from documentation, which makes it right today but does
+// not keep it right: nothing re-reads auth.js at runtime. The bump
+// checklist above is what keeps it honest.
 const MARKETPLACE_SCOPE = '499b84ac-1321-427f-aa17-267ca6975798/.default';
 
 // The audience Entra requires on a GitHub OIDC token presented as a client
@@ -103,12 +110,19 @@ async function githubIdToken() {
     headers: { authorization: `Bearer ${required('ACTIONS_ID_TOKEN_REQUEST_TOKEN')}` },
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
+  const body = await response.text();
   if (!response.ok) {
-    throw new Error(
-      `the GitHub OIDC endpoint returned ${response.status}: ${await response.text()}`,
-    );
+    throw new Error(`the GitHub OIDC endpoint returned ${response.status}: ${body}`);
   }
-  const { value } = await response.json();
+  // Guarded the same way postForm is, and for the same reason: a 200
+  // carrying something that is not JSON would otherwise surface as a bare
+  // parser error with the body discarded.
+  let value;
+  try {
+    ({ value } = JSON.parse(body));
+  } catch {
+    throw new Error(`the GitHub OIDC endpoint returned a non-JSON body: ${body.slice(0, 200)}`);
+  }
   if (!value) {
     throw new Error('the GitHub OIDC endpoint returned no token');
   }
@@ -134,6 +148,12 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(`marketplace-token: ${error.message}`);
-  process.exit(1);
+  // error.cause carries the useful half of a fetch failure -- "fetch
+  // failed" alone does not distinguish DNS from TLS from a refused
+  // connection, and this runs where nobody can attach a debugger.
+  const cause = error.cause ? ` (${error.cause})` : '';
+  console.error(`marketplace-token: ${error.message}${cause}`);
+  // exitCode rather than exit(): process.exit can truncate a pending write
+  // to stderr, losing the message this line exists to print.
+  process.exitCode = 1;
 });
