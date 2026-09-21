@@ -1,90 +1,175 @@
 # Release Infrastructure Setup
 
-This document describes how to configure the VS Code Marketplace and GitHub to
-enable automated releases of the Hunky Dory extension using GitHub Actions.
+This document describes how to configure the VS Code Marketplace, Microsoft
+Entra ID and GitHub to enable automated releases of the Hunky Dory extension
+using GitHub Actions.
 
 ## Overview
 
 The release process uses:
 
 - **VS Code Marketplace publishing (`vsce`)**: The extension is published
-  under the `shakenfist` publisher id, using a Personal Access Token (PAT)
-  minted from an Azure DevOps organisation. VS Code Marketplace identity is
-  layered on top of Azure DevOps — there is no separate Marketplace account
-  system.
-- **A tag-protected `release` GitHub environment**: The publishing token is
-  stored as a secret on this environment, not on the repository, so only a
-  workflow run triggered by a `v*` tag can read it.
+  under the `shakenfist` publisher id. VS Code Marketplace identity is
+  layered on top of Azure DevOps and Microsoft Entra ID — there is no
+  separate Marketplace account system.
+- **No stored publishing credential at all.** The publish job exchanges the
+  GitHub OIDC token minted for that specific run for a short-lived Entra
+  access token, and publishes with that. Nothing long-lived is stored in
+  GitHub, so there is nothing to rotate and nothing to leak. See
+  [Why not a Personal Access Token](#why-not-a-personal-access-token).
+- **A tag-protected `release` GitHub environment**: it holds no secrets,
+  only two identifiers. Three separate things bind publishing to `v*` tags:
+  the workflow's `on: push: tags` trigger, the job's own `if:` guard, and
+  the environment's tag rule. The first two are one edit away from being
+  changed by anyone who can change the workflow; the environment rule is
+  the one that survives that, which is why it exists. What none of them
+  constrain is *who* may create the tag — an environment-scoped OIDC
+  subject names the environment and carries no ref, so Entra cannot
+  distinguish one ref from another, and the ability to create a `v*` tag is
+  therefore the ability to publish. Step 6 is where that is addressed.
 - **Split build/publish jobs**: Building the `.vsix` and publishing it happen
-  in different jobs on different runner pools, so the Marketplace token is
-  never present on the repository's shared static runner pool. See
+  in different jobs on different runner pools, so the publishing credential
+  is never present on the repository's shared static runner pool. See
   [What the Workflow Then Does](#what-the-workflow-then-does) for why.
 - **A GitHub Release**: Each publish also attaches the `.vsix` that was
   shipped to the Marketplace to a GitHub Release, so it can be downloaded
   without going through the Marketplace.
 
+### Why not a Personal Access Token
+
+An Azure DevOps personal access token (`VSCE_PAT`) is the path most `vsce`
+documentation still describes, and an earlier version of this file described
+it too. It is not used here, for one decisive reason: Microsoft is retiring
+*global* PATs — the "all accessible organizations" scope publishing needs —
+on **1 December 2026**, in favour of Entra ID and workload identity
+federation. A PAT minted now would need replacing within months, and the
+replacement is the setup below, so the setup below is what gets done once.
+
+The mechanism is not `vsce publish --azure-credential`, despite that flag
+existing in the pinned version. See the header of
+`tools/marketplace-token.mjs` for why, and for the one check to run when
+`vsce` is next upgraded that would let this be simplified.
+
 ## One-Time Setup Steps
 
-### 1. Create the Azure DevOps organisation and Marketplace publisher
+These steps are ordered, and steps 5 and 6 must both be complete before any
+`v*` tag is pushed.
+
+The Azure and Marketplace web interfaces are re-arranged from time to time,
+so treat the menu names below as a description of what you are looking for
+rather than a literal path. What must end up true is stated with each step.
+
+### 1. Create the Marketplace publisher
 
 The VS Code Marketplace publisher id is already fixed in this repository:
-`package.json` declares `"publisher": "shakenfist"`. The Azure DevOps side
+`package.json` declares `"publisher": "shakenfist"`. The Marketplace side
 must be set up to match that exact string.
 
-1. If you do not already have one, create an Azure DevOps organisation at
-   [dev.azure.com](https://dev.azure.com). Any organisation you belong to can
-   mint a token that publishes under a Marketplace publisher — the publisher
-   itself is not tied to a specific organisation.
-2. Sign in to the
+1. Sign in to the
    [Marketplace publisher management page](https://marketplace.visualstudio.com/manage)
-   with the Microsoft account tied to that Azure DevOps organisation.
-3. Create a publisher with id `shakenfist` (this must match `package.json`
+   with the Microsoft account that should own this publisher.
+2. Create a publisher with id `shakenfist` (this must match `package.json`
    exactly) and a display name of your choosing.
 
 If a publisher with id `shakenfist` already exists from earlier work, skip
 creating it and confirm you have access instead.
 
-### 2. Generate a Marketplace Personal Access Token (`VSCE_PAT`)
+**What must be true:** a Marketplace publisher with id `shakenfist` exists
+and you can administer it.
 
-1. In Azure DevOps, open **User settings** (top right) > **Personal access
-   tokens**.
-2. Click **New Token**.
-3. Set **Organization** to **All accessible organizations** — not a specific
-   org. `vsce` needs this scope to publish, even though the token is created
-   from within one organisation's UI.
-4. Click **Show all scopes**, then check **Marketplace** > **Manage**.
-5. Set an expiration. Azure DevOps currently allows up to one year; pick the
-   longest option available and put a reminder somewhere durable (a calendar
-   entry, not just this file) to rotate it before it expires. See
-   [Troubleshooting](#troubleshooting) for what happens if you don't.
-6. Click **Create** and copy the token immediately — Azure DevOps shows it
-   only once.
+### 2. Register an Entra application for the publish job
 
-**Read this before relying on a PAT long-term**: Microsoft is retiring
-*global* PATs (the "all accessible organizations" scope this token needs) on
-**1 December 2026**, in favour of Microsoft Entra ID / workload identity
-federation. The version of `vsce` this repository pins (3.9.2) already
-carries the replacement: `vsce publish --azure-credential`, described by its
-own help as "Use Microsoft Entra ID for authentication". There is no
-`--oidc` flag in this version. A token generated before the retirement date
-keeps working until it expires or is revoked, but stops working outright
-once global PATs are decommissioned, regardless of the token's own
-expiration date. Before that date, revisit this document and switch to
-`--azure-credential`, which needs an Entra app registration, a GitHub
-federated credential and that identity added as a member of the Marketplace
-publisher — do not simply mint a fresh PAT and assume this setup survives
-unchanged.
+This is the identity the workflow publishes *as*. It is not a user and it
+holds no password.
 
-### 3. Create the tag-protected `release` GitHub environment
+1. In the [Azure portal](https://portal.azure.com), go to **Microsoft Entra
+   ID** > **App registrations** > **New registration**.
+2. Give it a name that says what it is — `hunkydory Marketplace publisher`
+   is the one this document assumes.
+3. Leave the supported account types at the single-tenant default, and leave
+   the redirect URI empty. Neither is used.
+4. Register it, then record two values from the application's **Overview**
+   page. You will need both in step 5:
+   - **Application (client) ID** → becomes `AZURE_CLIENT_ID`
+   - **Directory (tenant) ID** → becomes `AZURE_TENANT_ID`
 
-**Do this before pushing the first release tag.** The environment's tag
-restriction is what stops a workflow run on an arbitrary branch from reading
-`VSCE_PAT`. If a `v*` tag is pushed before this environment (and its tag
-rule) exists, the `publish-marketplace` job either fails outright (no
-`release` environment to satisfy `environment: release`) or, if the
-environment gets created carelessly afterwards without the tag restriction,
-runs with the secret exposed to any ref. Set this up first; the first tag this repository
-pushes will be `v0.1.0`.
+**Do not create a client secret.** If you find yourself on the "Client
+secrets" tab, you are about to build the thing this setup exists to avoid —
+a stored credential with an expiry date. The next step is what replaces it.
+
+**What must be true:** an app registration exists, you have its client and
+tenant ids, and it has no client secret.
+
+### 3. Add a federated credential for this repository
+
+This is the step that lets GitHub Actions authenticate as that application
+without any shared secret. Entra will accept a token that GitHub minted, for
+this repository, for this environment, and for nothing else.
+
+1. On the app registration, go to **Certificates & secrets** > **Federated
+   credentials** > **Add credential**.
+2. Choose the **GitHub Actions deploying Azure resources** scenario.
+3. Fill in:
+   - **Organization**: `shakenfist`
+   - **Repository**: `hunkydory`
+   - **Entity type**: **Environment** — not Branch, and not Tag.
+   - **Environment name**: `release`
+4. Give the credential a name and save it.
+
+**What must be true:** the credential's subject identifier reads exactly
+`repo:shakenfist/hunkydory:environment:release`, its issuer is
+`https://token.actions.githubusercontent.com`, and its audience is
+`api://AzureADTokenExchange`. The portal shows all three after saving;
+check them rather than assuming, because the entity type is easy to
+misselect and a Branch-scoped credential will simply refuse every real
+release with an unhelpful error.
+
+Those three values are also what `tools/marketplace-token.mjs` presents. If
+the audience ever differs, it is the constant `EXCHANGE_AUDIENCE` in that
+file that has to agree.
+
+### 4. Add the application to the Marketplace publisher
+
+The application can now prove who it is, but it still has no permission to
+publish. Marketplace permissions are managed per publisher.
+
+1. Return to the
+   [Marketplace publisher management page](https://marketplace.visualstudio.com/manage)
+   and open the `shakenfist` publisher.
+2. Find its members or permissions list, and add the app registration from
+   step 2 as a member, searching for it by the name you gave it.
+3. Give it the least role that can publish a new version of an existing
+   extension — **Contributor** at the time of writing. **Owner** is not
+   needed and should not be granted.
+
+**What must be true:** the app registration appears as a member of the
+`shakenfist` publisher with a role that permits publishing.
+
+This step is the one most likely to have moved: if the publisher management
+page offers no way to add an application, the Azure DevOps organisation
+behind the publisher is where its permissions live, and the app registration
+is added there as a service principal instead.
+
+### 5. Create the tag-protected `release` environment
+
+**Do this before pushing the first release tag.** If a `v*` tag is pushed
+before this environment exists, GitHub auto-creates the environment
+*unprotected* to satisfy `environment: release`.
+
+That particular case fails closed, and it is worth knowing which way round
+this goes before you need to reason about it during an incident. An
+auto-created environment has no variables either, so `vars.AZURE_CLIENT_ID`
+and `vars.AZURE_TENANT_ID` arrive empty and
+`tools/publish-marketplace.sh` exits with `AZURE_CLIENT_ID is not set`
+before docker is even invoked. No token is minted and nothing is published.
+
+The case that does bite is an environment created *carelessly later* —
+variables added so that publishing works, tag rule forgotten. Then the
+OIDC subject GitHub mints names the environment and carries no ref, Entra
+cannot tell a run on `main` from a run on a tag, and any run that reaches
+the job gets a genuine publishing token. Create the environment with its
+tag rule in the same sitting, and never add the variables to an
+environment whose protection rules you have not already saved.
 
 1. Go to **Settings** > **Environments** on
    `github.com/shakenfist/hunkydory`.
@@ -95,19 +180,34 @@ pushes will be `v0.1.0`.
    unset — this repository does not gate releases on manual approval, only
    on tag protection.
 4. Click **Save protection rules**.
+5. Under **Environment variables** — *variables*, not secrets — add:
+   - `AZURE_CLIENT_ID`: the Application (client) ID from step 2.
+   - `AZURE_TENANT_ID`: the Directory (tenant) ID from step 2.
 
-### 4. Add `VSCE_PAT` as a secret on the `release` environment
+Neither value is confidential; they identify the application, they do not
+authenticate as it. They are on the environment rather than the repository
+so that everything this job needs is configured in one place and moves
+together.
 
-1. Still on the `release` environment's configuration page, find
-   **Environment secrets**.
-2. Click **Add secret**.
-3. Name: `VSCE_PAT`. Value: the token from step 2.
-4. Click **Add secret**.
+**What must be true:** the `release` environment exists, is restricted to
+`v*` tags, carries those two variables, and carries no secrets.
 
-Do not add this as a repository secret (**Settings** > **Secrets and
-variables** > **Actions** > **Repository secrets**). A repository secret is
-readable by every workflow run regardless of ref, which defeats the point of
-restricting the `release` environment to `v*` tags.
+### 6. Protect the repository's tags
+
+`release.yml` triggers on any `v*` tag, and step 5 explained why the
+environment's tag rule is the only thing deciding which refs reach the
+publish job. This is the other half of that: without a ruleset, anyone who
+can push to the repository can create a `v*` tag and so start a publish
+under the `shakenfist` publisher id. Add a tag ruleset restricting who may
+create `v*` tags. Tracked as issue #21.
+
+**Do this before the first release, not after.** Until it exists, the
+authority to publish under the `shakenfist` publisher id is held by
+everyone with write access to the repository. The credential is
+short-lived; the ability to mint one is not rationed. This was equally
+true of the PAT setup — it is not a regression introduced by moving to
+Entra — but moving to Entra is what makes it the *only* remaining
+distinction between "a release" and "anyone with push".
 
 ## What the Workflow Then Does
 
@@ -117,34 +217,40 @@ restricting the `release` environment to `v*` tags.
    the tag matches the version in `package.json`, runs `npm ci` and `npm run
    package` (`vsce package`), and uploads the resulting `.vsix` as a workflow
    artifact.
-2. **`publish-marketplace`**, on `[self-hosted, vm, debian-13, s]`, with
-   `environment: release`: downloads the artifact from `build` and runs
-   `vsce publish --packagePath <the downloaded .vsix>`. It is the only job
-   that can read `VSCE_PAT`.
+2. **`publish-marketplace`**, on `[self-hosted, vm, debian-13-docker, s]`,
+   with `environment: release`: downloads the artifact from `build` and runs
+   `tools/publish-marketplace.sh`, which does the rest inside a pinned
+   `node:22` container. It is the only job that can obtain a publishing
+   credential.
 3. **`github-release`**, on `[self-hosted, static]`: attaches the same
    artifact to a GitHub Release, and runs only once the Marketplace publish
    has succeeded.
 
-Two details are deliberate:
+Four details are deliberate:
 
 - **The runner split.** The `static` pool that `build` and `github-release`
   run on is a shared, non-ephemeral runner used by every repository in both
-  the `shakenfist` and `mach33labs` GitHub organisations. A secret placed in
-  a job's environment on that pool is exposed to every other repository's
-  jobs that happen to land on the same machine. `publish-marketplace` — the
-  only job that touches `VSCE_PAT` — runs instead on the `debian-13`/`vm`
-  pool, where that exposure doesn't apply.
-
-  That job installs with `npm ci --ignore-scripts`, not a bare `npm ci`. The
-  concern is lifecycle scripts: a bare `npm ci` runs `preinstall`,
-  `postinstall` and friends from every package in the tree, which is exactly
-  the kind of arbitrary code a shared credential should not be anywhere
-  near. `--ignore-scripts` removes that while still installing the
-  lockfile-pinned `vsce` the job then runs — which is why it installs at all
-  rather than reaching for `npx @vscode/vsce`, since that would fetch
-  whatever version is newest at publish time rather than the one this
-  repository has tested against. Beyond that install, the job only unpacks
-  the already-built artifact and runs `vsce`.
+  the `shakenfist` and `mach33labs` GitHub organisations. A credential
+  obtained in a job on that pool is exposed to every other repository's jobs
+  that happen to land on the same machine. `publish-marketplace` runs
+  instead on an ephemeral VM.
+- **The container.** That VM lane carries neither node nor npm — this was
+  measured, in run 35141854203, after an earlier version of this workflow
+  asserted the opposite in a comment and could never have published.
+  `tools/publish-marketplace.sh` supplies the runtime from a `node:22`
+  image pinned by digest. That also resolves a second problem: several of
+  `vsce`'s transitive Azure dependencies declare `engines.node ">=22.0.0"`
+  while the fleet's runners carry node 20.
+- **`npm ci --ignore-scripts`, not a bare `npm ci`.** A bare `npm ci` runs
+  `preinstall`, `postinstall` and friends from every package in the tree,
+  which is exactly the kind of arbitrary code a publishing credential should
+  not be anywhere near. `--ignore-scripts` removes that while still
+  installing the lockfile-pinned `vsce` the job then runs — which is why it
+  installs at all rather than reaching for `npx @vscode/vsce`, since that
+  would fetch whatever version is newest at publish time rather than the one
+  this repository has tested against. The install also runs before the
+  token is minted, and with the OIDC request variables removed from its
+  environment, so there is no credential present for it to reach.
 - **`--packagePath`, never bare `vsce publish`.** Bare `vsce publish`
   repackages the working tree at publish time. Using `--packagePath` against
   the artifact `build` produced means the exact bytes that were built (and
@@ -173,34 +279,44 @@ Two details are deliberate:
 
 ## Troubleshooting
 
-### `publish-marketplace` fails with an authentication error months later
+### `AZURE_CLIENT_ID is not set`, or the same for `AZURE_TENANT_ID`
 
-This is the PAT expiring, and it is the most likely failure mode of this
-whole setup — Azure DevOps PATs are not renewed automatically. Generate a new
-token (step 2 above) and update the `VSCE_PAT` secret on the `release`
-environment (step 4). You do not need to touch the workflow or re-run the
-tag push; re-running the failed `publish-marketplace` job after updating the
-secret is enough. If the token was created before 1 December 2026 and suddenly stops
-working with no expiration in sight, that is the global-PAT retirement, not
-a normal expiry — see the note in step 2.
+The `release` environment is missing its variables, or they were added as
+*secrets* rather than variables — the workflow reads them through the
+`vars` context, which does not see secrets. Step 5.
 
-### "Publisher not found" or similar from `vsce publish`
+### `ACTIONS_ID_TOKEN_REQUEST_URL is not set`
 
-- Confirm the publisher id used by the token's account is exactly
-  `shakenfist`, matching `package.json`.
-- Confirm the PAT's **Organization** scope is **All accessible
-  organizations**, not a single org — a single-org token can fail to see a
-  publisher that isn't tied to that org.
-- Confirm the PAT's scope includes **Marketplace** > **Manage**, not just
-  **Marketplace** > **Publish** or **Marketplace** > **Acquire**.
+GitHub did not mint an OIDC token for the job, which means the job is
+missing `permissions: id-token: write`. This is a workflow defect rather
+than a configuration one; the line is in `release.yml`'s
+`publish-marketplace` job and nothing else in the repository needs it.
 
-### `publish-marketplace` can't find the `release` environment, or runs unprotected
+### Entra returns `AADSTS700213` or "No matching federated identity record"
 
-Both symptoms trace back to setup ordering. If the environment doesn't exist
-yet, the job fails outright. If the environment exists but its tag rule was
-never added, the job succeeds but ran with the secret exposed on whatever ref
-triggered it — treat that as a reason to rotate `VSCE_PAT` immediately, then
-add the missing tag rule (step 3) before pushing another tag.
+The federated credential's subject does not match what GitHub sent. The
+subject GitHub mints for this job is
+`repo:shakenfist/hunkydory:environment:release`. The usual causes, in order
+of likelihood: the credential was created with entity type **Branch** or
+**Tag** instead of **Environment**; the environment name was typed with
+different capitalisation; or the job lost its `environment: release` line,
+in which case GitHub sends a ref-based subject instead. Step 3.
+
+### The token is minted but `vsce publish` reports a permission error
+
+Authentication worked and authorisation did not: the application is not a
+member of the `shakenfist` publisher, or its role does not permit
+publishing. Step 4. Confirm also that the publisher id is exactly
+`shakenfist`, matching `package.json`.
+
+### `publish-marketplace` fails pulling or running the container
+
+The job needs a docker daemon, which is what the `debian-13-docker` half of
+its runner label selects. If the label was changed, or the run was retried
+on a lane without docker, this is where it shows up. The image is pinned by
+digest in `tools/publish-marketplace.sh`; a digest that no longer exists
+upstream fails here too, and is fixed by pulling the current
+`node:22-trixie-slim` and recording its new digest.
 
 ### Tag pushed but no workflow run appears
 

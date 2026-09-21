@@ -4,9 +4,10 @@
 # rather than copied verbatim -- that template is written for a Python
 # project publishing to PyPI with setuptools_scm and trusted publishers.
 # hunkydory is a VS Code extension publishing a .vsix to the VS Code
-# Marketplace with a long-lived personal access token (VSCE_PAT), so this
-# file keeps the template's job shape and reasoning where it still applies
-# and deviates where it does not. The deviations:
+# Marketplace with a Microsoft Entra ID token minted from this run's own
+# GitHub OIDC identity, so this file keeps the template's job shape and
+# reasoning where it still applies and deviates where it does not. The
+# deviations:
 #
 # * Only three jobs, not the template's four. The template's sign-tag job
 #   Sigstore-signs the release tag with gitsign before publishing. Phase 7
@@ -17,19 +18,36 @@
 #   signed with Sigstore. Revisit this if/when the fleet's tag-signing
 #   convention gets applied here.
 #
-# * publish-marketplace runs on [self-hosted, vm, debian-13, s] rather
-#   than the template's [self-hosted, static]. static is a shared,
+# * publish-marketplace runs on [self-hosted, vm, debian-13-docker, s]
+#   rather than the template's [self-hosted, static]. static is a shared,
 #   persistent bare-metal pool -- other repositories' jobs run on the
-#   same machines between releases. This job holds VSCE_PAT, a token
-#   that can publish under the shakenfist publisher id, so it runs on an
-#   ephemeral VM runner instead, matching the same reasoning
+#   same machines between releases. This job holds a credential that can
+#   publish under the shakenfist publisher id, so it runs on an ephemeral
+#   VM runner instead, matching the same reasoning
 #   .github/actionlint.yaml already documents for secret-scan.yml's use
 #   of vm + debian-13.
 #
-# * publish-marketplace runs `npm ci --ignore-scripts` rather than the
-#   template's PyPI job, which runs no install step comparable to this at
-#   all. See the comment on that step below for why --ignore-scripts
-#   specifically, since the plan text this workflow implements says
+#   The -docker half of that label is not decoration. The plain debian-13
+#   lane carries neither node nor npm -- measured in run 35141854203, not
+#   assumed -- so the runtime comes from a pinned node:22 container that
+#   tools/publish-marketplace.sh starts. An earlier revision of this file
+#   ran `npm ci` on the plain lane and asserted in a comment that it
+#   "carries Debian 13's node 20". That was false, and the job could
+#   never have published; phase 7b repaired both.
+#
+# * publish-marketplace mints its own credential and stores none. There
+#   is no VSCE_PAT secret, and no `release` environment secret at all.
+#   This job's GitHub OIDC identity is exchanged at Entra for a
+#   Marketplace access token that lives about an hour, which is why the
+#   job needs `id-token: write` and why the `release` environment carries
+#   two non-secret variables instead. tools/marketplace-token.mjs holds
+#   that exchange, and its header explains why it does not simply use
+#   `vsce publish --azure-credential`.
+#
+# * publish-marketplace installs, where the template's PyPI job runs no
+#   comparable step: it needs the lockfile-pinned vsce binary. See
+#   tools/publish-marketplace.sh for why that install uses
+#   --ignore-scripts, since the plan text this workflow implements says
 #   simply "no npm ci".
 #
 # See RELEASE-SETUP.md for one-time configuration steps.
@@ -102,53 +120,31 @@ jobs:
     name: Publish to the VS Code Marketplace
     needs: build
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    runs-on: [self-hosted, vm, debian-13, s]
+    runs-on: [self-hosted, vm, debian-13-docker, s]
     environment: release
-    timeout-minutes: 10
+    # Longer than the other jobs, because this one pulls a container
+    # image before it installs anything.
+    timeout-minutes: 15
 
-    # Least privilege: this job never writes to the repository. It only
-    # needs to read it (for package.json / package-lock.json, to install
-    # the pinned vsce) and to publish, which VSCE_PAT authorizes out of
-    # band.
+    # Least privilege, with one addition. This job never writes to the
+    # repository; it reads it for package.json and package-lock.json, to
+    # install the pinned vsce. `id-token: write` is what lets the job ask
+    # GitHub for the OIDC token it exchanges at Entra -- without it the
+    # ACTIONS_ID_TOKEN_REQUEST_* variables are simply absent and
+    # tools/publish-marketplace.sh fails saying so. Despite the name it
+    # grants no write access to anything in the repository.
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      # See the same step in build, and in ci.yml, for why this can't be
-      # a job-level env: block.
-      - name: Point npm's cache at runner.temp
-        run: echo "npm_config_cache=${{ runner.temp }}/npm-cache" >> "$GITHUB_ENV"
-
-      # The plan this workflow implements says this job "runs no npm
-      # ci". Its actual concern, from the same paragraph, is that a bare
-      # `npm ci` executes dependency lifecycle scripts (preinstall,
-      # postinstall, and friends) from every package in the tree, and
-      # this job holds VSCE_PAT -- a token that can publish under the
-      # shakenfist publisher id -- so an untrusted lifecycle script
-      # running here is a real supply-chain risk. `--ignore-scripts`
-      # removes exactly that lifecycle-script execution while still
-      # installing the lockfile-pinned @vscode/vsce, which is what this
-      # job actually needs. That's preferred over `npx @vscode/vsce`,
-      # which would fetch whatever the latest published version is at
-      # publish time rather than the version this repository has tested
-      # against.
-      #
-      # Risk to revisit: @vscode/vsce declares engines.node ">= 20", and
-      # this runner carries Debian 13's node 20, so that's satisfied
-      # today. But several of vsce's transitive Azure dependencies
-      # (@azure/identity and friends, used for Marketplace auth) declare
-      # engines.node ">=22.0.0". npm currently only warns (EBADENGINE)
-      # and installs anyway, and @vscode/vsce/out/auth.js does load and
-      # run on node 20.19.2 as of this writing -- but a future
-      # @azure/identity update could start actually requiring node 22,
-      # and the failure would only show up here, at publish time, months
-      # after the fact.
-      - name: Install dependencies (no lifecycle scripts)
-        run: npm ci --ignore-scripts
+      # No npm cache step here, unlike build and ci.yml: npm runs inside
+      # a container whose cache is its own /tmp, so there is no shared
+      # ~/.npm on the host to keep out of.
 
       - name: Download .vsix artifact
         uses: actions/download-artifact@v8
@@ -156,24 +152,35 @@ jobs:
           name: vsix
           path: ${{ runner.temp }}/vsix/
 
-      # --packagePath, never a bare `vsce publish`: a bare `vsce
-      # publish` repackages from the working tree, which would ship
-      # something other than the artifact the build job actually built
-      # and that github-release below attaches to the release.
+      # The script does the work, rather than a run: block, because the
+      # fleet keeps CI logic longer than a few lines in tools/.
+      # It starts the pinned node:22 container, installs with
+      # --ignore-scripts, mints the Marketplace token from this run's
+      # OIDC identity, and publishes with --packagePath. Each of those
+      # has a reason, and the reasons live in the script rather than
+      # here, because that is where somebody changing them will be.
+      #
+      # Both variables below are environment *variables* on the
+      # `release` environment, not secrets: a client id and a tenant id
+      # identify the app registration, they do not authenticate as it.
+      # What authenticates is the OIDC token GitHub mints for this job,
+      # which Entra accepts only for the subject
+      # repo:shakenfist/hunkydory:environment:release. Note what that
+      # subject does NOT contain: a ref. An environment-scoped subject
+      # names the environment and nothing else, so Entra cannot tell one
+      # ref from another.
+      #
+      # Three things bind this job to `v*` tags -- the trigger above, this
+      # job's `if:`, and the `release` environment's tag rule -- and the
+      # third is the one an edit to this file cannot remove. But none of
+      # them constrain who may create the tag, and since Entra cannot see
+      # the ref, tag-creation permission is publish permission. That is a
+      # repository ruleset, tracked as issue #21. See RELEASE-SETUP.md.
       - name: Publish to the VS Code Marketplace
         env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: |
-          # nullglob first: without it bash leaves a glob that matched
-          # nothing as its own literal text, so the array below has one
-          # element and the count check passes on zero .vsix files. The
-          # run then fails at vsce, reporting that it cannot open a file
-          # called '*.vsix' -- a check that cannot fail in the case it
-          # exists for, and a confusing error in place of a clear one.
-          shopt -s nullglob
-          vsix=( "${RUNNER_TEMP}"/vsix/*.vsix )
-          [ "${#vsix[@]}" -eq 1 ] || { echo "expected one .vsix, got ${#vsix[@]}"; exit 1; }
-          node_modules/.bin/vsce publish --packagePath "${vsix[0]}"
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+        run: ./tools/publish-marketplace.sh "${RUNNER_TEMP}/vsix"
 
   github-release:
     name: Create GitHub Release
