@@ -89,13 +89,15 @@ holds no password.
 3. Leave the supported account types at the single-tenant default, and leave
    the redirect URI empty. Neither is used.
 4. Register it, then record two values from the application's **Overview**
-   page. You will need both in step 5:
+   page. You will need both in steps 4 and 5:
    - **Application (client) ID** → becomes `AZURE_CLIENT_ID`
    - **Directory (tenant) ID** → becomes `AZURE_TENANT_ID`
 
 **Do not create a client secret.** If you find yourself on the "Client
 secrets" tab, you are about to build the thing this setup exists to avoid —
 a stored credential with an expiry date. The next step is what replaces it.
+(Step 4 needs one for the few minutes it takes to read an identifier, and
+deletes it again there. That is the only exception.)
 
 **What must be true:** an app registration exists, you have its client and
 tenant ids, and it has no client secret.
@@ -133,22 +135,54 @@ file that has to agree.
 The application can now prove who it is, but it still has no permission to
 publish. Marketplace permissions are managed per publisher.
 
-1. Return to the
-   [Marketplace publisher management page](https://marketplace.visualstudio.com/manage)
-   and open the `shakenfist` publisher.
-2. Find its members or permissions list, and add the app registration from
-   step 2 as a member, searching for it by the name you gave it.
+The obstacle here is finding the application in the publisher's member
+picker at all. It does not resolve an app registration by name, by client
+id, by the service principal's object id, or by any Azure resource id. The
+only identifier it accepts is the application's **Azure DevOps profile
+id** — a separate GUID that appears nowhere in the Entra portal and can
+only be read by presenting a token minted as the application itself.
+
+1. Read the profile id:
+
+   ```bash
+   AZURE_CLIENT_ID=<from step 2> AZURE_TENANT_ID=<from step 2> \
+       tools/marketplace-profile-id.sh
+   ```
+
+   The script asks for a client secret, and step 2 said not to create one.
+   This is the single exception: the federated credential from step 3
+   trusts GitHub's issuer and nothing else, so there is no way to
+   authenticate as this application from a workstation without one. Create
+   a secret under **Certificates & secrets** > **Client secrets**, run the
+   script, and **delete the secret immediately afterwards**. Nothing in the
+   finished setup depends on it, and it should outlive this step by
+   minutes.
+
+2. Open the
+   [Marketplace publisher management page](https://marketplace.visualstudio.com/manage),
+   select the `shakenfist` publisher, and add a member — pasting the
+   profile id into the search box.
 3. Give it the least role that can publish a new version of an existing
    extension — **Contributor** at the time of writing. **Owner** is not
    needed and should not be granted.
 
-**What must be true:** the app registration appears as a member of the
-`shakenfist` publisher with a role that permits publishing.
+The member looks wrong once it is added, and is not. The application has no
+email address, and its display name is the tenant id and the service
+principal's object id joined by a backslash, rendering as something like
+`51077808-…\aea1b5df-…`. There is no friendly name to confirm against, so
+confirm against the profile id the script printed.
 
-This step is the one most likely to have moved: if the publisher management
-page offers no way to add an application, the Azure DevOps organisation
-behind the publisher is where its permissions live, and the app registration
-is added there as a service principal instead.
+**What must be true:** the `shakenfist` publisher's member list contains an
+entry whose profile id matches the one the script printed, with a role that
+permits publishing.
+
+One thing here is worth recording, because the public advice conflicts on
+it. The application needed no Azure DevOps organisation membership and no
+Azure subscription role assignment: the profile is created on demand the
+first time the identity presents a Marketplace-scoped token, and the call
+the script makes is what creates it. Advice that says to add the service
+principal as a user in an Azure DevOps organisation first is describing a
+different API, and is not needed here.
 
 ### 5. Create the tag-protected `release` environment
 
@@ -301,6 +335,12 @@ of likelihood: the credential was created with entity type **Branch** or
 **Tag** instead of **Environment**; the environment name was typed with
 different capitalisation; or the job lost its `environment: release` line,
 in which case GitHub sends a ref-based subject instead. Step 3.
+
+### The publisher's member search finds nothing
+
+The picker resolves only an application's Azure DevOps profile id. A name,
+a client id, an object id and an Azure resource id all return no results,
+and it does not say why. Step 4 reads the profile id.
 
 ### The token is minted but `vsce publish` reports a permission error
 
