@@ -294,9 +294,36 @@ Four details are deliberate:
 
 ## Cutting a Release
 
-1. Bump `"version"` in `package.json` (and run whatever `npm` commands keep
-   `package-lock.json` in sync) and commit that change through the normal PR
+1. Bump the version in `package.json` and `package-lock.json` together:
+
+   ```bash
+   npm version --no-git-tag-version 0.1.1
+   ```
+
+   That edits both files — the lockfile carries the package's own version
+   in two places, at its root and under `packages[""]` — and, unlike a bare
+   `npm version`, neither commits nor tags. The tag is pushed from
+   `develop` in step 2, once the bump has been reviewed; a tag created here
+   would be on the wrong commit. Take the bump through the normal PR
    process.
+
+   Editing `package.json` by hand instead leaves the lockfile's version
+   behind, and nothing will tell you: `npm ci` compares dependencies, not
+   the package's own version field, so the release still builds and still
+   publishes the correct version. The lockfile is simply wrong about which
+   version it pins for.
+
+   Dependency drift is the kind that bites, and it bites before a release
+   rather than during one. `npm ci` refuses a lockfile that disagrees with
+   `package.json`'s dependencies, with `Missing: <package> from lock file`,
+   and `ci.yml` runs `npm ci` on every pull request. A lockfile wrong in
+   that way cannot reach `develop` green, so by the time you are tagging,
+   this has already been checked for you.
+
+   The first release is the exception to all of this: `package.json`
+   already declares `0.1.0`, so there is nothing to bump and step 2 is
+   where you start.
+
 2. Once the version bump is on `develop`, tag it and push the tag:
    ```bash
    git checkout develop && git pull
