@@ -33,10 +33,6 @@
       "author": "mikal"
     },
     {
-      "path": ".github/actionlint.yaml",
-      "author": "mikal"
-    },
-    {
       "path": "tools/check-node.sh",
       "author": "mikal"
     },
@@ -74,6 +70,102 @@
     },
     {
       "path": "docs",
+      "author": "mikal"
+    },
+    {
+      "path": "src/diff.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "src/extension.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "src/recount.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "src",
+      "author": "mikal"
+    },
+    {
+      "path": "test/corpus.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "RELEASE-SETUP.md",
+      "author": "mikal"
+    },
+    {
+      "path": "AGENTS.md",
+      "author": "mikal"
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "author": "mikal"
+    },
+    {
+      "path": "biome.json",
+      "author": "mikal"
+    },
+    {
+      "path": "PUSH-AUDIT.md",
+      "author": "mikal"
+    },
+    {
+      "path": "README.md",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/check-package-contents.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/marketplace-token.mjs",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/publish-marketplace.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "tools",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/workflows",
+      "author": "mikal"
+    },
+    {
+      "path": "test/recount.test.ts",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/actionlint.yaml",
+      "author": "mikal"
+    },
+    {
+      "path": ".github",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fixtures/crlf-line-endings.patch",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fixtures",
+      "author": "mikal"
+    },
+    {
+      "path": "test",
       "author": "mikal"
     }
   ],

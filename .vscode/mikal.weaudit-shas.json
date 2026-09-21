@@ -2,8 +2,8 @@
   "version": 1,
   "files": {
     ".github/actionlint.yaml": {
-      "sha": "b544a14c5755e4db653822a2d6ffe8a20d141280",
-      "date": "2026-09-15"
+      "sha": "214371ccfcaee697ec8aff2bbc0776295a442337",
+      "date": "2026-09-22"
     },
     ".github/exported-config/repository-settings.json": {
       "sha": "e1e9f80b8dfc29fbc9440143fd2f804d43bace80",
@@ -12,6 +12,10 @@
     ".github/exported-config/rulesets-summary.json": {
       "sha": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
       "date": "2026-09-16"
+    },
+    ".github/workflows/ci.yml": {
+      "sha": "98e1adf3a81dbd84d66685ad1c9ae15507dba037",
+      "date": "2026-09-22"
     },
     ".github/workflows/codeql-analysis.yml": {
       "sha": "33ec0a9eeaf82ad7f5c32a771a80707d90b3fea6",
@@ -33,6 +37,10 @@
       "sha": "bcbcaa0b2af76d0e991c19e9893a678d89e0ee00",
       "date": "2026-09-15"
     },
+    ".github/workflows/release.yml": {
+      "sha": "e0862318d44e440506b281da6e291b8ec3fd6012",
+      "date": "2026-09-22"
+    },
     ".github/workflows/renovate.yml": {
       "sha": "52a8457d0e6b52934d56175c9593bb4e6774b25c",
       "date": "2026-09-15"
@@ -40,6 +48,30 @@
     ".github/workflows/secret-scan.yml": {
       "sha": "50f8e9027318ae590250421cf55ba39290a299f1",
       "date": "2026-09-15"
+    },
+    "AGENTS.md": {
+      "sha": "1ef57d038ac5374c832be925c51effbba301b93a",
+      "date": "2026-09-22"
+    },
+    "ARCHITECTURE.md": {
+      "sha": "4b9c5446230a0786a450435f93ffce9fc2c93e90",
+      "date": "2026-09-22"
+    },
+    "PUSH-AUDIT.md": {
+      "sha": "1aac92ab89d4b7a297f0ac6a52241dcef4d775be",
+      "date": "2026-09-22"
+    },
+    "README.md": {
+      "sha": "63f2dac5eb48910f0df2daa3031837ae7e446ef9",
+      "date": "2026-09-22"
+    },
+    "RELEASE-SETUP.md": {
+      "sha": "450ff1660204969afb85ed35a3a52b17209bd953",
+      "date": "2026-09-22"
+    },
+    "biome.json": {
+      "sha": "2468e97c69419c12ec2afd927db7978ba1dd6583",
+      "date": "2026-09-22"
     },
     "docs/ambiguity.md": {
       "sha": "c7dd342504e7c00761e256ff7cec0a4048c8b9f3",
@@ -53,13 +85,49 @@
       "sha": "8d7b953fb531274a1c50cf06ccd1ba3b36a01571",
       "date": "2026-09-17"
     },
+    "src/diff.ts": {
+      "sha": "a89a1f7185027088b63a015d726761dc985c2e22",
+      "date": "2026-09-22"
+    },
+    "src/extension.ts": {
+      "sha": "f20c0f4ea7e3a49ece65e0a4868a987c3c210612",
+      "date": "2026-09-22"
+    },
+    "src/recount.ts": {
+      "sha": "95ab52cbad451a93a38e5bfecf8ea409986a167a",
+      "date": "2026-09-22"
+    },
+    "test/corpus.ts": {
+      "sha": "ea3fbbb88971c6fccde73f438cbef6034b254558",
+      "date": "2026-09-22"
+    },
+    "test/fixtures/crlf-line-endings.patch": {
+      "sha": "71b2f0a05e8fe2b27de0a5713541dec60409092d",
+      "date": "2026-09-22"
+    },
+    "test/recount.test.ts": {
+      "sha": "6707e3d645a3ba6b370b723eaad4c2207c6ad6ce",
+      "date": "2026-09-22"
+    },
     "tools/check-node.sh": {
       "sha": "a03f2a09b518a5cb1c42405e48df5cdafcdf7281",
       "date": "2026-09-16"
     },
+    "tools/check-package-contents.sh": {
+      "sha": "07e737f51939bfb8038d1624e05a788be07e5eaf",
+      "date": "2026-09-22"
+    },
     "tools/ci-prune-reviews.sh": {
       "sha": "6daef1e07eb05d46b0a13745d5338cf1aea23cd8",
       "date": "2026-09-16"
+    },
+    "tools/marketplace-token.mjs": {
+      "sha": "2cf09e86506733658f02f79dda4f7d7b09ca9c1f",
+      "date": "2026-09-22"
+    },
+    "tools/publish-marketplace.sh": {
+      "sha": "c6d72b5e2bb1d8ff424069b9e586236c7d3beeae",
+      "date": "2026-09-22"
     },
     "tools/review-tracking.sh": {
       "sha": "e63705ac5c57fd6d9fd0da21e18f399e3f88e4a4",
