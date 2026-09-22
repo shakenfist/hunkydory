@@ -66,7 +66,7 @@
       "date": "2026-09-22"
     },
     "RELEASE-SETUP.md": {
-      "sha": "450ff1660204969afb85ed35a3a52b17209bd953",
+      "sha": "07f15816903afd73f77d68ebe9b8514a55ea62a2",
       "date": "2026-09-22"
     },
     "biome.json": {
@@ -120,6 +120,10 @@
     "tools/ci-prune-reviews.sh": {
       "sha": "6daef1e07eb05d46b0a13745d5338cf1aea23cd8",
       "date": "2026-09-16"
+    },
+    "tools/marketplace-profile-id.sh": {
+      "sha": "5bff663717d8ca39ea2a5477351364d8a536b53a",
+      "date": "2026-09-22"
     },
     "tools/marketplace-token.mjs": {
       "sha": "2cf09e86506733658f02f79dda4f7d7b09ca9c1f",
