@@ -18,25 +18,28 @@
 #   signed with Sigstore. Revisit this if/when the fleet's tag-signing
 #   convention gets applied here.
 #
-# * build and publish-marketplace both run on
-#   [self-hosted, vm, debian-13-docker, s] rather than the template's
-#   [self-hosted, static]. static is a shared, persistent bare-metal pool
-#   -- other repositories' jobs run on the same machines between
-#   releases. publish-marketplace holds a credential that can publish
-#   under the shakenfist publisher id, so it runs on an ephemeral VM
-#   runner instead, matching the same reasoning
+# * All three jobs run on [self-hosted, vm, debian-13-docker, s] rather
+#   than the template's [self-hosted, static]. static is a shared,
+#   persistent bare-metal pool -- other repositories' jobs run on the
+#   same machines between releases -- and each job had its own reason to
+#   leave it. publish-marketplace holds a credential that can publish
+#   under the shakenfist publisher id, matching the reasoning
 #   .github/actionlint.yaml already documents for secret-scan.yml's use
 #   of vm + debian-13. build holds no credential, but it produces the
-#   .vsix that publish-marketplace then ships, and an artifact built on a
-#   pool with state that outlives the job is reachable by a compromise of
-#   that pool; issue #23 is that argument in full.
+#   .vsix publish-marketplace ships, and an artifact built on a pool with
+#   state that outlives the job is reachable by a compromise of that
+#   pool; issue #23 is that argument in full. github-release holds
+#   contents: write, which is a credential on shared infrastructure by
+#   the same reasoning as the first; issue #32.
 #
-#   github-release is still on static, and that is a gap rather than a
-#   conclusion: it holds contents: write, and nothing compares the .vsix
-#   it attaches against the one publish-marketplace shipped, so the two
-#   copies could differ and no check here would notice. Tracked
-#   separately; do not read this job's placement as a decision that the
-#   lane is safe for it.
+#   The three jobs also now agree on *which* bytes. build publishes the
+#   sha256 of the .vsix it produced as a job output, and the other two
+#   check what they downloaded against it before publishing or attaching
+#   it. Until that existed, the file on the GitHub Release could have
+#   differed from the one sent to the Marketplace with nothing to notice.
+#   See tools/vsix-digest.sh, which is also clear about what that does
+#   not buy: it catches tampering between jobs and ordinary mistakes, not
+#   a job that can rewrite both the artifact and the digest.
 #
 #   The -docker half of that label is not decoration. The plain debian-13
 #   lane carries neither node nor npm -- measured in run 35141854203, not
@@ -101,6 +104,12 @@ jobs:
     permissions:
       contents: read
 
+    # The digest of the .vsix this job produced, so the two jobs that
+    # consume it can check they got the same bytes. See
+    # tools/vsix-digest.sh and issue #32.
+    outputs:
+      vsix_sha256: ${{ steps.digest.outputs.vsix_sha256 }}
+
     steps:
       # persist-credentials: false for the same reason
       # publish-marketplace sets it, and one this job did not have
@@ -139,6 +148,22 @@ jobs:
         env:
           HUNKYDORY_RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || '' }}
         run: ./tools/build-vsix.sh
+
+      # Recorded before the upload rather than after, so the value
+      # describes the file this job built rather than whatever came back
+      # out of the artifact store.
+      # Two lines rather than one `echo "k=$(...)"`, and the difference
+      # matters: under `bash -e` a command substitution that fails inside
+      # an echo does not fail the step, because echo itself succeeds. This
+      # job would have gone green having published an empty digest, and
+      # the error would have surfaced two jobs later in the one holding
+      # the publishing credential. The assignment form propagates the exit
+      # status.
+      - name: Record the .vsix digest
+        id: digest
+        run: |
+          digest=$(./tools/vsix-digest.sh .)
+          echo "vsix_sha256=${digest}" >> "$GITHUB_OUTPUT"
 
       - name: Upload .vsix artifact
         uses: actions/upload-artifact@v7
@@ -182,6 +207,15 @@ jobs:
           name: vsix
           path: ${{ runner.temp }}/vsix/
 
+      # Before the credential is anywhere near it. What reaches the
+      # Marketplace under the shakenfist publisher id should be the bytes
+      # build produced and nothing else; this is where that stops being
+      # an assumption. Issue #32.
+      - name: Check the artifact is the one build produced
+        env:
+          EXPECTED_VSIX_SHA256: ${{ needs.build.outputs.vsix_sha256 }}
+        run: ./tools/vsix-digest.sh "${RUNNER_TEMP}/vsix" "${EXPECTED_VSIX_SHA256}"
+
       # The script does the work, rather than a run: block, because the
       # fleet keeps CI logic longer than a few lines in tools/.
       # It starts the pinned node:22 container, installs with
@@ -216,29 +250,48 @@ jobs:
     name: Create GitHub Release
     needs: [build, publish-marketplace]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    runs-on: [self-hosted, static]
+    # The last job to come off [self-hosted, static], and the one whose
+    # case for it was weakest: it holds contents: write, which on a pool
+    # shared with every other repository in both organisations is a
+    # credential sitting where other repositories' jobs run. It needs no
+    # docker itself -- the actions below are JavaScript and run on the
+    # runner's own bundled node -- but it shares the lane with build and
+    # publish-marketplace so that release.yml names one runner and
+    # nothing here runs on static at all. Issue #32.
+    runs-on: [self-hosted, vm, debian-13-docker, s]
     timeout-minutes: 5
 
     permissions:
       contents: write
 
     steps:
-      # Unlike publish-marketplace above, this job does not check out.
-      # action-gh-release is a JavaScript action running on the host, so
-      # it reads an absolute runner.temp path happily, and downloading
-      # into runner.temp is the cheaper way to get a directory nothing
-      # else has written to, without paying for a checkout to clean one.
-      #
-      # fail_on_unmatched_files is the other half -- action-gh-release
-      # treats a glob that matches nothing as a warning, so without it a
-      # release that attached no files at all would still report
-      # success.
+      # This job used to skip the checkout, on the reasoning that
+      # action-gh-release reads an absolute runner.temp path happily and
+      # a checkout was a cost with nothing to buy. It now has something
+      # to buy: tools/vsix-digest.sh, which is the thing that makes the
+      # attached file provably the published one.
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
       - name: Download .vsix artifact
         uses: actions/download-artifact@v8
         with:
           name: vsix
           path: ${{ runner.temp }}/vsix/
 
+      # The Release asset is what RELEASE-SETUP.md offers as the copy of
+      # what shipped, downloadable without going through the Marketplace.
+      # That claim is only worth anything if the two are the same bytes,
+      # and until this step nothing compared them. Issue #32.
+      - name: Check the artifact is the one that was published
+        env:
+          EXPECTED_VSIX_SHA256: ${{ needs.build.outputs.vsix_sha256 }}
+        run: ./tools/vsix-digest.sh "${RUNNER_TEMP}/vsix" "${EXPECTED_VSIX_SHA256}"
+
+      # fail_on_unmatched_files because action-gh-release treats a glob
+      # that matches nothing as a warning, so without it a release that
+      # attached no files at all would still report success.
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:

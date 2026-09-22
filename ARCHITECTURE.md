@@ -12,6 +12,7 @@ they agree with the body beneath them.
 | `src/extension.ts` | Decides *when* to recount and applies the edits. All vscode contact lives here. |
 | `test/recount.test.ts` | Unit tests for the rules. |
 | `test/corpus.ts` | Round-trip check over the committed fixtures and a directory of real patches. |
+| `test/scripts.test.ts` | Exercises the `tools/` release scripts' validation and failure paths, without docker. |
 | `test/fixtures/` | Patches that must survive recounting untouched, covering what a real patch set does not contain. |
 
 The split matters: the interesting logic is pure string-to-string, so it runs

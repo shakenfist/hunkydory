@@ -92,6 +92,23 @@ if [ "${stage}" = "host" ]; then
     # it fails before an image is pulled.
     : "${HUNKYDORY_RELEASE_TAG?must be set; set it empty to build without a release tag}"
 
+    # Checked here rather than beside the version comparison it belongs
+    # with, because it is the half that needs no node: the lane has none,
+    # so anything requiring it has to wait for the container. Failing on
+    # the host costs nothing and saves an image pull.
+    #
+    # release.yml only triggers on `v*`, so this can currently only fail
+    # by mistake -- which is the point, since catching a mistake is the
+    # whole job of the version check. Without it `${tag#v}` below is a
+    # no-op on a tag that does not start with v, and the comparison
+    # silently runs against the wrong string; the `refs/tags/v` strip this
+    # replaced failed closed on its own. Not inherited from a trigger
+    # filter in another file.
+    case "${HUNKYDORY_RELEASE_TAG}" in
+        ""|v*) ;;
+        *) die "release tag ${HUNKYDORY_RELEASE_TAG} does not start with v" ;;
+    esac
+
     # IMAGE_TAG and IMAGE. Sourced inside this branch rather than at the
     # top of the file because only the host stage starts a container;
     # the container stage has no use for the pin, and not executing a
@@ -138,13 +155,15 @@ fi
 # still before anything is installed or built, which is what it is for.
 tag="${HUNKYDORY_RELEASE_TAG:-}"
 if [ -n "${tag}" ]; then
-    # release.yml only triggers on `v*`, so this can currently only fail
-    # by mistake -- which is the point, since catching a mistake is the
-    # whole job of the check below. Without it `${tag#v}` is a no-op on a
-    # tag that does not start with v, and the check silently compares the
-    # wrong string; the form this replaced stripped `refs/tags/v` and so
-    # failed closed on its own. Not inherited from a filter in another
-    # file.
+    # Checked again, not merely checked earlier. The host stage runs this
+    # too, and for a different purpose -- there it buys a failure before an
+    # image is pulled -- but this file is deliberately two programs and
+    # HUNKYDORY_BUILD_STAGE is an ordinary environment variable, so the
+    # container stage can be entered without the host stage ever having
+    # run. test/scripts.test.ts does exactly that. An earlier revision of
+    # this comment claimed the strip was safe *because* the host stage had
+    # checked, which is true only of the path through the workflow; the
+    # check needs no node, so enforcing it in both places costs nothing.
     case "${tag}" in
         v*) ;;
         *) die "release tag ${tag} does not start with v" ;;

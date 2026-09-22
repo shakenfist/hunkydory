@@ -29,11 +29,17 @@ The release process uses:
   therefore the ability to publish. Step 6 is where that is addressed.
 - **Split build/publish jobs**: Building the `.vsix` and publishing it happen
   in different jobs, so the publishing credential is present in only one of
-  them. Neither runs on the shared static runner pool. See
+  them. No job runs on the shared static runner pool, and each checks the
+  artifact against the digest the build recorded. See
   [What the Workflow Then Does](#what-the-workflow-then-does) for why.
 - **A GitHub Release**: Each publish also attaches the `.vsix` that was
   shipped to the Marketplace to a GitHub Release, so it can be downloaded
-  without going through the Marketplace.
+  without going through the Marketplace. The workflow checks it against the
+  same digest before attaching it, so it is the file that shipped rather
+  than merely a file from the same run — but note that this is a check the
+  workflow makes internally. The digest is not published anywhere a
+  downloader can see, so it is not something a stranger can verify for
+  themselves.
 
 ### Why not a Personal Access Token
 
@@ -257,11 +263,13 @@ distinction between "a release" and "anyone with push".
    `tools/publish-marketplace.sh`, which does the rest inside a pinned
    `node:22` container. It is the only job that can obtain a publishing
    credential.
-3. **`github-release`**, on `[self-hosted, static]`: attaches the same
-   artifact to a GitHub Release, and runs only once the Marketplace publish
-   has succeeded.
+3. **`github-release`**, on `[self-hosted, vm, debian-13-docker, s]`:
+   attaches the same artifact to a GitHub Release, and runs only once the
+   Marketplace publish has succeeded.
 
-Four details are deliberate:
+All three check the `.vsix` they hold against the digest `build` recorded,
+so "the same artifact" above is a fact rather than a hope. Five details are
+deliberate:
 
 - **The runner split.** The `static` pool is a shared, non-ephemeral runner
   used by every repository in both the `shakenfist` and `mach33labs` GitHub
@@ -274,8 +282,15 @@ Four details are deliberate:
   credential, but the `.vsix` it produces is what `publish-marketplace`
   later ships, so a compromise of the pool reached the artifact even where
   it could not reach the token. It used to run a bare `npm ci` on `static`;
-  issue #23 is that argument in full. `github-release` is the one job still
-  on `static`, because it only attaches bytes the other two produced.
+  issue #23 is that argument in full.
+
+  `github-release` was the last to move, and the argument for it is the
+  first one again rather than the second: it holds `contents: write` with
+  `secrets.GITHUB_TOKEN`, which is a credential on shared infrastructure by
+  the same reasoning that moved `publish-marketplace`. Issue #32. Nothing in
+  `release.yml` now runs on `static`. That job needs no docker of its own —
+  its actions are JavaScript and run on the runner's own bundled node — but
+  it shares the lane so the workflow names one runner.
 - **The container.** That VM lane carries neither node nor npm — this was
   measured, in run 35141854203, after an earlier version of this workflow
   asserted the opposite in a comment and could never have published.
@@ -305,6 +320,18 @@ Four details are deliberate:
   before the token is minted, and with the OIDC request variables removed
   from its environment, so there is no credential present for it to
   reach.
+- **The digest chain.** `build` records the sha256 of the `.vsix` it
+  produced as a job output, and `publish-marketplace` and `github-release`
+  each check what they downloaded against it — before publishing, and before
+  attaching. Until that existed, three jobs handed a file to each other
+  through the artifact store and nothing compared the bytes, so the Release
+  asset offered below as the copy of what shipped could have differed from
+  what actually shipped with nothing to notice. `tools/vsix-digest.sh` does
+  the checking and is candid about what it does not buy: a job able to
+  substitute the artifact can generally substitute the digest too, so this
+  catches tampering *between* jobs, corruption in the artifact store, and
+  the ordinary mistake — what keeps a job off shared infrastructure is its
+  runner label, not this check.
 - **`--packagePath`, never bare `vsce publish`.** Bare `vsce publish`
   repackages the working tree at publish time. Using `--packagePath` against
   the artifact `build` produced means the exact bytes that were built (and
