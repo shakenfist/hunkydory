@@ -5,10 +5,6 @@
       "sha": "e1e9f80b8dfc29fbc9440143fd2f804d43bace80",
       "date": "2026-09-16"
     },
-    ".github/exported-config/rulesets-summary.json": {
-      "sha": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
-      "date": "2026-09-16"
-    },
     ".github/workflows/ci.yml": {
       "sha": "98e1adf3a81dbd84d66685ad1c9ae15507dba037",
       "date": "2026-09-22"
