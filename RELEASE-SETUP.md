@@ -28,8 +28,8 @@ The release process uses:
   distinguish one ref from another, and the ability to create a `v*` tag is
   therefore the ability to publish. Step 6 is where that is addressed.
 - **Split build/publish jobs**: Building the `.vsix` and publishing it happen
-  in different jobs on different runner pools, so the publishing credential
-  is never present on the repository's shared static runner pool. See
+  in different jobs, so the publishing credential is present in only one of
+  them. Neither runs on the shared static runner pool. See
   [What the Workflow Then Does](#what-the-workflow-then-does) for why.
 - **A GitHub Release**: Each publish also attaches the `.vsix` that was
   shipped to the Marketplace to a GitHub Release, so it can be downloaded
@@ -247,10 +247,11 @@ distinction between "a release" and "anyone with push".
 
 `release.yml` triggers on push of a tag matching `v*` and runs three jobs:
 
-1. **`build`**, on `[self-hosted, static]`: checks out the tag, checks that
-   the tag matches the version in `package.json`, runs `npm ci` and `npm run
-   package` (`vsce package`), and uploads the resulting `.vsix` as a workflow
-   artifact.
+1. **`build`**, on `[self-hosted, vm, debian-13-docker, s]`: checks out the
+   tag and runs `tools/build-vsix.sh`, which inside a pinned `node:22`
+   container checks that the tag matches the version in `package.json`, runs
+   `npm ci --ignore-scripts` and then `npm run package` (`vsce package`). The
+   job uploads the resulting `.vsix` as a workflow artifact.
 2. **`publish-marketplace`**, on `[self-hosted, vm, debian-13-docker, s]`,
    with `environment: release`: downloads the artifact from `build` and runs
    `tools/publish-marketplace.sh`, which does the rest inside a pinned
@@ -262,29 +263,48 @@ distinction between "a release" and "anyone with push".
 
 Four details are deliberate:
 
-- **The runner split.** The `static` pool that `build` and `github-release`
-  run on is a shared, non-ephemeral runner used by every repository in both
-  the `shakenfist` and `mach33labs` GitHub organisations. A credential
-  obtained in a job on that pool is exposed to every other repository's jobs
-  that happen to land on the same machine. `publish-marketplace` runs
-  instead on an ephemeral VM.
+- **The runner split.** The `static` pool is a shared, non-ephemeral runner
+  used by every repository in both the `shakenfist` and `mach33labs` GitHub
+  organisations, with filesystem and process state that outlives a job. A
+  credential obtained in a job on that pool is exposed to every other
+  repository's jobs that happen to land on the same machine, so
+  `publish-marketplace` runs on an ephemeral VM instead.
+
+  `build` runs there too, and for a related but distinct reason: it holds no
+  credential, but the `.vsix` it produces is what `publish-marketplace`
+  later ships, so a compromise of the pool reached the artifact even where
+  it could not reach the token. It used to run a bare `npm ci` on `static`;
+  issue #23 is that argument in full. `github-release` is the one job still
+  on `static`, because it only attaches bytes the other two produced.
 - **The container.** That VM lane carries neither node nor npm — this was
   measured, in run 35141854203, after an earlier version of this workflow
   asserted the opposite in a comment and could never have published.
-  `tools/publish-marketplace.sh` supplies the runtime from a `node:22`
-  image pinned by digest. That also resolves a second problem: several of
+  `tools/build-vsix.sh` and `tools/publish-marketplace.sh` each supply the
+  runtime from a `node:22` image pinned by digest, sharing that pin through
+  `tools/container-image.sh` so there is one digest to bump rather than two
+  that can drift. The container also resolves a second problem: several of
   `vsce`'s transitive Azure dependencies declare `engines.node ">=22.0.0"`
   while the fleet's runners carry node 20.
-- **`npm ci --ignore-scripts`, not a bare `npm ci`.** A bare `npm ci` runs
-  `preinstall`, `postinstall` and friends from every package in the tree,
-  which is exactly the kind of arbitrary code a publishing credential should
-  not be anywhere near. `--ignore-scripts` removes that while still
-  installing the lockfile-pinned `vsce` the job then runs — which is why it
-  installs at all rather than reaching for `npx @vscode/vsce`, since that
-  would fetch whatever version is newest at publish time rather than the one
-  this repository has tested against. The install also runs before the
-  token is minted, and with the OIDC request variables removed from its
-  environment, so there is no credential present for it to reach.
+- **`npm ci --ignore-scripts`, not a bare `npm ci`.** Both jobs install,
+  and a bare `npm ci` runs `preinstall`, `postinstall` and friends from
+  every package in the tree. In `publish-marketplace` that is exactly the
+  kind of arbitrary code a publishing credential should not be anywhere
+  near. In `build` there is no credential to reach, but the same code
+  would be running where the bytes users install are produced, which is
+  what issue #23 was about. Nothing in this repository's dependency tree
+  needs a lifecycle script; that was measured in a clean container rather
+  than assumed, and Biome's native binary — the likeliest candidate —
+  arrives as a prebuilt platform package rather than being built on
+  install.
+
+  Each job installs at all, rather than reaching for `npx @vscode/vsce`,
+  so that the `vsce` it runs is the lockfile-pinned one this repository
+  has tested against rather than whatever is newest at the time. `build`
+  runs it through `npm run package`; `publish-marketplace` runs
+  `vsce publish`. In `publish-marketplace` the install also happens
+  before the token is minted, and with the OIDC request variables removed
+  from its environment, so there is no credential present for it to
+  reach.
 - **`--packagePath`, never bare `vsce publish`.** Bare `vsce publish`
   repackages the working tree at publish time. Using `--packagePath` against
   the artifact `build` produced means the exact bytes that were built (and
@@ -376,14 +396,15 @@ member of the `shakenfist` publisher, or its role does not permit
 publishing. Step 4. Confirm also that the publisher id is exactly
 `shakenfist`, matching `package.json`.
 
-### `publish-marketplace` fails pulling or running the container
+### `build` or `publish-marketplace` fails pulling or running the container
 
-The job needs a docker daemon, which is what the `debian-13-docker` half of
-its runner label selects. If the label was changed, or the run was retried
+Both jobs need a docker daemon, which is what the `debian-13-docker` half of
+their runner label selects. If the label was changed, or the run was retried
 on a lane without docker, this is where it shows up. The image is pinned by
-digest in `tools/publish-marketplace.sh`; a digest that no longer exists
+digest in `tools/container-image.sh`; a digest that no longer exists
 upstream fails here too, and is fixed by pulling the current
-`node:22-trixie-slim` and recording its new digest.
+`node:22-trixie-slim` and recording its new digest. Both jobs read the same
+pin, so a stale digest fails both.
 
 ### Tag pushed but no workflow run appears
 
