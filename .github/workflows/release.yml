@@ -18,20 +18,33 @@
 #   signed with Sigstore. Revisit this if/when the fleet's tag-signing
 #   convention gets applied here.
 #
-# * publish-marketplace runs on [self-hosted, vm, debian-13-docker, s]
-#   rather than the template's [self-hosted, static]. static is a shared,
-#   persistent bare-metal pool -- other repositories' jobs run on the
-#   same machines between releases. This job holds a credential that can
-#   publish under the shakenfist publisher id, so it runs on an ephemeral
-#   VM runner instead, matching the same reasoning
+# * build and publish-marketplace both run on
+#   [self-hosted, vm, debian-13-docker, s] rather than the template's
+#   [self-hosted, static]. static is a shared, persistent bare-metal pool
+#   -- other repositories' jobs run on the same machines between
+#   releases. publish-marketplace holds a credential that can publish
+#   under the shakenfist publisher id, so it runs on an ephemeral VM
+#   runner instead, matching the same reasoning
 #   .github/actionlint.yaml already documents for secret-scan.yml's use
-#   of vm + debian-13.
+#   of vm + debian-13. build holds no credential, but it produces the
+#   .vsix that publish-marketplace then ships, and an artifact built on a
+#   pool with state that outlives the job is reachable by a compromise of
+#   that pool; issue #23 is that argument in full.
+#
+#   github-release is still on static, and that is a gap rather than a
+#   conclusion: it holds contents: write, and nothing compares the .vsix
+#   it attaches against the one publish-marketplace shipped, so the two
+#   copies could differ and no check here would notice. Tracked
+#   separately; do not read this job's placement as a decision that the
+#   lane is safe for it.
 #
 #   The -docker half of that label is not decoration. The plain debian-13
 #   lane carries neither node nor npm -- measured in run 35141854203, not
-#   assumed -- so the runtime comes from a pinned node:22 container that
-#   tools/publish-marketplace.sh starts. An earlier revision of this file
-#   ran `npm ci` on the plain lane and asserted in a comment that it
+#   assumed -- so the runtime of both jobs comes from a pinned node:22
+#   container, started by tools/build-vsix.sh and
+#   tools/publish-marketplace.sh respectively, with the digest shared
+#   between them in tools/container-image.sh. An earlier revision of this
+#   file ran `npm ci` on the plain lane and asserted in a comment that it
 #   "carries Debian 13's node 20". That was false, and the job could
 #   never have published; phase 7b repaired both.
 #
@@ -71,44 +84,61 @@ on:
 jobs:
   build:
     name: Build the .vsix
-    runs-on: [self-hosted, static]
-    timeout-minutes: 10
+    # Not [self-hosted, static], and not because of the credential --
+    # there is none in this job. The .vsix the publish job ships is
+    # produced here, and static is the persistent pool shared by every
+    # repository in both organisations, so a compromise of it reached the
+    # artifact even where it could not reach the token. Issue #23. Same
+    # ephemeral VM lane as publish-marketplace below, for the same reason
+    # and with the same consequence: the lane carries neither node nor
+    # npm, so the runtime comes from the pinned container that
+    # tools/build-vsix.sh starts.
+    runs-on: [self-hosted, vm, debian-13-docker, s]
+    # Longer than it was on static, because this one pulls a container
+    # image before it installs anything. Matches publish-marketplace.
+    timeout-minutes: 15
 
     permissions:
       contents: read
 
     steps:
+      # persist-credentials: false for the same reason
+      # publish-marketplace sets it, and one this job did not have
+      # before: tools/build-vsix.sh bind-mounts the whole checkout into
+      # the container, .git included, and actions/checkout otherwise
+      # leaves an AUTHORIZATION header for GITHUB_TOKEN in .git/config
+      # where every package in the tree could read it. Nothing after the
+      # checkout uses git.
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      # vsce publishes whatever version is inside the .vsix, and nothing
-      # here derives that version from the tag the way the template's
-      # setuptools_scm does. So a tag of v0.2.0 pushed while package.json
-      # still says 0.1.0 would quietly publish 0.1.0 again -- or fail on
-      # the Marketplace as a duplicate, long after the mistake. Check the
-      # two agree before anything is built. Skipped on workflow_dispatch,
-      # which has no tag to check against.
-      - name: Check the tag matches package.json
-        if: github.event_name == 'push'
-        run: |
-          want="${GITHUB_REF#refs/tags/v}"
-          have="$(node -p 'require("./package.json").version')"
-          [ "$want" = "$have" ] || { echo "tag v$want != package.json $have"; exit 1; }
-
-      # Same idiom as ci.yml: the runner context isn't available in a
-      # job-level env: block, so the cache path is exported to
-      # GITHUB_ENV from a step instead. Keeps this shared, persistent
-      # runner pool from polluting the default ~/.npm that other
-      # repositories' jobs on the same machine also use.
-      - name: Point npm's cache at runner.temp
-        run: echo "npm_config_cache=${{ runner.temp }}/npm-cache" >> "$GITHUB_ENV"
-
-      - name: Install dependencies
-        run: npm ci
-
-      # vscode:prepublish runs `npm run build` first, so this both
-      # compiles and packages.
-      - name: Build .vsix package
-        run: npm run package
+      # No npm cache step here, unlike ci.yml: npm runs inside a
+      # container whose cache is its own /tmp, and the workspace does not
+      # outlive the run, so there is no shared ~/.npm on the host to keep
+      # out of.
+      #
+      # The script does the work, rather than a run: block, because the
+      # fleet keeps CI logic longer than a few lines in tools/. It starts
+      # the pinned container, checks the tag against package.json,
+      # installs with --ignore-scripts and runs `npm run package`. The
+      # reasons for each live in the script, because that is where
+      # somebody changing them will be.
+      #
+      # HUNKYDORY_RELEASE_TAG is the tag being released, or empty. Empty
+      # skips the version check, which is what a workflow_dispatch run
+      # wants: it has no tag to check against. The script requires the
+      # variable to be *set* even when empty, so that deleting or
+      # mistyping this key fails the job rather than silently disabling
+      # the check -- "not a release" and "the env: block broke" would
+      # otherwise be the same signal.
+      #
+      # Passed by environment rather than interpolated into a run:
+      # block, so a ref name is never shell input.
+      - name: Build the .vsix
+        env:
+          HUNKYDORY_RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || '' }}
+        run: ./tools/build-vsix.sh
 
       - name: Upload .vsix artifact
         uses: actions/upload-artifact@v7
@@ -142,9 +172,9 @@ jobs:
         with:
           persist-credentials: false
 
-      # No npm cache step here, unlike build and ci.yml: npm runs inside
-      # a container whose cache is its own /tmp, so there is no shared
-      # ~/.npm on the host to keep out of.
+      # No npm cache step here, unlike ci.yml: npm runs inside a
+      # container whose cache is its own /tmp, so there is no shared
+      # ~/.npm on the host to keep out of. Same as build, above.
 
       - name: Download .vsix artifact
         uses: actions/download-artifact@v8

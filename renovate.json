@@ -26,9 +26,9 @@
   "rollbackPrs": true,
   "customManagers": [
     {
-      "description": "The node:22 image that tools/publish-marketplace.sh runs vsce in is pinned by digest in a shell script, which none of the stock managers read. Without this the pin ages until a release fails on a digest upstream has garbage-collected, which RELEASE-SETUP.md already lists as a troubleshooting case.",
+      "description": "The node:22 image that tools/build-vsix.sh and tools/publish-marketplace.sh run in is pinned by digest in a shell script, which none of the stock managers read. Both source the pin from tools/container-image.sh, so there is one line here to keep current rather than two that could drift. Without this the pin ages until a release fails on a digest upstream has garbage-collected, which RELEASE-SETUP.md already lists as a troubleshooting case.",
       "customType": "regex",
-      "managerFilePatterns": ["/^tools/publish-marketplace\\.sh$/"],
+      "managerFilePatterns": ["/^tools/container-image\\.sh$/"],
       "matchStrings": [
         "IMAGE_TAG=\"(?<depName>[^:]+):(?<currentValue>[^\"]+)\"\\nIMAGE=\"\\$\\{IMAGE_TAG\\}@(?<currentDigest>sha256:[a-f0-9]+)\""
       ],

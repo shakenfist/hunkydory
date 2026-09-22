@@ -35,20 +35,6 @@
 
 set -euo pipefail
 
-# Pinned by digest as well as by tag, matching tools/mermaid-lint.sh in
-# shakenfist/development: a tag is mutable, and this runs a third-party
-# container on a runner with a docker daemon. The tag is for a human
-# reading this; the digest is what pins. trixie rather than bookworm so
-# the container's libc matches the Debian 13 host it runs on.
-#
-# Renovate's stock managers do not read a docker reference out of a shell
-# script, so renovate.json carries a customManager that does. It matches
-# these two lines as an adjacent pair: keep them adjacent, keep the
-# quoting, and do not put a blank line or a comment between them, or the
-# digest silently stops being updated.
-IMAGE_TAG="node:22-trixie-slim"
-IMAGE="${IMAGE_TAG}@sha256:c5849ff9c9ebcd66615412f0b548ca5b8ecaef84003dc9ac2e077ebe46aaa3f6"
-
 die() {
     echo "publish-marketplace: $*" >&2
     exit 1
@@ -98,6 +84,14 @@ if [ "${stage}" = "host" ]; then
     # actions/checkout falls back to a REST tarball when git is missing or
     # too old, which leaves no .git at all.
     repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+
+    # IMAGE_TAG and IMAGE. One file, shared with tools/build-vsix.sh,
+    # rather than a copy of the digest in each; the header of the sourced
+    # file says why, and is where renovate.json's customManager points.
+    # Sourced here rather than at the top of the file because only this
+    # stage starts a container.
+    # shellcheck source=tools/container-image.sh
+    source "${repo_root}/tools/container-image.sh"
 
     echo "publish-marketplace: publishing $(basename "${vsix[0]}") via ${IMAGE_TAG}"
 

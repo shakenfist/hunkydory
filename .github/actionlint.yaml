@@ -7,12 +7,14 @@
 # `claude-code` for pr-re-review.yml.
 #
 # `debian-13-docker` is the fleet's docker-capable VM image, and is here
-# for release.yml's publish-marketplace job alone. That job needs a
+# for release.yml's build and publish-marketplace jobs. Both need a
 # docker daemon because plain `debian-13` carries neither node nor npm
-# (measured in run 35141854203), so its runtime comes from a pinned
+# (measured in run 35141854203), so their runtime comes from a pinned
 # node:22 container rather than from the image. Adding this label was
 # phase 7b's to do, deliberately: phase 7a left it out so that choosing
-# the lane stayed a decision rather than a default.
+# the lane stayed a decision rather than a default. `build` joined
+# publish-marketplace on it for issue #23: the .vsix that ships should
+# not be built on a pool whose state outlives the job.
 #
 # The bookworm labels are deliberately absent, matching
 # shakenfist/development. Debian 12 went end of life on 2026-06-10, and
