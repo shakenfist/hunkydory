@@ -121,31 +121,11 @@
       "author": "mikal"
     },
     {
-      "path": "tools/publish-marketplace.sh",
-      "author": "mikal"
-    },
-    {
       "path": ".github/workflows/ci.yml",
       "author": "mikal"
     },
     {
-      "path": ".github/workflows/release.yml",
-      "author": "mikal"
-    },
-    {
-      "path": ".github/workflows",
-      "author": "mikal"
-    },
-    {
       "path": "test/recount.test.ts",
-      "author": "mikal"
-    },
-    {
-      "path": ".github/actionlint.yaml",
-      "author": "mikal"
-    },
-    {
-      "path": ".github",
       "author": "mikal"
     },
     {
@@ -161,15 +141,7 @@
       "author": "mikal"
     },
     {
-      "path": "RELEASE-SETUP.md",
-      "author": "mikal"
-    },
-    {
       "path": "tools/marketplace-profile-id.sh",
-      "author": "mikal"
-    },
-    {
-      "path": "tools",
       "author": "mikal"
     }
   ],

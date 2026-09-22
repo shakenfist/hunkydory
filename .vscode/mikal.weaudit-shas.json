@@ -1,10 +1,6 @@
 {
   "version": 1,
   "files": {
-    ".github/actionlint.yaml": {
-      "sha": "214371ccfcaee697ec8aff2bbc0776295a442337",
-      "date": "2026-09-22"
-    },
     ".github/exported-config/repository-settings.json": {
       "sha": "e1e9f80b8dfc29fbc9440143fd2f804d43bace80",
       "date": "2026-09-16"
@@ -37,10 +33,6 @@
       "sha": "bcbcaa0b2af76d0e991c19e9893a678d89e0ee00",
       "date": "2026-09-15"
     },
-    ".github/workflows/release.yml": {
-      "sha": "e0862318d44e440506b281da6e291b8ec3fd6012",
-      "date": "2026-09-22"
-    },
     ".github/workflows/renovate.yml": {
       "sha": "52a8457d0e6b52934d56175c9593bb4e6774b25c",
       "date": "2026-09-15"
@@ -63,10 +55,6 @@
     },
     "README.md": {
       "sha": "63f2dac5eb48910f0df2daa3031837ae7e446ef9",
-      "date": "2026-09-22"
-    },
-    "RELEASE-SETUP.md": {
-      "sha": "07f15816903afd73f77d68ebe9b8514a55ea62a2",
       "date": "2026-09-22"
     },
     "biome.json": {
@@ -127,10 +115,6 @@
     },
     "tools/marketplace-token.mjs": {
       "sha": "2cf09e86506733658f02f79dda4f7d7b09ca9c1f",
-      "date": "2026-09-22"
-    },
-    "tools/publish-marketplace.sh": {
-      "sha": "c6d72b5e2bb1d8ff424069b9e586236c7d3beeae",
       "date": "2026-09-22"
     },
     "tools/review-tracking.sh": {
