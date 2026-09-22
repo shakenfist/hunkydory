@@ -9,6 +9,12 @@ Guidance for agents working in this repository. See
 - `src/diff.ts` and `src/recount.ts` must never import `vscode`. That is what
   lets the test suite run under plain node. Anything needing the editor API
   goes in `src/extension.ts`.
+- New validation in `tools/build-vsix.sh` and `tools/publish-marketplace.sh`
+  goes in the **host** stage wherever it can. Each file is two programs, and
+  only the host half runs without a docker daemon, which is what
+  `test/scripts.test.ts` can reach. A check that needs node has to wait for
+  the container; everything else fails faster and gets a test if it goes
+  before the `docker run`.
 - Wrap at 100 characters. Two-space indent, single quotes, semicolons.
 - TypeScript runs with `strict`, `noUnusedLocals` and `noImplicitReturns`. Do
   not loosen these to make something compile.
