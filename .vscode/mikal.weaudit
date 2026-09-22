@@ -85,14 +85,6 @@
       "author": "mikal"
     },
     {
-      "path": "AGENTS.md",
-      "author": "mikal"
-    },
-    {
-      "path": "ARCHITECTURE.md",
-      "author": "mikal"
-    },
-    {
       "path": "biome.json",
       "author": "mikal"
     },
@@ -126,10 +118,6 @@
     },
     {
       "path": "test/fixtures",
-      "author": "mikal"
-    },
-    {
-      "path": "test",
       "author": "mikal"
     },
     {
