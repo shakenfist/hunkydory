@@ -6,15 +6,24 @@
 # are here for secret-scan.yml, which needs a runner carrying gitleaks;
 # `claude-code` for pr-re-review.yml.
 #
-# `debian-13-docker` is the fleet's docker-capable VM image, and is here
-# for release.yml's build and publish-marketplace jobs. Both need a
-# docker daemon because plain `debian-13` carries neither node nor npm
-# (measured in run 35141854203), so their runtime comes from a pinned
+# `debian-13-docker` is the fleet's docker-capable VM image, and every
+# job in release.yml now runs on it. build and publish-marketplace need
+# the docker daemon, because plain `debian-13` carries neither node nor
+# npm (measured in run 35141854203), so their runtime comes from a pinned
 # node:22 container rather than from the image. Adding this label was
 # phase 7b's to do, deliberately: phase 7a left it out so that choosing
 # the lane stayed a decision rather than a default. `build` joined
 # publish-marketplace on it for issue #23: the .vsix that ships should
 # not be built on a pool whose state outlives the job.
+#
+# github-release joined them for issue #32, and is the one that does NOT
+# need docker -- its actions are JavaScript and run on the runner's own
+# bundled node. It is here because it holds contents: write, which is a
+# credential, and static is shared with every repository in both
+# organisations. It shares this lane rather than taking a third so that
+# release.yml names one runner. So "uses debian-13-docker" no longer
+# implies "needs a docker daemon", which it did when only two jobs were
+# on it.
 #
 # The bookworm labels are deliberately absent, matching
 # shakenfist/development. Debian 12 went end of life on 2026-06-10, and
