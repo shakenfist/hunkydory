@@ -93,10 +93,6 @@
       "author": "mikal"
     },
     {
-      "path": "RELEASE-SETUP.md",
-      "author": "mikal"
-    },
-    {
       "path": "AGENTS.md",
       "author": "mikal"
     },
@@ -126,10 +122,6 @@
     },
     {
       "path": "tools/publish-marketplace.sh",
-      "author": "mikal"
-    },
-    {
-      "path": "tools",
       "author": "mikal"
     },
     {
@@ -166,6 +158,18 @@
     },
     {
       "path": "test",
+      "author": "mikal"
+    },
+    {
+      "path": "RELEASE-SETUP.md",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/marketplace-profile-id.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "tools",
       "author": "mikal"
     }
   ],
