@@ -1,9 +1,25 @@
 {
   "version": 1,
   "files": {
+    ".github/actionlint.yaml": {
+      "sha": "2bcf520469753daf91c2ba3dc1e090a99353b71e",
+      "date": "2026-09-23"
+    },
     ".github/exported-config/repository-settings.json": {
       "sha": "e1e9f80b8dfc29fbc9440143fd2f804d43bace80",
       "date": "2026-09-16"
+    },
+    ".github/exported-config/ruleset-develop-branch.json": {
+      "sha": "5bffeb6f0c79ff3f511782b4307ad91c47634e36",
+      "date": "2026-09-23"
+    },
+    ".github/exported-config/ruleset-release-tags.json": {
+      "sha": "f563227f0416ea9e7320ea9107d73fb612024342",
+      "date": "2026-09-23"
+    },
+    ".github/exported-config/rulesets-summary.json": {
+      "sha": "09e5f8048d911f5e16f455508d63e101b1fee2ce",
+      "date": "2026-09-23"
     },
     ".github/workflows/ci.yml": {
       "sha": "98e1adf3a81dbd84d66685ad1c9ae15507dba037",
@@ -29,6 +45,10 @@
       "sha": "bcbcaa0b2af76d0e991c19e9893a678d89e0ee00",
       "date": "2026-09-15"
     },
+    ".github/workflows/release.yml": {
+      "sha": "9cbc5df1eb6caf0dccd641138597267872f4f2bd",
+      "date": "2026-09-23"
+    },
     ".github/workflows/renovate.yml": {
       "sha": "52a8457d0e6b52934d56175c9593bb4e6774b25c",
       "date": "2026-09-15"
@@ -37,6 +57,14 @@
       "sha": "50f8e9027318ae590250421cf55ba39290a299f1",
       "date": "2026-09-15"
     },
+    "AGENTS.md": {
+      "sha": "2b07613d8909f973e730afeff2f5217fc2a6f506",
+      "date": "2026-09-23"
+    },
+    "ARCHITECTURE.md": {
+      "sha": "2a7d70b67941f0322443df8677896f381ef9b5c2",
+      "date": "2026-09-23"
+    },
     "PUSH-AUDIT.md": {
       "sha": "1aac92ab89d4b7a297f0ac6a52241dcef4d775be",
       "date": "2026-09-22"
@@ -44,6 +72,10 @@
     "README.md": {
       "sha": "63f2dac5eb48910f0df2daa3031837ae7e446ef9",
       "date": "2026-09-22"
+    },
+    "RELEASE-SETUP.md": {
+      "sha": "be2b32be14de1ac8f5d9fd314b82db1db14c2233",
+      "date": "2026-09-23"
     },
     "biome.json": {
       "sha": "2468e97c69419c12ec2afd927db7978ba1dd6583",
@@ -85,6 +117,14 @@
       "sha": "6707e3d645a3ba6b370b723eaad4c2207c6ad6ce",
       "date": "2026-09-22"
     },
+    "test/scripts.test.ts": {
+      "sha": "ac7b7a556e07d7567d6fdd9976c4042686b0c03b",
+      "date": "2026-09-23"
+    },
+    "tools/build-vsix.sh": {
+      "sha": "0b4bbe02781d5675547c7d5c9a438b50b7f2087f",
+      "date": "2026-09-23"
+    },
     "tools/check-node.sh": {
       "sha": "a03f2a09b518a5cb1c42405e48df5cdafcdf7281",
       "date": "2026-09-16"
@@ -97,6 +137,10 @@
       "sha": "6daef1e07eb05d46b0a13745d5338cf1aea23cd8",
       "date": "2026-09-16"
     },
+    "tools/container-image.sh": {
+      "sha": "5efb1953611739f95b923930f7a99fbc8afd6fcb",
+      "date": "2026-09-23"
+    },
     "tools/marketplace-profile-id.sh": {
       "sha": "5bff663717d8ca39ea2a5477351364d8a536b53a",
       "date": "2026-09-22"
@@ -105,9 +149,17 @@
       "sha": "2cf09e86506733658f02f79dda4f7d7b09ca9c1f",
       "date": "2026-09-22"
     },
+    "tools/publish-marketplace.sh": {
+      "sha": "97a55c27f6adbc09de187c3308c2c4bc58201148",
+      "date": "2026-09-23"
+    },
     "tools/review-tracking.sh": {
       "sha": "e63705ac5c57fd6d9fd0da21e18f399e3f88e4a4",
       "date": "2026-09-16"
+    },
+    "tools/vsix-digest.sh": {
+      "sha": "2ab84621062c3dcb55f5d483d2c381bf8f7650ad",
+      "date": "2026-09-23"
     }
   }
 }

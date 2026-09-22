@@ -123,6 +123,78 @@
     {
       "path": "tools/marketplace-profile-id.sh",
       "author": "mikal"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/workflows",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/actionlint.yaml",
+      "author": "mikal"
+    },
+    {
+      "path": "AGENTS.md",
+      "author": "mikal"
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/exported-config/ruleset-release-tags.json",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/exported-config/rulesets-summary.json",
+      "author": "mikal"
+    },
+    {
+      "path": "RELEASE-SETUP.md",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/container-image.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "test/scripts.test.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/publish-marketplace.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/vsix-digest.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/build-vsix.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "tools",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/exported-config/ruleset-develop-branch.json",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/exported-config",
+      "author": "mikal"
+    },
+    {
+      "path": ".github",
+      "author": "mikal"
     }
   ],
   "partiallyAuditedFiles": [],
