@@ -114,23 +114,60 @@ This is the step that lets GitHub Actions authenticate as that application
 without any shared secret. Entra will accept a token that GitHub minted, for
 this repository, for this environment, and for nothing else.
 
+The credential matches exactly one string: the `sub` claim of the token
+GitHub mints for the job. Getting that string right is the whole step, and
+its format changed in 2026. GitHub now builds it from numeric ids as well
+as names — what it calls *immutable subject claims* — so the subject for
+this repository is:
+
+```text
+repo:shakenfist@67136805/hunkydory@1365377246:environment:release
+```
+
+The two numbers are the organisation's id and the repository's id. They
+are assigned once and never reused, which is the point: a credential
+holding them stays bound to this repository across a rename or a transfer,
+and cannot later be satisfied by some different repository that acquires
+the same names. Read them back at any time with:
+
+```bash
+gh api repos/shakenfist/hunkydory \
+    --jq '"repo:\(.owner.login)@\(.owner.id)/\(.name)@\(.id):environment:release"'
+```
+
+GitHub applies this format automatically to repositories created, renamed
+or transferred from 15 July 2026, and hunkydory was created on 2026-09-11.
+There is nothing to opt into here; it is simply what arrives. The older
+name-based form, `repo:shakenfist/hunkydory:environment:release`, is what
+a repository predating that date still sends, and is what most tutorials
+still show. A credential holding it fails every release with
+`AADSTS700213`.
+
 1. On the app registration, go to **Certificates & secrets** > **Federated
    credentials** > **Add credential**.
-2. Choose the **GitHub Actions deploying Azure resources** scenario.
-3. Fill in:
-   - **Organization**: `shakenfist`
-   - **Repository**: `hunkydory`
-   - **Entity type**: **Environment** — not Branch, and not Tag.
-   - **Environment name**: `release`
-4. Give the credential a name and save it.
+2. Set the subject identifier to the string above, the issuer to
+   `https://token.actions.githubusercontent.com`, and the audience to
+   `api://AzureADTokenExchange`.
 
-**What must be true:** the credential's subject identifier reads exactly
-`repo:shakenfist/hunkydory:environment:release`, its issuer is
+   The portal's **GitHub Actions deploying Azure resources** scenario
+   composes the subject for you from an organisation, a repository, an
+   entity type and an environment name. Use it only if what it composes
+   carries the numeric ids; if it produces the name-based form, enter the
+   subject explicitly instead.
+3. Give the credential a name and save it.
+
+Replacing a credential that already holds the name-based subject is the
+same operation with one ordering constraint: add the new one first, run a
+release, and only then delete the old. A name-based credential left behind
+is the recycling risk described above, not merely clutter.
+
+**What must be true:** the credential's subject identifier matches the
+`gh api` output above character for character, its issuer is
 `https://token.actions.githubusercontent.com`, and its audience is
-`api://AzureADTokenExchange`. The portal shows all three after saving;
-check them rather than assuming, because the entity type is easy to
-misselect and a Branch-scoped credential will simply refuse every real
-release with an unhelpful error.
+`api://AzureADTokenExchange`. The portal shows all three after saving.
+Check them rather than assuming: every way of getting this wrong produces
+the same `AADSTS700213`, and produces it at the end of a release rather
+than the start.
 
 Those three values are also what `tools/marketplace-token.mjs` presents. If
 the audience ever differs, it is the constant `EXCHANGE_AUDIENCE` in that
@@ -216,9 +253,14 @@ environment whose protection rules you have not already saved.
 2. Click **New environment**, name it `release`, and click **Configure
    environment**.
 3. Under **Deployment branches and tags**, select **Selected branches and
-   tags** and add a rule for pattern `v*`. Leave **Required reviewers**
-   unset — this repository does not gate releases on manual approval, only
-   on tag protection.
+   tags** and add a rule for pattern `v*`. The rule has a *type*, it
+   defaults to **Branch**, and it has to be set to **Tag** here.
+   Deployment rules are matched by type, so a branch-typed `v*` rule never
+   matches a tag: the publish job is refused about two seconds into the
+   run, with no runner assigned and no steps, annotated `Tag "v0.1.0" is
+   not allowed to deploy to release due to environment protection rules`.
+   Leave **Required reviewers** unset — this repository does not gate
+   releases on manual approval, only on tag protection.
 4. Click **Save protection rules**.
 5. Under **Environment variables** — *variables*, not secrets — add:
    - `AZURE_CLIENT_ID`: the Application (client) ID from step 2.
@@ -230,7 +272,14 @@ so that everything this job needs is configured in one place and moves
 together.
 
 **What must be true:** the `release` environment exists, is restricted to
-`v*` tags, carries those two variables, and carries no secrets.
+`v*` by a rule whose type is **Tag**, carries those two variables, and
+carries no secrets. The type is the half that is worth checking rather
+than eyeballing:
+
+```bash
+gh api repos/shakenfist/hunkydory/environments/release/deployment-branch-policies \
+    --jq '.branch_policies[] | "\(.name)\t\(.type)"'
+```
 
 ### 6. Protect the repository's tags
 
@@ -403,12 +452,17 @@ than a configuration one; the line is in `release.yml`'s
 ### Entra returns `AADSTS700213` or "No matching federated identity record"
 
 The federated credential's subject does not match what GitHub sent. The
-subject GitHub mints for this job is
-`repo:shakenfist/hunkydory:environment:release`. The usual causes, in order
-of likelihood: the credential was created with entity type **Branch** or
-**Tag** instead of **Environment**; the environment name was typed with
-different capitalisation; or the job lost its `environment: release` line,
-in which case GitHub sends a ref-based subject instead. Step 3.
+error quotes the subject it received, so read that rather than guessing.
+It should be
+`repo:shakenfist@67136805/hunkydory@1365377246:environment:release`.
+
+The usual causes, in order of likelihood: the credential holds the older
+name-based subject `repo:shakenfist/hunkydory:environment:release`, which
+nothing this repository sends will ever match; the credential was created
+with entity type **Branch** or **Tag** instead of **Environment**; the
+environment name was typed with different capitalisation; or the job lost
+its `environment: release` line, in which case GitHub sends a ref-based
+subject instead. Step 3.
 
 ### The publisher's member search finds nothing
 
@@ -432,6 +486,42 @@ digest in `tools/container-image.sh`; a digest that no longer exists
 upstream fails here too, and is fixed by pulling the current
 `node:22-trixie-slim` and recording its new digest. Both jobs read the same
 pin, so a stale digest fails both.
+
+### The publish job is refused within seconds of the run starting
+
+The job shows no runner, no steps and an annotation reading `Tag "v0.1.0"
+is not allowed to deploy to release due to environment protection rules`.
+The run reached the `release` environment and the environment declined it,
+almost always because its deployment rule is typed **Branch** rather than
+**Tag**. The pattern `v*` reads correctly either way, so check the type
+itself:
+
+```bash
+gh api repos/shakenfist/hunkydory/environments/release/deployment-branch-policies \
+    --jq '.branch_policies[] | "\(.name)\t\(.type)"'
+```
+
+Step 5.
+
+### The Marketplace version installs but the old sideloaded code keeps running
+
+This only happens if a locally built `.vsix` of the *same version number*
+was installed first. VS Code cannot delete an extension directory that a
+running instance is holding, so the uninstall is deferred; the reinstall
+then finds a directory already named `shakenfist.hunkydory-<version>`,
+reuses it, and rewrites only the metadata. The extension is listed as
+coming from the Marketplace while the files on disk are still the local
+build, and reinstalling again does not help. Remove the directory
+explicitly, in between:
+
+```bash
+code --uninstall-extension shakenfist.hunkydory
+rm -rf ~/.vscode/extensions/shakenfist.hunkydory-*
+code --install-extension shakenfist.hunkydory
+```
+
+Reload the window afterwards. Only a matching version number collides, so
+bumping the version before building locally avoids it entirely.
 
 ### Tag pushed but no workflow run appears
 
