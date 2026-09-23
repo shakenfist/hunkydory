@@ -25,10 +25,6 @@
       "author": "mikal"
     },
     {
-      "path": ".github/workflows/renovate.yml",
-      "author": "mikal"
-    },
-    {
       "path": ".github/workflows/secret-scan.yml",
       "author": "mikal"
     },
@@ -125,10 +121,6 @@
       "author": "mikal"
     },
     {
-      "path": ".github/workflows",
-      "author": "mikal"
-    },
-    {
       "path": ".github/actionlint.yaml",
       "author": "mikal"
     },
@@ -182,10 +174,6 @@
     },
     {
       "path": ".github/exported-config",
-      "author": "mikal"
-    },
-    {
-      "path": ".github",
       "author": "mikal"
     },
     {
