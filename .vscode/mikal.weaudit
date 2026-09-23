@@ -149,10 +149,6 @@
       "author": "mikal"
     },
     {
-      "path": "RELEASE-SETUP.md",
-      "author": "mikal"
-    },
-    {
       "path": "tools/container-image.sh",
       "author": "mikal"
     },
