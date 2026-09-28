@@ -21,6 +21,14 @@
       "sha": "09e5f8048d911f5e16f455508d63e101b1fee2ce",
       "date": "2026-09-23"
     },
+    ".github/workflows/ci.yml": {
+      "sha": "9cba890931d6484679c52e4a2fc412bd4b708c23",
+      "date": "2026-09-29"
+    },
+    ".github/workflows/codeql-analysis.yml": {
+      "sha": "562c108c0cc679374169a33c94acbf02cd97b29c",
+      "date": "2026-09-29"
+    },
     ".github/workflows/release.yml": {
       "sha": "9cbc5df1eb6caf0dccd641138597267872f4f2bd",
       "date": "2026-09-23"

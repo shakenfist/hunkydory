@@ -151,6 +151,14 @@
     {
       "path": "PUSH-AUDIT.md",
       "author": "mikal"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/workflows/codeql-analysis.yml",
+      "author": "mikal"
     }
   ],
   "partiallyAuditedFiles": [],
