@@ -44,22 +44,96 @@
 # The consequence to know about: a fork pull request gets no CI at all,
 # and has to be pushed as a branch in this repository before anything
 # tests it.
+#
+# Review-only changes -- weAudit marks, their shas sidecars, the scope
+# config and the rendered REVIEWS.md -- cannot change what either job
+# checks, and the daily prune-reviews run commits exactly those files.
+# Both jobs are required status checks on develop, so pull requests
+# skip them at the job level through check_paths below rather than
+# with a trigger-level paths-ignore: a workflow that never starts never
+# reports its required checks, and the pull request waits on them
+# forever, whereas a skipped job satisfies a required check. push
+# carries no required checks, so it can use paths-ignore directly.
+# Keep both path lists in sync with codeql-analysis.yml's copies.
+#
+# secret-scan.yml deliberately has neither. gitleaks exists to read
+# human-written text, and a review note is prose, which is exactly
+# where a secret lands as easily as in code.
 name: CI
 
 on:
   pull_request:
   push:
     branches: [develop]
+    paths-ignore:
+      - 'REVIEWS.md'
+      - '.vscode/*.weaudit'
+      - '.vscode/*.weaudit-shas.json'
+      - '.vscode/review-scope.toml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  # Detect review-only pull requests so the two jobs below can skip
+  # them. For every other event the filter step is skipped and the
+  # output defaults to code_changed=true: push is already filtered by
+  # paths-ignore above, and workflow_dispatch has no pull request to
+  # diff, so both run everything.
+  check_paths:
+    name: "Check paths"
+    runs-on: [self-hosted, static]
+    timeout-minutes: 10
+    # paths-filter reads the changed-file list from pulls.listFiles
+    # rather than from the working tree, and the top-level permissions
+    # block sets every scope it does not name to none.
+    permissions:
+      pull-requests: read
+    outputs:
+      code_changed: ${{ steps.filter.outputs.code || 'true' }}
+    steps:
+      # There is deliberately no checkout step. On a pull_request
+      # event paths-filter asks the API for the changed files and never
+      # looks at the working tree, so a fork's content never reaches
+      # the shared static pool -- which is why this job, unlike the two
+      # below, carries no fork guard.
+      - uses: dorny/paths-filter@v4
+        id: filter
+        if: github.event_name == 'pull_request'
+        with:
+          # By default a file matches the filter if it matches ANY
+          # listed pattern, which makes '**' match everything and
+          # silently defeats the '!REVIEWS.md' style exclusions. 'every'
+          # requires a file to match ALL patterns, which is the correct
+          # semantics for an "everything except the review artefacts"
+          # filter.
+          predicate-quantifier: 'every'
+          filters: |
+            code:
+              - '**'
+              - '!REVIEWS.md'
+              - '!.vscode/*.weaudit'
+              - '!.vscode/*.weaudit-shas.json'
+              - '!.vscode/review-scope.toml'
+
   build-test-lint:
     name: Build, test and lint
     # No fork pull requests on the shared pool; see the header.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    #
+    # !cancelled() makes the path filter fail open. A job whose
+    # dependency did not succeed is skipped by default, and a skipped
+    # required check reads as green -- so without it a transient
+    # failure of check_paths would merge a pull request that was never
+    # built. A failed check_paths yields no output, an empty output is
+    # != 'false', and the job runs. Only a filter that positively said
+    # 'false' skips it.
+    needs: [check_paths]
+    if: |
+      !cancelled()
+      && (github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository)
+      && needs.check_paths.outputs.code_changed != 'false'
     runs-on: [self-hosted, static]
     permissions:
       contents: read
@@ -96,8 +170,14 @@ jobs:
 
   pre-commit:
     name: Pre-commit hooks
-    # No fork pull requests on the shared pool; see the header.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    # No fork pull requests on the shared pool, and the path filter
+    # fails open; see the header and build-test-lint.
+    needs: [check_paths]
+    if: |
+      !cancelled()
+      && (github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository)
+      && needs.check_paths.outputs.code_changed != 'false'
     runs-on: [self-hosted, static]
     permissions:
       contents: read

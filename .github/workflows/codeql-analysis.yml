@@ -2,17 +2,61 @@ name: CodeQL
 
 permissions: {}
 
+# Review-only changes cannot affect code analysis, so skip them.
+# Analyze is a required status check on develop, so pull requests skip
+# it at the job level through check_paths rather than with a
+# trigger-level paths-ignore, which would leave the check pending
+# forever; see ci.yml's header. push carries no required checks and
+# uses paths-ignore directly. Keep both path lists in sync with
+# ci.yml's copies.
 on:
   push:
     branches: [develop]
+    paths-ignore:
+      - 'REVIEWS.md'
+      - '.vscode/*.weaudit'
+      - '.vscode/*.weaudit-shas.json'
+      - '.vscode/review-scope.toml'
   pull_request:
     branches: [develop]
   schedule:
     - cron: '0 17 * * 2'
 
 jobs:
+  # Detect review-only pull requests so analyze can skip them. For push
+  # and the weekly schedule the filter step is skipped and the output
+  # defaults to code_changed=true, so both always analyze. See ci.yml's
+  # check_paths for why there is no checkout step.
+  check_paths:
+    name: "Check paths"
+    runs-on: [self-hosted, static]
+    timeout-minutes: 10
+    permissions:
+      pull-requests: read
+    outputs:
+      code_changed: ${{ steps.filter.outputs.code || 'true' }}
+    steps:
+      - uses: dorny/paths-filter@v4
+        id: filter
+        if: github.event_name == 'pull_request'
+        with:
+          # See ci.yml: 'every' is what makes the '!' exclusions work.
+          predicate-quantifier: 'every'
+          filters: |
+            code:
+              - '**'
+              - '!REVIEWS.md'
+              - '!.vscode/*.weaudit'
+              - '!.vscode/*.weaudit-shas.json'
+              - '!.vscode/review-scope.toml'
+
   analyze:
     name: Analyze
+    # The path filter fails open; see build-test-lint in ci.yml.
+    needs: [check_paths]
+    if: |
+      !cancelled()
+      && needs.check_paths.outputs.code_changed != 'false'
     runs-on: [self-hosted, static]
     permissions:
       actions: read
