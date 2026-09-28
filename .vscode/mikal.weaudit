@@ -5,27 +5,11 @@
   "treeEntries": [],
   "auditedFiles": [
     {
-      "path": ".github/workflows/codeql-analysis.yml",
-      "author": "mikal"
-    },
-    {
-      "path": ".github/workflows/prune-reviews.yml",
-      "author": "mikal"
-    },
-    {
       "path": ".github/workflows/secret-scan.yml",
       "author": "mikal"
     },
     {
       "path": "tools/check-node.sh",
-      "author": "mikal"
-    },
-    {
-      "path": "tools/ci-prune-reviews.sh",
-      "author": "mikal"
-    },
-    {
-      "path": "tools/review-tracking.sh",
       "author": "mikal"
     },
     {
@@ -82,10 +66,6 @@
     },
     {
       "path": "tools/marketplace-token.mjs",
-      "author": "mikal"
-    },
-    {
-      "path": ".github/workflows/ci.yml",
       "author": "mikal"
     },
     {
@@ -150,10 +130,6 @@
     },
     {
       "path": "tools/build-vsix.sh",
-      "author": "mikal"
-    },
-    {
-      "path": "tools",
       "author": "mikal"
     },
     {

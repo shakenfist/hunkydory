@@ -21,18 +21,6 @@
       "sha": "09e5f8048d911f5e16f455508d63e101b1fee2ce",
       "date": "2026-09-23"
     },
-    ".github/workflows/ci.yml": {
-      "sha": "98e1adf3a81dbd84d66685ad1c9ae15507dba037",
-      "date": "2026-09-22"
-    },
-    ".github/workflows/codeql-analysis.yml": {
-      "sha": "33ec0a9eeaf82ad7f5c32a771a80707d90b3fea6",
-      "date": "2026-09-15"
-    },
-    ".github/workflows/prune-reviews.yml": {
-      "sha": "bcbcaa0b2af76d0e991c19e9893a678d89e0ee00",
-      "date": "2026-09-15"
-    },
     ".github/workflows/release.yml": {
       "sha": "9cbc5df1eb6caf0dccd641138597267872f4f2bd",
       "date": "2026-09-23"
@@ -121,10 +109,6 @@
       "sha": "07e737f51939bfb8038d1624e05a788be07e5eaf",
       "date": "2026-09-22"
     },
-    "tools/ci-prune-reviews.sh": {
-      "sha": "6daef1e07eb05d46b0a13745d5338cf1aea23cd8",
-      "date": "2026-09-16"
-    },
     "tools/container-image.sh": {
       "sha": "5efb1953611739f95b923930f7a99fbc8afd6fcb",
       "date": "2026-09-23"
@@ -140,10 +124,6 @@
     "tools/publish-marketplace.sh": {
       "sha": "97a55c27f6adbc09de187c3308c2c4bc58201148",
       "date": "2026-09-23"
-    },
-    "tools/review-tracking.sh": {
-      "sha": "e63705ac5c57fd6d9fd0da21e18f399e3f88e4a4",
-      "date": "2026-09-16"
     },
     "tools/vsix-digest.sh": {
       "sha": "2ab84621062c3dcb55f5d483d2c381bf8f7650ad",
