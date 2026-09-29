@@ -145,10 +145,6 @@
       "author": "mikal"
     },
     {
-      "path": ".github/workflows/renovate.yml",
-      "author": "mikal"
-    },
-    {
       "path": "PUSH-AUDIT.md",
       "author": "mikal"
     },
