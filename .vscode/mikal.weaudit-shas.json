@@ -25,17 +25,9 @@
       "sha": "9cba890931d6484679c52e4a2fc412bd4b708c23",
       "date": "2026-09-29"
     },
-    ".github/workflows/codeql-analysis.yml": {
-      "sha": "562c108c0cc679374169a33c94acbf02cd97b29c",
-      "date": "2026-09-29"
-    },
     ".github/workflows/release.yml": {
       "sha": "9cbc5df1eb6caf0dccd641138597267872f4f2bd",
       "date": "2026-09-23"
-    },
-    ".github/workflows/renovate.yml": {
-      "sha": "6a16ca3e88a339bccf126f7485fd694bd3884650",
-      "date": "2026-09-30"
     },
     ".github/workflows/secret-scan.yml": {
       "sha": "50f8e9027318ae590250421cf55ba39290a299f1",

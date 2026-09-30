@@ -151,14 +151,6 @@
     {
       "path": ".github/workflows/ci.yml",
       "author": "mikal"
-    },
-    {
-      "path": ".github/workflows/codeql-analysis.yml",
-      "author": "mikal"
-    },
-    {
-      "path": ".github/workflows/renovate.yml",
-      "author": "mikal"
     }
   ],
   "partiallyAuditedFiles": [],
