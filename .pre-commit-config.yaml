@@ -44,6 +44,6 @@ repos:
   # `pre-commit run --all-files` as a job. Until that phase lands,
   # llm-context-lint-ci stays red for this repository.
   - repo: https://github.com/stbenjam/skillsaw
-    rev: v0.20.0
+    rev: v0.21.0
     hooks:
       - id: skillsaw
