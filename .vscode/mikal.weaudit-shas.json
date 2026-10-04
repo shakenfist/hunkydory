@@ -25,9 +25,17 @@
       "sha": "9cba890931d6484679c52e4a2fc412bd4b708c23",
       "date": "2026-09-29"
     },
+    ".github/workflows/pr-re-review.yml": {
+      "sha": "68425cd384443ae15a909832693af1df01414c38",
+      "date": "2026-10-04"
+    },
     ".github/workflows/release.yml": {
       "sha": "9cbc5df1eb6caf0dccd641138597267872f4f2bd",
       "date": "2026-09-23"
+    },
+    ".github/workflows/renovate.yml": {
+      "sha": "ab84e6fb10de106ac0c39124db52fa1ee7ed73a4",
+      "date": "2026-10-04"
     },
     ".github/workflows/secret-scan.yml": {
       "sha": "50f8e9027318ae590250421cf55ba39290a299f1",
