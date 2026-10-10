@@ -29,7 +29,7 @@ for how this works, including how to verify the attestations.
 | .github/workflows/pr-retest.yml | mikal | 2026-10-02 | dab99349ea18 | development@334333685dd9 |
 | .github/workflows/prune-reviews.yml | mikal | 2026-09-27 | 7fc119ce4625 | development@149c6f72446e |
 | .github/workflows/release.yml | mikal | 2026-09-23 | 9cbc5df1eb6c | - |
-| .github/workflows/renovate.yml | mikal | 2026-10-04 | ab84e6fb10de | - |
+| .github/workflows/renovate.yml | mikal | 2026-10-09 | d63b3b287257 | development@f2bc2590ba8a |
 | .github/workflows/secret-scan.yml | mikal | 2026-09-15 | 50f8e9027318 | - |
 | AGENTS.md | mikal | 2026-09-23 | 2b07613d8909 | - |
 | ARCHITECTURE.md | mikal | 2026-09-23 | 2a7d70b67941 | - |
