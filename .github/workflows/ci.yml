@@ -56,18 +56,23 @@
 # carries no required checks, so it can use paths-ignore directly.
 # Keep both path lists in sync with codeql-analysis.yml's copies.
 #
+# secret-scan.yml deliberately has neither. gitleaks exists to read
+# human-written text, and a review note is prose, which is exactly
+# where a secret lands as easily as in code.
+#
 # The third job, automated_reviewer, posts the fleet's automatic Claude
 # review. Its body is the reusable pr-auto-review.yml in
 # shakenfist/actions, which already refuses anything but a same-repo
 # pull_request; what this file decides is when to ask. It asks only
-# once both jobs above have passed: a review of code that does not
-# build is wasted on the scarce claude-code runner, and so is one of
-# a review-only change, where both jobs were skipped. It is not a
-# required check, so skipping it never holds a pull request up.
-#
-# secret-scan.yml deliberately has neither. gitleaks exists to read
-# human-written text, and a review note is prose, which is exactly
-# where a secret lands as easily as in code.
+# for a pull_request, stating that here as well as in the shared
+# workflow for the reason pr-re-review.yml repeats its fork guard: a
+# regression in shakenfist/actions should not quietly widen what runs
+# here. It asks only once both jobs above have passed: a review of
+# code that does not build is wasted on the scarce claude-code runner,
+# and so is one of a review-only change, where both jobs were skipped.
+# A fork pull request needs no check of its own, since both jobs skip
+# it and so never report success. It is not a required check, so
+# skipping it never holds a pull request up.
 name: CI
 
 on:
@@ -245,7 +250,8 @@ jobs:
     # above run through !cancelled(), and only a positive pass from
     # both should spend a review. See the header.
     if: |
-      !cancelled()
+      github.event_name == 'pull_request'
+      && !cancelled()
       && needs.build-test-lint.result == 'success'
       && needs.pre-commit.result == 'success'
     # A cross-repository reusable workflow cannot grant itself more
