@@ -1,6 +1,6 @@
 # CI for hunkydory.
 #
-# Two jobs because the two failures are different. build-test-lint
+# Two test jobs because the two failures are different. build-test-lint
 # exercises tools/check-node.sh -- the build, the unit tests and Biome
 # -- which is exactly what pre-commit runs locally, so this job cannot
 # drift from what a contributor sees before pushing. pre-commit runs
@@ -55,6 +55,15 @@
 # forever, whereas a skipped job satisfies a required check. push
 # carries no required checks, so it can use paths-ignore directly.
 # Keep both path lists in sync with codeql-analysis.yml's copies.
+#
+# The third job, automated_reviewer, posts the fleet's automatic Claude
+# review. Its body is the reusable pr-auto-review.yml in
+# shakenfist/actions, which already refuses anything but a same-repo
+# pull_request; what this file decides is when to ask. It asks only
+# once both jobs above have passed: a review of code that does not
+# build is wasted on the scarce claude-code runner, and so is one of
+# a review-only change, where both jobs were skipped. It is not a
+# required check, so skipping it never holds a pull request up.
 #
 # secret-scan.yml deliberately has neither. gitleaks exists to read
 # human-written text, and a review note is prose, which is exactly
@@ -228,3 +237,24 @@ jobs:
         run: |
           export PATH="${{ runner.temp }}/venv-lint/bin:$PATH"
           pre-commit run --all-files --show-diff-on-failure
+
+  automated_reviewer:
+    name: "Automated reviewer"
+    needs: [build-test-lint, pre-commit]
+    # Explicit results rather than the default success(): the jobs
+    # above run through !cancelled(), and only a positive pass from
+    # both should spend a review. See the header.
+    if: |
+      !cancelled()
+      && needs.build-test-lint.result == 'success'
+      && needs.pre-commit.result == 'success'
+    # A cross-repository reusable workflow cannot grant itself more
+    # token scope than its caller has, so the permissions go here. No
+    # secrets: inherit -- the reviewer authenticates with github.token
+    # and reads no secret, so inheriting would only hand this
+    # repository's secrets to a workflow in another repository.
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    uses: shakenfist/actions/.github/workflows/pr-auto-review.yml@main
