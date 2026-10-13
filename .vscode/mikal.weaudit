@@ -9,10 +9,6 @@
       "author": "mikal"
     },
     {
-      "path": "tools/check-node.sh",
-      "author": "mikal"
-    },
-    {
       "path": ".github/exported-config/repository-settings.json",
       "author": "mikal"
     },
@@ -85,14 +81,6 @@
       "author": "mikal"
     },
     {
-      "path": ".github/workflows/release.yml",
-      "author": "mikal"
-    },
-    {
-      "path": ".github/actionlint.yaml",
-      "author": "mikal"
-    },
-    {
       "path": "AGENTS.md",
       "author": "mikal"
     },
@@ -118,10 +106,6 @@
     },
     {
       "path": "test",
-      "author": "mikal"
-    },
-    {
-      "path": "tools/publish-marketplace.sh",
       "author": "mikal"
     },
     {
