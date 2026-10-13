@@ -6,8 +6,8 @@
 # ARCHITECTURE.md, PUSH-AUDIT.md, REVIEWS.md, RELEASE-SETUP.md,
 # renovate.json and biome.json to every user: 24 of the 27 packaged
 # files were repository infrastructure rather than the extension.
-# Phase 7 is the phase that makes the .vsix public, so it is the phase
-# that has to decide what is in it.
+# Once the .vsix is published to the Marketplace, everything in it is
+# public, so what it holds has to be a decision rather than a default.
 #
 # The consequence to know about: a new file has to be named here to
 # reach a user. That is the point -- the failure mode of a deny-list is

@@ -10,9 +10,9 @@
 # job in release.yml now runs on it. build and publish-marketplace need
 # the docker daemon, because plain `debian-13` carries neither node nor
 # npm (measured in run 35141854203), so their runtime comes from a pinned
-# node:22 container rather than from the image. Adding this label was
-# phase 7b's to do, deliberately: phase 7a left it out so that choosing
-# the lane stayed a decision rather than a default. `build` joined
+# node:22 container rather than from the image. The label was left out
+# until a job needed it, deliberately, so that choosing the lane stayed
+# a decision rather than a default. `build` joined
 # publish-marketplace on it for issue #23: the .vsix that ships should
 # not be built on a pool whose state outlives the job.
 #
