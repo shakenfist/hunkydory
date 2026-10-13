@@ -6,8 +6,7 @@
 # is the only caller. Takes one argument: a directory holding exactly one
 # .vsix, which the job downloads from the build job's artifact.
 #
-# Two things about this job are unusual, and both come from phase 7b of the
-# TypeScript onboarding plan in shakenfist/development.
+# Two things about this job are unusual.
 #
 # It runs in a container. The lane this job used to run on --
 # [self-hosted, vm, debian-13, s] -- carries neither node nor npm, which

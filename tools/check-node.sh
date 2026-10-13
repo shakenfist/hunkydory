@@ -1,8 +1,8 @@
 #!/bin/bash
 # Run the build, the unit tests and Biome for hunkydory.
 #
-# Called by both pre-commit and (in phase 5) CI, so the two checks cannot
-# drift from each other. Node runs natively here -- unlike ryll's
+# Called by both pre-commit and CI, so the two checks cannot drift from
+# each other. Node runs natively here -- unlike ryll's
 # scripts/check-rust.sh, there is no Docker wrapper, because keeping Rust
 # toolchains off the host is a Rust-specific concern, not a node one.
 
