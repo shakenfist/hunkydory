@@ -1,5 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["customManagers:githubActionsVersions"],
   "gitAuthor": "shakenfist-bot <bot@shakenfist.com>",
   "dependencyDashboard": true,
   "assignees": ["mikalstill"],
@@ -19,6 +20,14 @@
       "matchPackageNames": ["@vscode/vsce"],
       "prBodyNotes": [
         ":warning: Before merging, re-read two files in the new version. `out/auth.js`: if `WorkloadIdentityCredential` has joined the `ChainedTokenCredential`, `tools/marketplace-token.mjs` can be deleted in favour of `vsce publish --azure-credential`. `out/publish.js`: if `getPAT()` no longer routes `-p`/`VSCE_PAT` and `--azure-credential` into the same value, publishing is broken and there will be no other signal until a release is attempted. Also confirm `out/auth.js` still requests the scope `499b84ac-1321-427f-aa17-267ca6975798/.default`, which `tools/marketplace-token.mjs` holds a copy of. See that file and RELEASE-SETUP.md."
+      ]
+    },
+    {
+      "description": "A Renovate major can raise engines.node past the node-version that .github/workflows/renovate.yml sets up, leaving every hourly run on a Node that Renovate does not support. This note reaches the reviewer of the bump.",
+      "matchDepNames": ["renovate"],
+      "matchUpdateTypes": ["major"],
+      "prBodyNotes": [
+        ":warning: Before merging, check this version's `engines.node` (`npm view renovate@<version> engines`) against `node-version` in `.github/workflows/renovate.yml`. If it no longer accepts that Node major, raise `node-version` in the same pull request, and in shakenfist/development's `templates/renovate/renovate.yml`, which every repository copies verbatim."
       ]
     }
   ],
