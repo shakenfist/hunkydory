@@ -17,10 +17,6 @@
       "author": "mikal"
     },
     {
-      "path": "test/corpus.ts",
-      "author": "mikal"
-    },
-    {
       "path": "biome.json",
       "author": "mikal"
     },

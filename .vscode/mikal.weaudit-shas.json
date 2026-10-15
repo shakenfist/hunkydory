@@ -41,10 +41,6 @@
       "sha": "8d7b953fb531274a1c50cf06ccd1ba3b36a01571",
       "date": "2026-09-17"
     },
-    "test/corpus.ts": {
-      "sha": "ea3fbbb88971c6fccde73f438cbef6034b254558",
-      "date": "2026-09-22"
-    },
     "test/fixtures/crlf-line-endings.patch": {
       "sha": "71b2f0a05e8fe2b27de0a5713541dec60409092d",
       "date": "2026-09-22"
