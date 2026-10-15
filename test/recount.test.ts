@@ -179,6 +179,70 @@ describe('trailing blank ambiguity', () => {
   });
 });
 
+describe('a blank before the next hunk', () => {
+  // git reads everything up to the next @@ as part of the hunk before it, so
+  // a trailing blank there is not ambiguous: leaving it out makes git reject
+  // the patch with "patch fragment without header".
+  const patch = (header: string) =>
+    [
+      '--- a/f',
+      '+++ b/f',
+      header,
+      ' alpha',
+      '-beta',
+      '+gamma',
+      ' ',
+      '@@ -20,2 +20,2 @@',
+      ' delta',
+      '-epsilon',
+      '+zeta',
+      '',
+    ].join('\n');
+
+  test('counts a blank typed at the end of the hunk', () => {
+    // The header from before the blank was typed matches if it is ignored.
+    assert.match(recountText(patch('@@ -1,2 +1,2 @@')), /^@@ -1,3 \+1,3 @@$/m);
+  });
+
+  test('counts several blanks of either kind', () => {
+    const lines = recountText(patch('@@ -1,2 +1,2 @@').replace(' \n@@', '\n \n@@'));
+    assert.match(lines, /^@@ -1,4 \+1,4 @@$/m);
+  });
+
+  test('leaves a blank out of a hunk with no other context', () => {
+    // Counted in, the blank would be all git had to place the insertion by,
+    // and it would apply it silently at the first blank line in the file.
+    // Left out, git rejects the patch, which is the better way to be wrong.
+    const u0 = ['--- a/f', '+++ b/f', '@@ -5 +5 @@', '-a', '+x', '', '@@ -30 +30 @@', '-b', '+y'];
+    const text = `${u0.join('\n')}\n`;
+    assert.equal(recountText(text), text);
+  });
+
+  test('leaves a blank out of a hunk whose only context is blank', () => {
+    // git diff -U1 inserting between two blank lines: the blanks anchor
+    // nothing, and git would apply the hunk at any other pair of them.
+    const u1 = [
+      '--- a/f',
+      '+++ b/f',
+      '@@ -5,2 +5,3 @@',
+      ' ',
+      '+x',
+      ' ',
+      ' ',
+      '@@ -35 +36 @@',
+      '-a',
+      '+b',
+    ];
+    const text = `${u1.join('\n')}\n`;
+    assert.equal(recountText(text), text);
+  });
+
+  test('leaves a header that already counts it alone', () => {
+    const correct = patch('@@ -1,3 +1,3 @@');
+    assert.equal(recountText(correct), correct);
+  });
+});
+
 describe('line endings', () => {
   // A CRLF patch used to be a total silent no-op: recountText split on '\n'
   // alone, so every line kept its CR, '@@ ... @@\r' matched no header, and the

@@ -45,6 +45,24 @@ not a reading at all, and the fallback takes the first one that leaves it
 empty. Over-counting is only the safe direction while the result is still a
 header git can parse.
 
+Nor is there any ambiguity right before another hunk of the same file. git
+reads every line up to the next `@@` as part of the hunk before it, and stops
+at nothing in between, so a blank there is in the hunk whatever the old header
+said. Without this, a blank typed at the end of such a hunk was left out by the
+tie-break -- the old header still matched without it -- and git rejected the
+patch with `patch fragment without header`.
+
+That holds only for a hunk with context of its own. A hunk with none, as in a
+patch made with `git diff -U0`, or whose only context is itself blank, would
+be found by blank lines alone, and git would apply it silently at the first
+run of blank lines it came to. There the old reading stands, and git rejects
+the patch; a loud failure is the better way to be wrong.
+
+Even with context, counting the blank in means the hunk only fits where the
+file has a blank line after it, so git searches for somewhere that does. That
+is safe exactly as far as the rest of the hunk's context is distinctive, which
+is why a stray blank is still best deleted rather than left to a recount.
+
 In practice this is why a correct patch is never rewritten — the tie-break
 reproduces whatever the file already said — while an edited one gets a header
 that is, at worst, conservative.
