@@ -4,9 +4,10 @@
  * Two sources, doing two different jobs.
  *
  * `test/fixtures/` is committed here and always runs. It holds the cases a
- * real patch set does not supply: today that is CRLF line endings, which the
- * OpenStack corpus has none of and which were a total silent no-op until a
- * push audit found them. Each fixture is checked twice -- it must come back
+ * real patch set does not supply: CRLF line endings, which the OpenStack corpus
+ * has none of and which were a total silent no-op until a push audit found
+ * them, and the empty sides of a patch made with -U0, whose new-side starts
+ * were recounted a line out. Each fixture is checked twice -- it must come back
  * unchanged, and it must also come back unchanged after every count in it has
  * been scrambled. The second check is the one that has teeth, because a
  * recounter that does not recognise a file at all passes the first one

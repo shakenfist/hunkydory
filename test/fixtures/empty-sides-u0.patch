@@ -1,0 +1,16 @@
+A patch made with git diff -U0, so no hunk has context and a side is often
+empty: an insertion, a deletion and an append in the middle and at the end
+of a file. An empty range is written as the line before it, which moves
+the other side's start by one. See test/corpus.ts.
+
+diff --git a/lines.txt b/lines.txt
+index e031777..c96e95a 100644
+--- a/lines.txt
++++ b/lines.txt
+@@ -3,0 +4,2 @@ three
++inserted-a
++inserted-b
+@@ -8 +9,0 @@ seven
+-eight
+@@ -12,0 +14 @@ twelve
++appended

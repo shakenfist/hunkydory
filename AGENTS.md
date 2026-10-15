@@ -74,7 +74,8 @@ are easy to miss, each of which broke a real patch:
 - A bare empty line is a context line that lost its leading space.
 - `\ No newline at end of file` counts on neither side.
 - A count of exactly 1 is elided: `-1,1` is written `-1`.
-- File creation is `-0,0 +1,N`; deletion is `-1,N +0,0`.
+- An empty range names the line before it: creation is `-0,0 +1,N`, deletion
+  `-1,N +0,0`, and a `-U0` insertion after line 3 `-3,0 +4,2`.
 - One case is genuinely ambiguous. Read [docs/ambiguity.md](docs/ambiguity.md)
   before touching `resolveCounts`.
 - Lines reach the rules with their terminators already removed. Split a patch

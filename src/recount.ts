@@ -6,6 +6,7 @@
  */
 
 import {
+  type Counts,
   formatHeader,
   HUNK_RE,
   type Hunk,
@@ -60,7 +61,7 @@ export function computeFixes(lines: string[]): HeaderFix[] {
  * it was edited into something that is no longer a creation or deletion. The
  * right start is not ours to guess, so the header is left as it is and
  * reported, where writing it would have produced a patch git rejects only once
- * someone comes to apply it.
+ * someone comes to apply it. refusal() has the other headers we will not write.
  */
 export function checkHeaders(lines: string[]): HeaderCheck {
   const fixes: HeaderFix[] = [];
@@ -84,30 +85,21 @@ export function checkHeaders(lines: string[]): HeaderCheck {
     const body = measureBody(lines, i + 1);
     const counts = resolveCounts(body, declared);
 
-    const side = zeroSideWithLines(declared, counts);
-    if (side !== undefined) {
-      const count = side === 'old' ? counts.oldCount : counts.newCount;
-      refused.push({
-        line: i,
-        current: lines[i],
-        reason:
-          `the body has ${count} ${side} line${count === 1 ? '' : 's'}, but the ${side} ` +
-          'side starts at 0 and so must be empty; correct the header by hand',
-      });
+    // An empty range is written as the line before it, so an empty side moves
+    // the other side's start by one: creation's -0,0 +1,N, deletion's
+    // -1,N +0,0, and anywhere in a patch made with -U0, such as -3,0 +4,2.
+    const afterEmptyOld = counts.oldCount === 0 ? 1 : 0;
+    const beforeEmptyNew = counts.newCount === 0 ? 1 : 0;
+    const newStart = declared.oldStart + delta + afterEmptyOld - beforeEmptyNew;
+
+    const reason = refusal(declared, counts, newStart);
+    if (reason !== undefined) {
+      refused.push({ line: i, current: lines[i], reason });
       // The header stays as written, and git will read it that way, so later
       // hunks in this file are numbered from what it declares.
       delta += declared.newCount - declared.oldCount;
       i = body.end;
       continue;
-    }
-
-    let newStart = declared.oldStart + delta;
-    if (counts.newCount === 0) {
-      // Deleting a file: the new side is empty and starts at 0.
-      newStart = 0;
-    } else if (newStart === 0) {
-      // Creating a file: -0,0 +1,N.
-      newStart = 1;
     }
     delta += counts.newCount - counts.oldCount;
 
@@ -138,6 +130,37 @@ export function checkHeaders(lines: string[]): HeaderCheck {
   }
 
   return { fixes, refused };
+}
+
+/**
+ * Why the header for these counts cannot be written, if it cannot.
+ *
+ * The computed start is checked as well as the declared one. Hunks out of
+ * order -- which git diff never writes, but a patch assembled by hand can
+ * hold -- leave the running offset meaningless, and the start it gives can
+ * fall before the first line. For a hunk with an empty old side that would be
+ * placed silently at the top of the file, where a header git rejects outright
+ * is the better outcome; refusing is better still.
+ */
+function refusal(declared: Hunk, counts: Counts, newStart: number): string | undefined {
+  const side = zeroSideWithLines(declared, counts);
+  if (side !== undefined) {
+    const count = side === 'old' ? counts.oldCount : counts.newCount;
+    return (
+      `the body has ${count} ${side} line${count === 1 ? '' : 's'}, but the ${side} ` +
+      'side starts at 0 and so must be empty; correct the header by hand'
+    );
+  }
+  if (counts.oldCount === 0 && counts.newCount === 0) {
+    return 'the hunk has no lines on either side; remove it or correct it by hand';
+  }
+  if (newStart < 0 || (newStart === 0 && counts.newCount !== 0)) {
+    return (
+      `its new side would start at ${newStart}, before the first line, which an earlier ` +
+      'hunk out of order can cause; correct the header by hand'
+    );
+  }
+  return undefined;
 }
 
 /** Apply computeFixes to a whole document. */

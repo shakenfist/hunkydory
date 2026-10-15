@@ -47,10 +47,10 @@ that one is left alone until you move away, so it never fights you.
 
 ## Correctness
 
-The counting rules have more edge cases than they look like they do: file
-creation and deletion, the elided `,1`, git's `-- ` signature line, missing
-trailing newlines, blank context lines that lost their leading space, and one
-case that is genuinely ambiguous.
+The counting rules have more edge cases than they look like they do: empty
+ranges (file creation and deletion, `git diff -U0` insertions), the elided
+`,1`, git's `-- ` signature line, missing trailing newlines, blank context
+lines that lost their leading space, and one case that is genuinely ambiguous.
 
 So the tests are concrete cases rather than opinions. Most of them are
 patches that actually broke, down to scrambling every count in one and
