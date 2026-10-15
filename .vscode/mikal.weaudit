@@ -79,6 +79,114 @@
     {
       "path": ".github/workflows/pr-re-review.yml",
       "author": "mikal"
+    },
+    {
+      "path": "docs/ambiguity.md",
+      "author": "mikal"
+    },
+    {
+      "path": "docs/hunk-format.md",
+      "author": "mikal"
+    },
+    {
+      "path": "docs",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/actionlint.yaml",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "author": "mikal"
+    },
+    {
+      "path": "test/recount.test.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/ci-prune-reviews.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "src/recount.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test/editor/undo.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test/editor",
+      "author": "mikal"
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "author": "mikal"
+    },
+    {
+      "path": "AGENTS.md",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/editor-test.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "src/diff.ts",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/workflows/prune-reviews.yml",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fixtures/empty-sides-u0.patch",
+      "author": "mikal"
+    },
+    {
+      "path": "test/corpus.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/check-node.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "src/extension.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "src",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/workflows/renovate.yml",
+      "author": "mikal"
+    },
+    {
+      "path": "README.md",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/publish-marketplace.sh",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fixtures/zero-start-sides.patch",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fixtures",
+      "author": "mikal"
+    },
+    {
+      "path": "test",
+      "author": "mikal"
     }
   ],
   "partiallyAuditedFiles": [],

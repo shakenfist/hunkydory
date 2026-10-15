@@ -1,6 +1,10 @@
 {
   "version": 1,
   "files": {
+    ".github/actionlint.yaml": {
+      "sha": "be624ce0574cbfc5b3f4d495ad47b28eb97ed9e5",
+      "date": "2026-10-16"
+    },
     ".github/exported-config/repository-settings.json": {
       "sha": "e1e9f80b8dfc29fbc9440143fd2f804d43bace80",
       "date": "2026-09-16"
@@ -17,17 +21,45 @@
       "sha": "09e5f8048d911f5e16f455508d63e101b1fee2ce",
       "date": "2026-09-23"
     },
+    ".github/workflows/ci.yml": {
+      "sha": "aa647062c23cc0cb0a37e3f54194b40fa143b958",
+      "date": "2026-10-16"
+    },
     ".github/workflows/pr-re-review.yml": {
       "sha": "68425cd384443ae15a909832693af1df01414c38",
       "date": "2026-10-04"
+    },
+    ".github/workflows/prune-reviews.yml": {
+      "sha": "91ff1783e6589e198ce5d14aab473112761b7ce2",
+      "date": "2026-10-16"
+    },
+    ".github/workflows/release.yml": {
+      "sha": "11b20579fc34f25e9015c26a8229c63e13c0cfcb",
+      "date": "2026-10-16"
+    },
+    ".github/workflows/renovate.yml": {
+      "sha": "8a07f668f1b2a7d4fce207513fd52efae0120b66",
+      "date": "2026-10-16"
     },
     ".github/workflows/secret-scan.yml": {
       "sha": "50f8e9027318ae590250421cf55ba39290a299f1",
       "date": "2026-09-15"
     },
+    "AGENTS.md": {
+      "sha": "df410a4dcdc2df80d695481e704f748306a85387",
+      "date": "2026-10-16"
+    },
+    "ARCHITECTURE.md": {
+      "sha": "18382840ed1bc035212ffe8b7f6c51726b06ad94",
+      "date": "2026-10-16"
+    },
     "PUSH-AUDIT.md": {
       "sha": "f22058378098cb8806391e51ede9d54bc3707537",
       "date": "2026-09-27"
+    },
+    "README.md": {
+      "sha": "8a07208bd000c0e1e72d00557df9e28217ecd50f",
+      "date": "2026-10-16"
     },
     "RELEASE-SETUP.md": {
       "sha": "5583edf9a7aaa2f648e0cc10652cb09de1617552",
@@ -37,13 +69,53 @@
       "sha": "2468e97c69419c12ec2afd927db7978ba1dd6583",
       "date": "2026-09-22"
     },
+    "docs/ambiguity.md": {
+      "sha": "0b6d0b9ec872d98eb6aca903bc74795d527e3380",
+      "date": "2026-10-16"
+    },
+    "docs/hunk-format.md": {
+      "sha": "4d12f2aaee2103ee2326387004e78e330b2dc4aa",
+      "date": "2026-10-16"
+    },
     "docs/index.md": {
       "sha": "8d7b953fb531274a1c50cf06ccd1ba3b36a01571",
       "date": "2026-09-17"
     },
+    "src/diff.ts": {
+      "sha": "f50a8a0dbc8f5afe53bdb33f65e896acb54ccbb3",
+      "date": "2026-10-16"
+    },
+    "src/extension.ts": {
+      "sha": "db8cf5f550a469069c594638bf665e7ad0fe223e",
+      "date": "2026-10-16"
+    },
+    "src/recount.ts": {
+      "sha": "703dce99ce482a9091b52d4f2838aeacb020700c",
+      "date": "2026-10-16"
+    },
+    "test/corpus.ts": {
+      "sha": "ff12e8b760df88da53d1b2fe4995170204ec99a0",
+      "date": "2026-10-16"
+    },
+    "test/editor/undo.ts": {
+      "sha": "90f07625ae5243c33f012c1ecf941bcdbc9fe779",
+      "date": "2026-10-16"
+    },
     "test/fixtures/crlf-line-endings.patch": {
       "sha": "71b2f0a05e8fe2b27de0a5713541dec60409092d",
       "date": "2026-09-22"
+    },
+    "test/fixtures/empty-sides-u0.patch": {
+      "sha": "c174e5a008c4d504f5d7f2c11e0341febd47a4fe",
+      "date": "2026-10-16"
+    },
+    "test/fixtures/zero-start-sides.patch": {
+      "sha": "3076fe5d8c32c1c30a16244d90d849bc9b333fba",
+      "date": "2026-10-16"
+    },
+    "test/recount.test.ts": {
+      "sha": "c9f63304c8e9f596d45b78d27b1aa7026e2497ed",
+      "date": "2026-10-16"
     },
     "test/scripts.test.ts": {
       "sha": "ac7b7a556e07d7567d6fdd9976c4042686b0c03b",
@@ -53,13 +125,25 @@
       "sha": "0b4bbe02781d5675547c7d5c9a438b50b7f2087f",
       "date": "2026-09-23"
     },
+    "tools/check-node.sh": {
+      "sha": "77606633dea10f2833a8fb2f466284078db94ae0",
+      "date": "2026-10-16"
+    },
     "tools/check-package-contents.sh": {
       "sha": "07e737f51939bfb8038d1624e05a788be07e5eaf",
       "date": "2026-09-22"
     },
+    "tools/ci-prune-reviews.sh": {
+      "sha": "b4ce5b64c79afb01e07b98f43457fa5ff842e896",
+      "date": "2026-10-16"
+    },
     "tools/container-image.sh": {
       "sha": "5efb1953611739f95b923930f7a99fbc8afd6fcb",
       "date": "2026-09-23"
+    },
+    "tools/editor-test.sh": {
+      "sha": "4e722f56c3b35e678020ee8c2f094c87472d035a",
+      "date": "2026-10-16"
     },
     "tools/marketplace-profile-id.sh": {
       "sha": "5bff663717d8ca39ea2a5477351364d8a536b53a",
@@ -68,6 +152,10 @@
     "tools/marketplace-token.mjs": {
       "sha": "2cf09e86506733658f02f79dda4f7d7b09ca9c1f",
       "date": "2026-09-22"
+    },
+    "tools/publish-marketplace.sh": {
+      "sha": "ef061e2182ca6833515a7282d4bd957264228953",
+      "date": "2026-10-16"
     },
     "tools/vsix-digest.sh": {
       "sha": "2ab84621062c3dcb55f5d483d2c381bf8f7650ad",
