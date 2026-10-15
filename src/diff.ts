@@ -127,7 +127,7 @@ function startsFile(line: string): boolean {
  */
 export interface BodyCounts {
   end: number;
-  byTrailingBlanks: Array<{ oldCount: number; newCount: number }>;
+  byTrailingBlanks: Counts[];
 }
 
 /** Find where the hunk body starting at `start` ends, and count its lines. */
@@ -201,41 +201,70 @@ export function measureBody(lines: string[], start: number): BodyCounts {
  * matches and we fall back to counting every line, which is the safe
  * direction: an over-large count makes git reject the patch loudly, while an
  * under-large one makes it silently truncate the hunk.
+ *
+ * Except where a side starts at 0, as the old side of a creation and the new
+ * side of a deletion do. Such a side must be empty, so a reading that gives it
+ * lines is not a reading at all: the fallback is the first one that keeps it
+ * empty, which is to say the trailing blanks are the gap before the next file.
+ * If none does, every line is counted and checkHeaders, which tests the result
+ * with the same zeroSideWithLines, refuses to write it.
  */
 export function resolveCounts(
   counts: BodyCounts,
-  declaredOld: number,
-  declaredNew: number,
-): { oldCount: number; newCount: number } {
-  for (const candidate of counts.byTrailingBlanks) {
-    if (candidate.oldCount === declaredOld && candidate.newCount === declaredNew) {
+  declared: Counts & { oldStart: number; newStart: number },
+): Counts {
+  const valid = counts.byTrailingBlanks.filter((c) => zeroSideWithLines(declared, c) === undefined);
+  for (const candidate of valid) {
+    if (candidate.oldCount === declared.oldCount && candidate.newCount === declared.newCount) {
       return candidate;
     }
   }
-  return counts.byTrailingBlanks[0];
+  return valid[0] ?? counts.byTrailingBlanks[0];
+}
+
+/** How many lines a hunk occupies on each side. */
+export interface Counts {
+  oldCount: number;
+  newCount: number;
+}
+
+/**
+ * The side of a hunk that starts at 0 but would be given lines, if either.
+ *
+ * Line 0 only exists as "before the first line", so a range starting there
+ * must be empty: `-0,0` for a creation or an insertion at the top, `+0,0` for
+ * a deletion. Anything else is a corrupt patch to git.
+ */
+export function zeroSideWithLines(
+  starts: { oldStart: number; newStart: number },
+  counts: Counts,
+): 'old' | 'new' | undefined {
+  if (starts.oldStart === 0 && counts.oldCount !== 0) {
+    return 'old';
+  }
+  if (starts.newStart === 0 && counts.newCount !== 0) {
+    return 'new';
+  }
+  return undefined;
 }
 
 /** Parse every hunk in a document, in order. */
 export function parseHunks(lines: string[]): Hunk[] {
   const hunks: Hunk[] = [];
   for (let i = 0; i < lines.length; i += 1) {
-    const match = HUNK_RE.exec(lines[i]);
-    if (!match) {
+    const declared = parseHeader(lines[i]);
+    if (!declared) {
       continue;
     }
-    const declaredOld = match[2] === undefined ? 1 : parseInt(match[2], 10);
-    const declaredNew = match[4] === undefined ? 1 : parseInt(match[4], 10);
     const body = measureBody(lines, i + 1);
-    const resolved = resolveCounts(body, declaredOld, declaredNew);
+    const resolved = resolveCounts(body, declared);
     hunks.push({
+      ...declared,
       headerLine: i,
       bodyStart: i + 1,
       bodyEnd: body.end,
-      oldStart: parseInt(match[1], 10),
       oldCount: resolved.oldCount,
-      newStart: parseInt(match[3], 10),
       newCount: resolved.newCount,
-      heading: match[5],
     });
   }
   return hunks;

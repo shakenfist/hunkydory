@@ -7,8 +7,8 @@
 
 import * as vscode from 'vscode';
 
-import { formatRange, parseHunks } from './diff';
-import { computeFixes, type HeaderFix, looksLikeDiff } from './recount';
+import { formatRange, parseHunks, splitPatch } from './diff';
+import { checkHeaders, computeFixes, type HeaderFix, looksLikeDiff } from './recount';
 
 /** How long to wait after a keystroke before rewriting headers. */
 const DEBOUNCE_MS = 200;
@@ -50,12 +50,16 @@ function isPatch(document: vscode.TextDocument): boolean {
   return document.languageId === 'diff';
 }
 
+/**
+ * The document's lines, as the counting rules expect them.
+ *
+ * Not lineAt(0..lineCount): a document ending in a newline has an extra empty
+ * line after it, which the rules count as context in the last hunk. splitPatch
+ * does not invent it, and its indices agree with the editor's for every real
+ * line.
+ */
 function documentLines(document: vscode.TextDocument): string[] {
-  const lines: string[] = [];
-  for (let i = 0; i < document.lineCount; i += 1) {
-    lines.push(document.lineAt(i).text);
-  }
-  return lines;
+  return splitPatch(document.getText()).lines;
 }
 
 /**
@@ -105,11 +109,21 @@ function refreshDiagnostics(document: vscode.TextDocument): void {
   }
 
   const found: vscode.Diagnostic[] = [];
-  for (const fix of computeFixes(documentLines(document))) {
+  const check = checkHeaders(documentLines(document));
+  for (const fix of check.fixes) {
     const range = document.lineAt(fix.line).range;
     const diagnostic = new vscode.Diagnostic(
       range,
       `Hunk header does not match its body; should be ${fix.corrected.split(' @@')[0]} @@`,
+      vscode.DiagnosticSeverity.Warning,
+    );
+    diagnostic.source = 'hunkydory';
+    found.push(diagnostic);
+  }
+  for (const refusal of check.refused) {
+    const diagnostic = new vscode.Diagnostic(
+      document.lineAt(refusal.line).range,
+      `Hunk header cannot be recounted: ${refusal.reason}`,
       vscode.DiagnosticSeverity.Warning,
     );
     diagnostic.source = 'hunkydory';
@@ -177,10 +191,19 @@ async function recountCommand(): Promise<void> {
   }
 
   // The command is explicit, so fix the cursor line too.
-  const fixes = computeFixes(documentLines(editor.document));
-  const applied = await applyFixes(editor.document, fixes);
+  const check = checkHeaders(documentLines(editor.document));
+  const applied = await applyFixes(editor.document, check.fixes);
   refreshDiagnostics(editor.document);
 
+  const refused = check.refused.length;
+  if (refused > 0) {
+    vscode.window.showWarningMessage(
+      `Hunky Dory: corrected ${applied}, but could not recount ${refused} hunk header` +
+        `${refused === 1 ? '' : 's'}, starting at line ${check.refused[0].line + 1}: ` +
+        check.refused[0].reason,
+    );
+    return;
+  }
   vscode.window.showInformationMessage(
     applied === 0
       ? 'Hunky Dory: all hunk headers were already correct.'

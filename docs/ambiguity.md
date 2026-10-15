@@ -39,6 +39,12 @@ counting every line. That is deliberate: over-counting makes git reject the
 patch loudly, while under-counting makes it silently apply the wrong content.
 Failing safe means erring large.
 
+The exception is a hunk whose old side starts at 0, as a file creation's does.
+That side must be empty, so a reading that counts a trailing blank into it is
+not a reading at all, and the fallback takes the first one that leaves it
+empty. Over-counting is only the safe direction while the result is still a
+header git can parse.
+
 In practice this is why a correct patch is never rewritten — the tie-break
 reproduces whatever the file already said — while an edited one gets a header
 that is, at worst, conservative.

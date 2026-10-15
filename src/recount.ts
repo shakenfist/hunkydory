@@ -13,6 +13,7 @@ import {
   parseHeader,
   resolveCounts,
   splitPatch,
+  zeroSideWithLines,
 } from './diff';
 
 /** A single header line that disagrees with its body. */
@@ -24,13 +25,46 @@ export interface HeaderFix {
 }
 
 /**
+ * A header we will not rewrite, because the counts its body implies cannot be
+ * written as a valid header.
+ */
+export interface RefusedHeader {
+  /** Line index of the @@ header. */
+  line: number;
+  current: string;
+  reason: string;
+}
+
+/** Every header in a document, sorted into those we can fix and those we must not touch. */
+export interface HeaderCheck {
+  fixes: HeaderFix[];
+  refused: RefusedHeader[];
+}
+
+/**
  * Work out the correct header for every hunk in `lines`.
  *
  * Returns only the headers that need to change, so a caller can apply a
  * minimal edit and leave the user's cursor and undo history alone.
  */
 export function computeFixes(lines: string[]): HeaderFix[] {
+  return checkHeaders(lines).fixes;
+}
+
+/**
+ * As computeFixes, but also report the headers we refused to rewrite.
+ *
+ * A range that starts at line 0 must be empty: the old side of a creation,
+ * the new side of a deletion. resolveCounts already prefers a reading that
+ * keeps it so; if none does, the body really has lines on that side, because
+ * it was edited into something that is no longer a creation or deletion. The
+ * right start is not ours to guess, so the header is left as it is and
+ * reported, where writing it would have produced a patch git rejects only once
+ * someone comes to apply it.
+ */
+export function checkHeaders(lines: string[]): HeaderCheck {
   const fixes: HeaderFix[] = [];
+  const refused: RefusedHeader[] = [];
 
   // Running difference between old-side and new-side line numbering. It
   // accumulates across the hunks of one file and resets at each new file.
@@ -48,7 +82,24 @@ export function computeFixes(lines: string[]): HeaderFix[] {
     }
 
     const body = measureBody(lines, i + 1);
-    const counts = resolveCounts(body, declared.oldCount, declared.newCount);
+    const counts = resolveCounts(body, declared);
+
+    const side = zeroSideWithLines(declared, counts);
+    if (side !== undefined) {
+      const count = side === 'old' ? counts.oldCount : counts.newCount;
+      refused.push({
+        line: i,
+        current: lines[i],
+        reason:
+          `the body has ${count} ${side} line${count === 1 ? '' : 's'}, but the ${side} ` +
+          'side starts at 0 and so must be empty; correct the header by hand',
+      });
+      // The header stays as written, and git will read it that way, so later
+      // hunks in this file are numbered from what it declares.
+      delta += declared.newCount - declared.oldCount;
+      i = body.end;
+      continue;
+    }
 
     let newStart = declared.oldStart + delta;
     if (counts.newCount === 0) {
@@ -86,7 +137,7 @@ export function computeFixes(lines: string[]): HeaderFix[] {
     i = body.end;
   }
 
-  return fixes;
+  return { fixes, refused };
 }
 
 /** Apply computeFixes to a whole document. */

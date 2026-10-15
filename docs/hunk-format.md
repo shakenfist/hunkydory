@@ -25,6 +25,14 @@ identical to git's, which makes round-trip testing useless.
 `oldStart + delta`. Deletion is the mirror image, `-1,N +0,0`: the new side
 starts at 0 because it is empty.
 
+**A range that starts at 0 must be empty.** Line 0 only exists as "before the
+first line", so `-0` with any count but 0 is invalid -- `-0 +1,6` is a corrupt
+patch to git. Trailing blank lines after a creation are therefore never counted
+into it (see [the ambiguous case](ambiguity.md)). If the body still implies old
+lines, Hunky Dory leaves the header alone and reports it rather than writing
+it: the body has stopped being a creation, and the right start is not
+something a recounter can guess.
+
 **git's signature is not a deletion.** `git format-patch` ends its output with:
 
 ```

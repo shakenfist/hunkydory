@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
 import { formatRange, parseHunks, splitPatch } from '../src/diff';
-import { computeFixes, looksLikeDiff, recountText } from '../src/recount';
+import { checkHeaders, computeFixes, looksLikeDiff, recountText } from '../src/recount';
 
 /** Break every count in a patch, leaving the bodies alone. */
 function scramble(patch: string): string {
@@ -274,6 +274,90 @@ describe('computeFixes', () => {
     assert.equal(fixes.length, 1);
     assert.equal(fixes[0].line, 0);
     assert.equal(fixes[0].corrected, '@@ -1,3 +1,3 @@');
+  });
+});
+
+// The shape of issue #80: a file creation as the last hunk of a patch with no
+// format-patch signature, edited so its header no longer matches.
+const creationAtEnd = [
+  'diff --git a/notes.yaml b/notes.yaml',
+  'new file mode 100644',
+  '--- /dev/null',
+  '+++ b/notes.yaml',
+  '@@ -0,0 +1,8 @@',
+  '+---',
+  '+fixes:',
+  '+  - |',
+  '+    Shorter now.',
+];
+
+describe('checkHeaders', () => {
+  test('recounts a file creation at the end of a patch', () => {
+    const text = `${creationAtEnd.join('\n')}\n`;
+    assert.match(recountText(text), /^@@ -0,0 \+1,4 @@$/m);
+  });
+
+  // Counting every line is the usual fallback, but here it would give an old
+  // side starting at 0 a line, which git rejects as a corrupt patch.
+  test('leaves trailing blanks out of a creation rather than make it invalid', () => {
+    const text = `${creationAtEnd.join('\n')}\n\n`;
+    const fixed = recountText(text);
+    assert.match(fixed, /^@@ -0,0 \+1,4 @@$/m);
+    assert.ok(fixed.endsWith('Shorter now.\n\n'));
+  });
+
+  // A caller that reads an editor's lines with lineAt(0..lineCount) hands us
+  // an empty line after the final newline. It must be read as the gap after
+  // the hunk, not as part of it, or the header becomes `-0 +1,5`.
+  test('reads a phantom final empty line as outside a creation', () => {
+    const check = checkHeaders([...creationAtEnd, '']);
+    assert.equal(check.fixes[0].corrected, '@@ -0,0 +1,4 @@');
+    assert.deepEqual(check.refused, []);
+  });
+
+  test('repairs a header that is already impossible', () => {
+    // Before, the tie-break preserved this: ignoring no trailing blanks
+    // reproduces its counts exactly.
+    const lines = [...creationAtEnd.slice(0, 4), '@@ -0 +1,5 @@', ...creationAtEnd.slice(5), ''];
+    assert.equal(checkHeaders(lines).fixes[0].corrected, '@@ -0,0 +1,4 @@');
+  });
+
+  test('refuses to give an old side starting at 0 any lines', () => {
+    const lines = [...creationAtEnd.slice(0, 6), ' context', ...creationAtEnd.slice(6)];
+    const check = checkHeaders(lines);
+    assert.deepEqual(check.fixes, []);
+    assert.equal(check.refused.length, 1);
+    assert.equal(check.refused[0].line, 4);
+    assert.equal(check.refused[0].current, '@@ -0,0 +1,8 @@');
+  });
+
+  test('leaves trailing blanks out of a deletion rather than make it invalid', () => {
+    const text = ['--- a/gone.txt', '+++ /dev/null', '@@ -1,9 +0,0 @@', '-a', '-b', '-c', '', ''];
+    assert.match(recountText(text.join('\n')), /^@@ -1,3 \+0,0 @@$/m);
+  });
+
+  test('refuses to give a new side starting at 0 any lines', () => {
+    const lines = ['--- a/gone.txt', '+++ /dev/null', '@@ -1,9 +0,0 @@', '-a', '+b'];
+    const check = checkHeaders(lines);
+    assert.deepEqual(check.fixes, []);
+    assert.equal(check.refused[0].line, 2);
+  });
+
+  test('still fixes the other hunks in a document with a refusal', () => {
+    const lines = [
+      '@@ -1,9 +1,9 @@',
+      ' alpha',
+      '-beta',
+      '+gamma',
+      ' delta',
+      ...creationAtEnd.slice(0, 6),
+      ' context',
+      ...creationAtEnd.slice(6),
+    ];
+    const check = checkHeaders(lines);
+    assert.equal(check.fixes.length, 1);
+    assert.equal(check.fixes[0].corrected, '@@ -1,3 +1,3 @@');
+    assert.equal(check.refused.length, 1);
   });
 });
 
