@@ -17,43 +17,11 @@
       "author": "mikal"
     },
     {
-      "path": "docs/ambiguity.md",
-      "author": "mikal"
-    },
-    {
-      "path": "docs/hunk-format.md",
-      "author": "mikal"
-    },
-    {
-      "path": "docs",
-      "author": "mikal"
-    },
-    {
-      "path": "src/diff.ts",
-      "author": "mikal"
-    },
-    {
-      "path": "src/extension.ts",
-      "author": "mikal"
-    },
-    {
-      "path": "src/recount.ts",
-      "author": "mikal"
-    },
-    {
-      "path": "src",
-      "author": "mikal"
-    },
-    {
       "path": "test/corpus.ts",
       "author": "mikal"
     },
     {
       "path": "biome.json",
-      "author": "mikal"
-    },
-    {
-      "path": "README.md",
       "author": "mikal"
     },
     {
@@ -65,27 +33,11 @@
       "author": "mikal"
     },
     {
-      "path": "test/recount.test.ts",
-      "author": "mikal"
-    },
-    {
       "path": "test/fixtures/crlf-line-endings.patch",
       "author": "mikal"
     },
     {
-      "path": "test/fixtures",
-      "author": "mikal"
-    },
-    {
       "path": "tools/marketplace-profile-id.sh",
-      "author": "mikal"
-    },
-    {
-      "path": "AGENTS.md",
-      "author": "mikal"
-    },
-    {
-      "path": "ARCHITECTURE.md",
       "author": "mikal"
     },
     {
@@ -102,10 +54,6 @@
     },
     {
       "path": "test/scripts.test.ts",
-      "author": "mikal"
-    },
-    {
-      "path": "test",
       "author": "mikal"
     },
     {
