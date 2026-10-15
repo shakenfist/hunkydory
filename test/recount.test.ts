@@ -205,8 +205,8 @@ describe('a blank before the next hunk', () => {
   });
 
   test('counts several blanks of either kind', () => {
-    const lines = recountText(patch('@@ -1,2 +1,2 @@').replace(' \n@@', '\n \n@@'));
-    assert.match(lines, /^@@ -1,4 \+1,4 @@$/m);
+    const text = recountText(patch('@@ -1,2 +1,2 @@').replace(' \n@@', '\n \n@@'));
+    assert.match(text, /^@@ -1,4 \+1,4 @@$/m);
   });
 
   test('leaves a blank out of a hunk with no other context', () => {

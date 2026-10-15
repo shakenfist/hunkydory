@@ -177,11 +177,13 @@ export function measureBody(lines: string[], start: number): BodyCounts {
   // line up to the next header as part of this hunk, and stops at nothing in
   // between, so a reading that leaves them out is a patch git rejects.
   //
-  // Unless the hunk has no other context with content, as in a patch made
-  // with -U0, or with -U1 between two blank lines. A blank counted in would
-  // then be all git had to find the hunk by, along with other blanks, and it
-  // would apply it silently at the first matching run of blank lines. Left
-  // out, git rejects the patch, and loud is the better way to be wrong.
+  // Unless the hunk has no context with content, as in a patch made with
+  // -U0, or with -U1 between two blank lines. Counted in, the blank would be
+  // all the context git had to place the hunk by, and an insertion would go
+  // silently at the first matching run of blank lines. A deleted line does
+  // pin a hunk too, but the rule asks for context and goes no further than
+  // it must: left out, the blank makes git reject the patch, and loud is the
+  // better way to be wrong.
   let trailing = perLine.length;
   while (trailing > 0 && perLine[trailing - 1].line.trim() === '') {
     trailing -= 1;

@@ -1,0 +1,21 @@
+A git diff whose first hunk ends in blank context lines right before the
+next @@. git reads every line up to a header as part of the hunk before it,
+so those blanks are not ambiguous and must come back counted in after the
+counts are scrambled. See test/corpus.ts.
+
+diff --git a/mod.py b/mod.py
+index 9418415..b81cef5 100644
+--- a/mod.py
++++ b/mod.py
+@@ -1,4 +1,4 @@
+ def first():
+-    return 1
++    return 10
+ 
+ 
+@@ -8,4 +8,4 @@ def second():
+ 
+ def third():
+-    return 3
++    return 30
+ 

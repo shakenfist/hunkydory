@@ -52,18 +52,20 @@ said. Without this, a blank typed at the end of such a hunk was left out by the
 tie-break -- the old header still matched without it -- and git rejected the
 patch with `patch fragment without header`.
 
-That holds only for a hunk with context of its own. A hunk with none, as in a
-patch made with `git diff -U0`, or whose only context is itself blank, would
-be found by blank lines alone, and git would apply it silently at the first
-run of blank lines it came to. There the old reading stands, and git rejects
-the patch; a loud failure is the better way to be wrong.
+That holds only for a hunk with context of its own. In a hunk with none, as in
+a patch made with `git diff -U0`, or whose only context is itself blank, the
+counted blank would be all the context git had, and an insertion would go
+silently at the first run of blank lines it came to. A deleted line pins a
+hunk too, but the rule asks for context and goes no further than it must:
+there the old reading stands, and git rejects the patch, which is the better
+way to be wrong.
 
 Even with context, counting the blank in means the hunk only fits where the
 file has a blank line after it, so git searches for somewhere that does. That
 is safe exactly as far as the rest of the hunk's context is distinctive, which
 is why a stray blank is still best deleted rather than left to a recount.
 
-In practice this is why a correct patch is never rewritten — the tie-break
+In practice this is why a patch git accepts is never rewritten — the tie-break
 reproduces whatever the file already said — while an edited one gets a header
 that is, at worst, conservative.
 
