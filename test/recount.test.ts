@@ -77,6 +77,36 @@ describe('recountText', () => {
     assert.match(recountText(patch), /^@@ -1,2 \+0,0 @@$/m);
   });
 
+  // git diff -U0 output: with no context, a side is empty in the middle of a
+  // file too, not only at its ends. An empty range names the line before it.
+  // The same hunks as test/fixtures/empty-sides-u0.patch, which git generated.
+  const unidiffZero = [
+    '--- a/lines.txt',
+    '+++ b/lines.txt',
+    '@@ -3,0 +4,2 @@ three',
+    '+inserted-a',
+    '+inserted-b',
+    '@@ -8 +9,0 @@ seven',
+    '-eight',
+    '@@ -12,0 +14 @@ twelve',
+    '+appended',
+    '',
+  ].join('\n');
+
+  test('starts the new side one later after an empty old side', () => {
+    const out = recountText(scramble(unidiffZero));
+    assert.match(out, /^@@ -3,0 \+4,2 @@ three$/m);
+    assert.match(out, /^@@ -12,0 \+14 @@ twelve$/m);
+  });
+
+  test('starts an empty new side one earlier', () => {
+    assert.match(recountText(scramble(unidiffZero)), /^@@ -8 \+9,0 @@ seven$/m);
+  });
+
+  test('leaves a correct patch with empty sides untouched', () => {
+    assert.equal(recountText(unidiffZero), unidiffZero);
+  });
+
   test('does not count the git format-patch signature as a deletion', () => {
     const patch = ['@@ -1,1 +1,1 @@', '-alpha', '+beta', '-- ', '2.47.3', ''].join('\n');
     assert.match(recountText(patch), /^@@ -1 \+1 @@$/m);
@@ -339,6 +369,25 @@ describe('checkHeaders', () => {
   test('refuses to give a new side starting at 0 any lines', () => {
     const lines = ['--- a/gone.txt', '+++ /dev/null', '@@ -1,9 +0,0 @@', '-a', '+b'];
     const check = checkHeaders(lines);
+    assert.deepEqual(check.fixes, []);
+    assert.equal(check.refused[0].line, 2);
+  });
+
+  test('refuses a start before the first line, as hunks out of order give', () => {
+    // As written, git applies this. The running offset assumes hunks in
+    // order, and would put the second one's insertion at the top of the file.
+    const lines = ['--- a/f', '+++ b/f', '@@ -10,5 +10,0 @@', '-a', '-b', '-c', '-d', '-e'];
+    const check = checkHeaders([...lines, '@@ -4,0 +5 @@', '+y']);
+    assert.deepEqual(
+      check.fixes.map((fix) => fix.corrected),
+      ['@@ -10,5 +9,0 @@'],
+    );
+    assert.equal(check.refused.length, 1);
+    assert.equal(check.refused[0].line, 8);
+  });
+
+  test('refuses a hunk with no lines on either side', () => {
+    const check = checkHeaders(['--- a/f', '+++ b/f', '@@ -5,0 +9,0 @@', 'diff --git a/g b/g']);
     assert.deepEqual(check.fixes, []);
     assert.equal(check.refused[0].line, 2);
   });

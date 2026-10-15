@@ -21,9 +21,20 @@ Every one of these broke a real patch during development.
 always emits the long form produces diffs that are correct but not byte
 identical to git's, which makes round-trip testing useless.
 
-**File creation is `-0,0 +1,N`.** The new side starts at 1, not at
-`oldStart + delta`. Deletion is the mirror image, `-1,N +0,0`: the new side
-starts at 0 because it is empty.
+**An empty range names the line before it.** A side with lines starts at its
+first line, but an empty side starts at the line it comes after. So file
+creation is `-0,0 +1,N` and deletion is its mirror image, `-1,N +0,0`. With
+context lines that only happens at the ends of a file, but a patch made with
+`git diff -U0` has empty sides anywhere: inserting two lines after line 3 is
+`-3,0 +4,2`, and deleting line 8 is `-8 +7,0`. Recounting moves the new-side
+start by one for each empty side; computing `oldStart + delta` for every hunk
+silently shifts such a hunk by a line, and git applies it there without
+complaint.
+
+The offset assumes hunks come in order, as git writes them. In a patch
+assembled by hand they may not, and the start it gives can then fall before
+the first line; Hunky Dory reports such a header rather than writing it, and
+the same goes for a hunk left with no lines on either side.
 
 **A range that starts at 0 must be empty.** Line 0 only exists as "before the
 first line", so `-0` with any count but 0 is invalid -- `-0 +1,6` is a corrupt
@@ -52,8 +63,9 @@ line above it.
 
 **Offsets accumulate within a file and reset between files.** The new-side
 start of each hunk is its old-side start plus the running total of
-`(additions - deletions)` from earlier hunks in the same file. That total must
-reset at each `--- ` line or the second file in a patch comes out shifted.
+`(additions - deletions)` from earlier hunks in the same file, adjusted by one
+for an empty side as above. That total must reset at each `--- ` line or the
+second file in a patch comes out shifted.
 
 ## Why the direction of an error matters
 
