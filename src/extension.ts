@@ -72,23 +72,62 @@ function excludeCursorLine(fixes: HeaderFix[], editor: vscode.TextEditor | undef
   return fixes.filter((fix) => !occupied.has(fix.line));
 }
 
-async function applyFixes(document: vscode.TextDocument, fixes: HeaderFix[]): Promise<number> {
+/**
+ * Replace the header lines named by `fixes`.
+ *
+ * With `joinUndoOf`, the replacement goes into that editor's open undo step
+ * rather than one of its own. That is how a live recount should land: the
+ * header follows from the edit that prompted it, so one undo has to take both
+ * back. As a step of its own it is the first thing undo reverts, and reverting
+ * a header to disagree with its body is exactly what a recount then puts back
+ * -- which is how undo got stuck. VS Code decides what the open step is; if it
+ * has already closed the user's (because the cursor moved, say), this becomes
+ * a step of its own after all, and the undo/redo check in activate is what
+ * stops the two fighting.
+ */
+async function applyFixes(
+  document: vscode.TextDocument,
+  fixes: HeaderFix[],
+  joinUndoOf?: vscode.TextEditor,
+): Promise<number> {
   if (fixes.length === 0) {
     return 0;
   }
 
-  const key = document.uri.toString();
-  const edit = new vscode.WorkspaceEdit();
-  for (const fix of fixes) {
-    // Replace only the header line, so the cursor and undo history elsewhere
-    // in the file are left alone.
-    const line = document.lineAt(fix.line);
-    edit.replace(document.uri, line.range, fix.corrected);
-  }
+  // Replace only the header line, so the cursor and undo history elsewhere
+  // in the file are left alone.
+  const replacements = fixes.map((fix) => ({
+    range: document.lineAt(fix.line).range,
+    text: fix.corrected,
+  }));
 
+  const key = document.uri.toString();
   applying.add(key);
   try {
-    const ok = await vscode.workspace.applyEdit(edit);
+    let ok: boolean;
+    if (joinUndoOf) {
+      // Rejects rather than returning false if the editor closes under us.
+      // Either way nothing was written, and the next edit or save recounts.
+      ok = await joinUndoOf
+        .edit(
+          (builder) => {
+            for (const r of replacements) {
+              builder.replace(r.range, r.text);
+            }
+          },
+          { undoStopBefore: false, undoStopAfter: false },
+        )
+        .then(
+          (applied) => applied,
+          () => false,
+        );
+    } else {
+      const edit = new vscode.WorkspaceEdit();
+      for (const r of replacements) {
+        edit.replace(document.uri, r.range, r.text);
+      }
+      ok = await vscode.workspace.applyEdit(edit);
+    }
     return ok ? fixes.length : 0;
   } finally {
     applying.delete(key);
@@ -141,12 +180,18 @@ function refreshStatusBar(editor: vscode.TextEditor | undefined): void {
   statusBar.show();
 }
 
-function scheduleRecount(document: vscode.TextDocument): void {
+function cancelRecount(document: vscode.TextDocument): void {
   const key = document.uri.toString();
   const existing = timers.get(key);
   if (existing) {
     clearTimeout(existing);
+    timers.delete(key);
   }
+}
+
+function scheduleRecount(document: vscode.TextDocument): void {
+  const key = document.uri.toString();
+  cancelRecount(document);
   timers.set(
     key,
     setTimeout(async () => {
@@ -154,9 +199,15 @@ function scheduleRecount(document: vscode.TextDocument): void {
       if (document.isClosed) {
         return;
       }
-      const editor = vscode.window.visibleTextEditors.find((e) => e.document === document);
+      // The active editor first: with the document open in two splits, it is
+      // the one being typed in, whose cursor line excludeCursorLine must see.
+      const active = vscode.window.activeTextEditor;
+      const editor =
+        active?.document === document
+          ? active
+          : vscode.window.visibleTextEditors.find((e) => e.document === document);
       const fixes = excludeCursorLine(computeFixes(documentLines(document)), editor);
-      await applyFixes(document, fixes);
+      await applyFixes(document, fixes, editor);
       refreshDiagnostics(document);
     }, DEBOUNCE_MS),
   );
@@ -175,6 +226,11 @@ async function recountCommand(): Promise<void> {
     vscode.window.showWarningMessage('Hunky Dory: this does not look like a patch file.');
     return;
   }
+
+  // The command supersedes a live recount still waiting on its debounce. Left
+  // pending, that would land a moment later in the user's undo step, after
+  // this one, and an undo would no longer take back what the command did.
+  cancelRecount(editor.document);
 
   // The command is explicit, so fix the cursor line too.
   const fixes = computeFixes(documentLines(editor.document));
@@ -199,6 +255,19 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeTextDocument((event) => {
       const document = event.document;
       if (!isPatch(document) || applying.has(document.uri.toString())) {
+        return;
+      }
+      if (
+        event.reason === vscode.TextDocumentChangeReason.Undo ||
+        event.reason === vscode.TextDocumentChangeReason.Redo
+      ) {
+        // An undo or redo. Recounting after one re-applies the header fix the
+        // user just took back, which clears the redo stack and leaves undo
+        // unable to get past that fix to the edit behind it. Whatever undo
+        // restores was a state the user had, so leave it be -- including a
+        // recount still pending from before it -- and just say what is stale.
+        cancelRecount(document);
+        refreshDiagnostics(document);
         return;
       }
       if (config().get<string>('mode', 'live') === 'live') {
