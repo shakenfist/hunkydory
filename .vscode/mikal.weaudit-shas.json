@@ -69,10 +69,6 @@
       "sha": "2468e97c69419c12ec2afd927db7978ba1dd6583",
       "date": "2026-09-22"
     },
-    "docs/ambiguity.md": {
-      "sha": "0b6d0b9ec872d98eb6aca903bc74795d527e3380",
-      "date": "2026-10-16"
-    },
     "docs/hunk-format.md": {
       "sha": "4d12f2aaee2103ee2326387004e78e330b2dc4aa",
       "date": "2026-10-16"
@@ -80,10 +76,6 @@
     "docs/index.md": {
       "sha": "8d7b953fb531274a1c50cf06ccd1ba3b36a01571",
       "date": "2026-09-17"
-    },
-    "src/diff.ts": {
-      "sha": "f50a8a0dbc8f5afe53bdb33f65e896acb54ccbb3",
-      "date": "2026-10-16"
     },
     "src/extension.ts": {
       "sha": "db8cf5f550a469069c594638bf665e7ad0fe223e",
@@ -111,10 +103,6 @@
     },
     "test/fixtures/zero-start-sides.patch": {
       "sha": "3076fe5d8c32c1c30a16244d90d849bc9b333fba",
-      "date": "2026-10-16"
-    },
-    "test/recount.test.ts": {
-      "sha": "c9f63304c8e9f596d45b78d27b1aa7026e2497ed",
       "date": "2026-10-16"
     },
     "test/scripts.test.ts": {
