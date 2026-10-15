@@ -6,9 +6,10 @@
 # a throwaway profile and disables every other extension, so neither the
 # user's settings nor their extensions can change the outcome.
 #
-# Not part of pre-commit or CI yet: it opens a window, so it needs a
-# display (run under `xvfb-run -a` on a headless machine) and a VS Code
-# install. VSCODE_BIN overrides where that install is.
+# It opens a window, so it needs a display (run under `xvfb-run -a` on a
+# headless machine) and a VS Code install; VSCODE_BIN overrides where that
+# install is. CI runs it through tools/editor-test-docker.sh, which brings
+# both in a container.
 
 set -e
 
@@ -49,4 +50,4 @@ timeout 300 "${VSCODE_BIN}" \
     --user-data-dir="${PROFILE}/user" \
     --extensions-dir="${PROFILE}/extensions" \
     --extensionDevelopmentPath="${PROJECT_ROOT}" \
-    --extensionTestsPath="${PROJECT_ROOT}/out/test/editor/undo.js"
+    --extensionTestsPath="${PROJECT_ROOT}/out/test/editor/index.js"

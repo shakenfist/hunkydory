@@ -1,10 +1,7 @@
 /**
  * Undo and redo against a real editor host.
  *
- * Run by tools/editor-test.sh, never by `npm test`: this needs the vscode
- * module, which only exists inside an extension host, and an undo stack, which
- * only exists inside an editor. The file name deliberately does not end in
- * .test.ts, so node's own runner never picks it up.
+ * Run through index.ts: an undo stack only exists inside an editor.
  *
  * The bug this guards against (#79): a live recount was an undo step of its
  * own, so undo reverted the header, the recount put it straight back, and the
@@ -65,7 +62,7 @@ async function undo(document: vscode.TextDocument): Promise<string> {
   return document.getText();
 }
 
-async function liveFixJoinsTheEditsUndoStep(): Promise<void> {
+export async function liveFixJoinsTheEditsUndoStep(): Promise<void> {
   const editor = await freshEditor();
   const document = editor.document;
   const original = document.getText();
@@ -81,7 +78,7 @@ async function liveFixJoinsTheEditsUndoStep(): Promise<void> {
   assert.equal(document.getText(), fixed, 'redo puts both back');
 }
 
-async function undoNeverRecounts(): Promise<void> {
+export async function undoNeverRecounts(): Promise<void> {
   // The explicit command always takes an undo step of its own, which is the
   // case the undo check exists for: VS Code can also close the user's step
   // before a live fix lands, but not on demand.
@@ -96,20 +93,4 @@ async function undoNeverRecounts(): Promise<void> {
 
   assert.equal(await undo(document), edited, 'the first undo reverts the header, for good');
   assert.equal(await undo(document), original, 'the second undo reaches the edit');
-}
-
-/** Entry point for --extensionTestsPath. A rejection fails the run. */
-export async function run(): Promise<void> {
-  const tests: Array<[string, () => Promise<void>]> = [
-    ['a live fix joins the undo step of the edit that prompted it', liveFixJoinsTheEditsUndoStep],
-    ['undo never prompts a recount', undoNeverRecounts],
-  ];
-  for (const [name, test] of tests) {
-    try {
-      await test();
-      console.log(`ok   ${name}`);
-    } finally {
-      await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
-    }
-  }
 }

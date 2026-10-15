@@ -243,6 +243,39 @@ jobs:
           export PATH="${{ runner.temp }}/venv-lint/bin:$PATH"
           pre-commit run --all-files --show-diff-on-failure
 
+  # The tests that need a real VS Code: undo and redo, and the editor's
+  # recount against recountText over edited patches. Its own job because
+  # it needs a display, Electron's libraries and a VS Code install, which
+  # tools/editor-test-docker.sh brings in a container, and because that
+  # container starts Electron with --no-sandbox. So it runs on the
+  # ephemeral docker lane release.yml uses rather than on static, whose
+  # state outlives the job. Not a dependency of automated_reviewer: a
+  # review is worth having before this slower job finishes.
+  editor-tests:
+    name: Editor tests
+    # No fork pull requests, and the path filter fails open; see the
+    # header and build-test-lint.
+    needs: [check_paths]
+    if: |
+      !cancelled()
+      && (github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository)
+      && needs.check_paths.outputs.code_changed != 'false'
+    runs-on: [self-hosted, vm, debian-13-docker, s]
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-editor-tests
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Run the editor tests in a container
+        run: tools/editor-test-docker.sh
+
   automated_reviewer:
     name: "Automated reviewer"
     needs: [build-test-lint, pre-commit]

@@ -34,8 +34,8 @@ pre-commit run --all-files
 
 That one command is `tools/check-node.sh check` (build with `tsc`, unit
 tests with `node --test`, and `biome check`), plus shellcheck over
-`tools/`, gitleaks, and skillsaw. There is no CI workflow yet, so this
-local run is the only gate a pull request gets until that lands.
+`tools/`, gitleaks, and skillsaw. CI runs the same, and the editor tests
+in a container besides (`tools/editor-test-docker.sh`).
 
 Then, separately, the corpus regression (not part of `pre-commit` because
 it depends on a sibling checkout that will not exist on every machine —
@@ -44,6 +44,10 @@ see the note in `docs/index.md`'s neighbour `test/corpus.ts`):
 ```bash
 HUNKYDORY_CORPUS=/path/to/kerbside-patches/_patches npm run corpus
 ```
+
+If the change touches counting behaviour, run the edit fuzzer over the same
+corpus too (`HUNKYDORY_CORPUS=... npm run fuzz`, see `docs/testing.md`); a
+clean run of the 2000 cases it defaults to is the bar.
 
 Skip this only if you have no such checkout to hand; say so explicitly
 rather than silently omitting it, since it is what would have caught most
