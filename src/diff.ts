@@ -123,6 +123,7 @@ function startsFile(line: string): boolean {
  * whitespace-only lines are treated as falling outside the hunk.
  *
  * Index 0 is "count every line"; index k is "ignore the last k blank lines".
+ * Before another hunk with context of its own, only index 0 exists.
  * See resolveCounts for why more than one answer exists.
  */
 export interface BodyCounts {
@@ -172,9 +173,29 @@ export function measureBody(lines: string[], start: number): BodyCounts {
   }
 
   const byTrailingBlanks = [{ oldCount, newCount }];
+  // Right before another hunk the blanks are not ambiguous: git reads every
+  // line up to the next header as part of this hunk, and stops at nothing in
+  // between, so a reading that leaves them out is a patch git rejects.
+  //
+  // Unless the hunk has no context with content, as in a patch made with
+  // -U0, or with -U1 between two blank lines. Counted in, the blank would be
+  // all the context git had to place the hunk by, and an insertion would go
+  // silently at the first matching run of blank lines. A deleted line does
+  // pin a hunk too, but the rule asks for context and goes no further than
+  // it must: left out, the blank makes git reject the patch, and loud is the
+  // better way to be wrong.
+  let trailing = perLine.length;
+  while (trailing > 0 && perLine[trailing - 1].line.trim() === '') {
+    trailing -= 1;
+  }
+  const anchored = perLine
+    .slice(0, trailing)
+    .some((entry) => entry.old && entry.nw && entry.line.trim() !== '');
+  const beforeHunk = i < lines.length && HUNK_RE.test(lines[i]) && anchored;
+  const last = beforeHunk ? -1 : perLine.length - 1;
   let o = oldCount;
   let n = newCount;
-  for (let k = perLine.length - 1; k >= 0; k -= 1) {
+  for (let k = last; k >= 0; k -= 1) {
     const entry = perLine[k];
     if (entry.line.trim() !== '') {
       break;
@@ -194,6 +215,8 @@ export function measureBody(lines: string[], start: number): BodyCounts {
  * consuming exactly as many lines as the header declares and ignoring whatever
  * follows, so a blank line between the last real body line and the next
  * `diff --git` may or may not belong to the hunk. The body alone cannot say.
+ * Before another hunk it usually can, and measureBody then offers only the one
+ * reading.
  *
  * We break the tie with the header we were given: if ignoring k trailing
  * blanks makes both sides agree with the declared counts, that was the
