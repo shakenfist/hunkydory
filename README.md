@@ -42,7 +42,7 @@ that one is left alone until you move away, so it never fights you.
 | Setting | Default | Meaning |
 |---|---|---|
 | `hunkydory.mode` | `live` | `live`, `onSave`, or `manual`. |
-| `hunkydory.diagnostics` | `true` | Report stale headers as warnings. |
+| `hunkydory.diagnostics` | `true` | Report stale headers, and any that cannot be recounted, as warnings. |
 | `hunkydory.statusBar` | `true` | Show the current hunk's counts. |
 
 ## Correctness

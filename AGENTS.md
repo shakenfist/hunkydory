@@ -75,7 +75,9 @@ are easy to miss, each of which broke a real patch:
 - Lines reach the rules with their terminators already removed. Split a patch
   string with `splitPatch`, never `split('\n')`: the leftover CR of a CRLF
   file is content as far as the rules are concerned, and reading it as such
-  made every CRLF patch a silent no-op for four pull requests.
+  made every CRLF patch a silent no-op for four pull requests. The same goes
+  for an editor document: `lineAt(0..lineCount)` ends with a phantom empty
+  line after the final newline, which corrupted the last hunk of a file.
 
 A header that is too large makes git reject a patch loudly. One that is too
 small makes git *silently truncate the hunk* and apply the wrong content. When

@@ -1,0 +1,35 @@
+A file deletion and a file creation, each followed by a blank line that
+sits outside its hunk. A side that starts at 0 must be empty, so those
+blanks are not ambiguous here even after the counts are scrambled.
+
+diff --git a/a-gone.txt b/a-gone.txt
+deleted file mode 100644
+index 4cb29ea..0000000
+--- a/a-gone.txt
++++ /dev/null
+@@ -1,3 +0,0 @@
+-one
+-two
+-three
+
+diff --git a/m-kept.txt b/m-kept.txt
+index 7a28df3..3cc64f7 100644
+--- a/m-kept.txt
++++ b/m-kept.txt
+@@ -1,4 +1,4 @@
+ alpha
+-beta
++BETA
+ gamma
+ delta
+diff --git a/z-new.yaml b/z-new.yaml
+new file mode 100644
+index 0000000..636c050
+--- /dev/null
++++ b/z-new.yaml
+@@ -0,0 +1,4 @@
++---
++fixes:
++  - |
++    A release note.
+
