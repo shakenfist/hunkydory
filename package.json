@@ -72,6 +72,7 @@
     "watch": "tsc -p . --watch",
     "test": "tsc -p . && node --test out/test/*.test.js",
     "corpus": "tsc -p . && node out/test/corpus.js",
+    "fuzz": "tsc -p . && node out/test/fuzz.js",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "vscode:prepublish": "npm run build",

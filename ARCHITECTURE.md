@@ -14,7 +14,8 @@ they agree with the body beneath them.
 | `test/corpus.ts` | Round-trip check over the committed fixtures and a directory of real patches. |
 | `test/scripts.test.ts` | Exercises the `tools/` release scripts' validation and failure paths, without docker. |
 | `test/fixtures/` | Patches that must survive recounting untouched, covering what a real patch set does not contain. |
-| `test/editor/` | Undo and redo against a real editor host, run by `tools/editor-test.sh` rather than `npm test`. |
+| `test/fuzz.ts`, `test/fuzz/` | Edits correct patches as a person might, recounts, and has git judge the result. |
+| `test/editor/` | Undo, redo, and the editor's recount against `recountText`, in a real editor host; run by `tools/editor-test.sh` rather than `npm test`. |
 
 The split matters: the interesting logic is pure string-to-string, so it runs
 under a plain `node --test` without an editor host. Only scheduling and edit

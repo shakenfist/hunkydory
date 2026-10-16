@@ -32,17 +32,20 @@ Guidance for agents working in this repository. See
 ## Testing
 
 ```bash
-npm test                                          # unit tests
+npm test                                          # unit tests, and a fuzz slice
 HUNKYDORY_CORPUS=/path/to/_patches npm run corpus # real-world regression
+HUNKYDORY_CORPUS=/path/to/_patches npm run fuzz   # edit fuzzer, judged by git
 tools/check-package-contents.sh                   # what the .vsix would hold
-tools/editor-test.sh                              # undo/redo in a real VS Code
+tools/editor-test.sh                              # real VS Code (needs a display)
 ```
 
-`tools/editor-test.sh` runs `test/editor/` in a throwaway VS Code profile. It
-needs a display and an installed VS Code (`VSCODE_BIN`), so it is not in
-pre-commit or CI yet; run it if you touch how `extension.ts` applies edits.
+[docs/testing.md](docs/testing.md) has what each checks and how to replay a
+fuzzer failure. CI runs the editor tests in a container
+(`tools/editor-test-docker.sh`); run them yourself if you touch how
+`extension.ts` reads a document or applies edits.
 
-The first two must pass before a commit. `pre-commit run --all-files` covers
+The first two must pass before a commit, and the fuzzer must come back clean if
+you change counting behaviour. `pre-commit run --all-files` covers
 `npm test` (via `tools/check-node.sh`, which also runs the build and Biome)
 but not the corpus, whose external half depends on a sibling checkout — run
 that by hand. The packaging check runs in CI on every pull request; run it

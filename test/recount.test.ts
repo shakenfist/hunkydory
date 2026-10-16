@@ -103,6 +103,15 @@ describe('recountText', () => {
     assert.match(recountText(scramble(unidiffZero)), /^@@ -8 \+9,0 @@ seven$/m);
   });
 
+  test('computes empty-side starts rather than keeping the declared ones', () => {
+    // scramble keeps each declared start, so this gives every hunk a wrong one.
+    const wrong = unidiffZero.replace(/\+\d+(,\d+)? @@/g, '+1,9 @@');
+    const out = recountText(wrong);
+    assert.match(out, /^@@ -3,0 \+4,2 @@ three$/m);
+    assert.match(out, /^@@ -8 \+9,0 @@ seven$/m);
+    assert.match(out, /^@@ -12,0 \+14 @@ twelve$/m);
+  });
+
   test('leaves a correct patch with empty sides untouched', () => {
     assert.equal(recountText(unidiffZero), unidiffZero);
   });

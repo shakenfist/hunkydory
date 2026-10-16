@@ -1,0 +1,61 @@
+From 8335843e7bcc31a63003fc16cd437b632f672c1b Mon Sep 17 00:00:00 2001
+From: Example Author <author@example.com>
+Date: Thu, 1 Jan 2026 00:00:00 +0000
+Subject: [PATCH] Adjust settings and notes.
+
+A commit for a fixture: two hunks in one file and a change at the end of a file with no final newline.
+---
+ config.py | 6 +++---
+ notes.txt | 5 +++--
+ 2 files changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/config.py b/config.py
+index eab82ed..26a1e5c 100644
+--- a/config.py
++++ b/config.py
+@@ -2,12 +2,13 @@ SETTING_1 = 1
+ SETTING_2 = 2
+ SETTING_3 = 3
+ SETTING_4 = 4
+-SETTING_5 = 5
++SETTING_5 = 500
+ SETTING_6 = 6
+ SETTING_7 = 7
+ SETTING_8 = 8
+ SETTING_9 = 9
+ SETTING_10 = 10
++NEW_AFTER_10 = True
+ SETTING_11 = 11
+ SETTING_12 = 12
+ SETTING_13 = 13
+@@ -27,13 +28,12 @@ SETTING_26 = 26
+ SETTING_27 = 27
+ SETTING_28 = 28
+ SETTING_29 = 29
+-SETTING_30 = 30
++SETTING_31 = 31  # changed
+ SETTING_31 = 31
+ SETTING_32 = 32
+ SETTING_33 = 33
+ SETTING_34 = 34
+ SETTING_35 = 35
+-SETTING_36 = 36
+ SETTING_37 = 37
+ SETTING_38 = 38
+ SETTING_39 = 39
+diff --git a/notes.txt b/notes.txt
+index b7a5282..4bee021 100644
+--- a/notes.txt
++++ b/notes.txt
+@@ -1,3 +1,4 @@
+ first
+-second
+-third
+\ No newline at end of file
++second, revised
++third
++fourth
+\ No newline at end of file
+-- 
+2.47.3
+

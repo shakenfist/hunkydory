@@ -72,6 +72,8 @@ HUNKYDORY_CORPUS=/path/to/patches npm run corpus # regression corpus
 - [The ambiguous case](https://github.com/shakenfist/hunkydory/blob/develop/docs/ambiguity.md) --
   why one blank line cannot be resolved from the body alone, and what we do
   about it.
+- [Testing](https://github.com/shakenfist/hunkydory/blob/develop/docs/testing.md) -- the
+  tests, the corpus, and the edit fuzzer that has git judge an edited patch.
 - [Architecture](https://github.com/shakenfist/hunkydory/blob/develop/ARCHITECTURE.md) -- how the
   pieces fit together.
 
