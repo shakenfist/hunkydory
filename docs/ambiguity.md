@@ -42,10 +42,13 @@ Failing safe means erring large.
 Except for a hunk that cannot own its trailing blanks. git and diff write
 context above a hunk wherever there is a line to write, so a hunk with no
 context at all above its trailing blanks, starting below the first line, was
-made with `git diff -U0`, which writes none below it either. Its trailing
-blanks are the gap before whatever follows, and they are left out whatever
-the header says. Counted in, they would be all git had to place the hunk by:
-an edited `-U0` insertion recounted that way was applied by
+made with `git diff -U0`, which writes none below it either. A header such as
+`-1,0 +2` starts below it too, since an empty side names the line before it,
+and is the one place the header has to say so: its body can be the same as
+that of an insertion before line 1 whose context is three blank lines. Its
+trailing blanks are the gap before whatever follows, and they are left out
+whatever the header says. Counted in, they would be all git had to place the
+hunk by: an edited `-U0` insertion recounted that way was applied by
 `git apply --unidiff-zero` three lines from where its header said, without a
 word. Not even a header that already counts them in is kept, because an edit
 can make that reading match the old header by chance.
@@ -89,9 +92,9 @@ is safe exactly as far as the rest of the hunk's context is distinctive, which
 is why a stray blank is still best deleted rather than left to a recount.
 
 In practice this is why trailing blanks never get a patch git accepts
-rewritten, `-U0` hunks aside — the tie-break reproduces whatever the file already said — while an
-edited one gets a header that is, at worst, conservative, wherever the hunk
-could own its blanks at all.
+rewritten, unless it was made with `-U0`: the tie-break reproduces whatever the
+file already said. An edited one gets a header that is, at worst,
+conservative, wherever the hunk could own its blanks at all.
 
 ## Lines that read as a file header
 

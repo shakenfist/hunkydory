@@ -332,7 +332,9 @@ export function resolveCounts(
 
 /**
  * True where a hunk's trailing blank lines cannot be its own context: it has
- * no context before them, and starts below the first line.
+ * no context before them, and starts below the first line -- which a header
+ * whose old side is empty, as `-1,0`, does too, since it names the line
+ * before the insertion.
  *
  * git and diff write context above a hunk wherever there is a line to write,
  * so such a hunk was made with -U0, which writes none below it either, and
@@ -341,9 +343,20 @@ export function resolveCounts(
  * first matching blank line in the file. A hunk with blank lines of context
  * above, or one at the top of the file, may own them, and is left to
  * resolveCounts' usual rule.
+ *
+ * At line 1 only the header can tell them apart: `-1,0 +2` inserts after the
+ * first line, and `-1,3 +1` before it with three blank lines of context, and
+ * their bodies can be the same. It is asked only whether the old side was
+ * empty, which an edit to the body cannot change, and which a recount of such
+ * a hunk keeps empty, so it is stable in live mode.
  */
-export function disownsBlanks(counts: BodyCounts, declared: { oldStart: number }): boolean {
-  return counts.contextless && declared.oldStart > 1;
+export function disownsBlanks(
+  counts: BodyCounts,
+  declared: { oldStart: number; oldCount: number },
+): boolean {
+  const belowFirstLine =
+    declared.oldStart > 1 || (declared.oldStart === 1 && declared.oldCount === 0);
+  return counts.contextless && belowFirstLine;
 }
 
 /** How many lines a hunk occupies on each side. */

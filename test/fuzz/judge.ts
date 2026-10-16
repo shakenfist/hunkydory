@@ -23,7 +23,7 @@ import {
 } from './patch';
 
 function isBlankContext(text: string): boolean {
-  return text === '' || (text.charAt(0) === ' ' && text.trim() === '');
+  return text === '' || text === '\r' || (text.charAt(0) === ' ' && text.trim() === '');
 }
 
 function bodyCounts(body: Line[]): { old: number; nw: number; added: number; deleted: number } {
@@ -83,7 +83,9 @@ function acceptableCounts(patch: Patch, index: number): Array<[number, number]> 
   }
 
   let most = above;
-  if (isContextless(hunk) && hunk.declared.oldStart > 1) {
+  // An empty old side names the line before it, so -1,0 inserts below line 1.
+  const { oldStart, oldCount } = hunk.declared;
+  if (isContextless(hunk) && (oldStart > 1 || (oldStart === 1 && oldCount === 0))) {
     if (below > 0 && patch.items[index + 1]?.kind === 'hunk') {
       return [];
     }
@@ -138,7 +140,9 @@ function isContextless(hunk: HunkItem): boolean {
   while (end > 0 && isBlankContext(counted[end - 1].text)) {
     end -= 1;
   }
-  return !counted.slice(0, end).some((line) => line.text === '' || line.text.charAt(0) === ' ');
+  return !counted
+    .slice(0, end)
+    .some((line) => line.text === '' || line.text === '\r' || line.text.charAt(0) === ' ');
 }
 
 function scratchDir(): string {

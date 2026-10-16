@@ -303,13 +303,35 @@ describe('trailing blank ambiguity', () => {
     assert.match(recountText([...patch, '+++ b/g'].join('\n')), /^@@ -1,3 \+1,5 @@$/m);
   });
 
-  test('refuses a hunk of nothing but blanks once its header no longer matches', () => {
+  test('refuses a hunk of nothing but blanks below the first line', () => {
     // Left out, the blanks leave no lines on either side. Counted in, they
-    // are a hunk that changes nothing, placed only by blank lines.
-    const lines = ['--- a/f', '+++ b/f', '@@ -5,3 +5,3 @@', '', ' ', 'diff --git a/g b/g'];
-    const check = checkHeaders(lines);
-    assert.deepEqual(check.fixes, []);
-    assert.equal(check.refused[0].line, 2);
+    // are a hunk that changes nothing, placed only by blank lines. Whether
+    // the header matches them or not.
+    for (const header of ['@@ -5,3 +5,3 @@', '@@ -5,2 +5,2 @@']) {
+      const check = checkHeaders(['--- a/f', '+++ b/f', header, '', ' ', 'diff --git a/g b/g']);
+      assert.deepEqual(check.fixes, []);
+      assert.equal(check.refused[0].line, 2);
+    }
+  });
+
+  test('leaves it out of an edited -U0 insertion after the first line', () => {
+    // -1,0 names the line before the insertion, so this hunk is below line 1
+    // too; its body is the same as the top-of-file one above, so only the
+    // empty old side tells them apart.
+    const patch = [
+      '--- a/f',
+      '+++ b/f',
+      '@@ -1,0 +2,2 @@',
+      '+x',
+      '+y',
+      '+z',
+      '',
+      '--- a/g',
+      '+++ b/g',
+    ];
+    const fixed = recountText(patch.join('\n'));
+    assert.match(fixed, /^@@ -1,0 \+2,3 @@$/m);
+    assert.equal(recountText(fixed), fixed);
   });
 });
 
