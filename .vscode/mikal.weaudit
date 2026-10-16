@@ -89,10 +89,6 @@
       "author": "mikal"
     },
     {
-      "path": ".github/workflows/renovate.yml",
-      "author": "mikal"
-    },
-    {
       "path": "tools/publish-marketplace.sh",
       "author": "mikal"
     },
