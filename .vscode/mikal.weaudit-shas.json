@@ -21,10 +21,6 @@
       "sha": "09e5f8048d911f5e16f455508d63e101b1fee2ce",
       "date": "2026-09-23"
     },
-    ".github/workflows/ci.yml": {
-      "sha": "aa647062c23cc0cb0a37e3f54194b40fa143b958",
-      "date": "2026-10-16"
-    },
     ".github/workflows/pr-re-review.yml": {
       "sha": "68425cd384443ae15a909832693af1df01414c38",
       "date": "2026-10-04"
@@ -45,22 +41,6 @@
       "sha": "50f8e9027318ae590250421cf55ba39290a299f1",
       "date": "2026-09-15"
     },
-    "AGENTS.md": {
-      "sha": "df410a4dcdc2df80d695481e704f748306a85387",
-      "date": "2026-10-16"
-    },
-    "ARCHITECTURE.md": {
-      "sha": "18382840ed1bc035212ffe8b7f6c51726b06ad94",
-      "date": "2026-10-16"
-    },
-    "PUSH-AUDIT.md": {
-      "sha": "f22058378098cb8806391e51ede9d54bc3707537",
-      "date": "2026-09-27"
-    },
-    "README.md": {
-      "sha": "8a07208bd000c0e1e72d00557df9e28217ecd50f",
-      "date": "2026-10-16"
-    },
     "RELEASE-SETUP.md": {
       "sha": "5583edf9a7aaa2f648e0cc10652cb09de1617552",
       "date": "2026-09-24"
@@ -73,24 +53,12 @@
       "sha": "4d12f2aaee2103ee2326387004e78e330b2dc4aa",
       "date": "2026-10-16"
     },
-    "docs/index.md": {
-      "sha": "8d7b953fb531274a1c50cf06ccd1ba3b36a01571",
-      "date": "2026-09-17"
-    },
     "src/extension.ts": {
       "sha": "db8cf5f550a469069c594638bf665e7ad0fe223e",
       "date": "2026-10-16"
     },
     "src/recount.ts": {
       "sha": "703dce99ce482a9091b52d4f2838aeacb020700c",
-      "date": "2026-10-16"
-    },
-    "test/corpus.ts": {
-      "sha": "ff12e8b760df88da53d1b2fe4995170204ec99a0",
-      "date": "2026-10-16"
-    },
-    "test/editor/undo.ts": {
-      "sha": "90f07625ae5243c33f012c1ecf941bcdbc9fe779",
       "date": "2026-10-16"
     },
     "test/fixtures/crlf-line-endings.patch": {
@@ -128,10 +96,6 @@
     "tools/container-image.sh": {
       "sha": "5efb1953611739f95b923930f7a99fbc8afd6fcb",
       "date": "2026-09-23"
-    },
-    "tools/editor-test.sh": {
-      "sha": "4e722f56c3b35e678020ee8c2f094c87472d035a",
-      "date": "2026-10-16"
     },
     "tools/marketplace-profile-id.sh": {
       "sha": "5bff663717d8ca39ea2a5477351364d8a536b53a",
