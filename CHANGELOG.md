@@ -15,8 +15,9 @@ where it should.
 - A hunk header that cannot be recounted is now reported, as a warning in
   the Problems panel and when **Hunky Dory: Recount hunk headers** is run,
   rather than being left as it was without a word. That happens when an
-  edit has given a file creation or deletion lines on its empty side, or
-  has left a hunk with no lines at all.
+  edit has given a file creation or deletion lines on its empty side, has
+  left a hunk with no lines at all, or has put hunks out of order so that
+  one would start before the first line.
 
 ### Fixed
 
@@ -40,8 +41,9 @@ where it should.
   ([#85](https://github.com/shakenfist/hunkydory/issues/85))
 - An edited hunk from a `-U0` patch no longer counts a following blank
   line in. That blank became all git had to place the hunk by, and git put
-  the hunk at the first blank line in the file. A blank line between two
-  such hunks, which belongs to neither, is now reported.
+  the hunk at the first blank line in the file. A blank line between such
+  a hunk and the next one belongs to neither, and is now reported in the
+  Problems panel.
   ([#86](https://github.com/shakenfist/hunkydory/issues/86))
 
 ## 0.1.0 -- 2026-09-22
