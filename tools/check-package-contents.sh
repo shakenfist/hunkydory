@@ -60,12 +60,21 @@ while IFS= read -r module; do
     fi
 done < <(find out/src -name '*.js' | sort)
 
+# The files the Marketplace listing is built from. Without CHANGELOG.md its
+# Changelog tab is simply empty, which nothing else would notice.
+for required in package.json README.md CHANGELOG.md LICENSE; do
+    if ! printf '%s\n' "${listing}" | grep -qxF "${required}"; then
+        echo "MISSING from the package: ${required}"
+        failed=1
+    fi
+done
+
 # And nothing else. Note that a shell case pattern is not a pathname glob:
 # "*" here does cross a directory separator, which is exactly the property
 # .vscodeignore's "*" lacks and the reason this file exists.
 while IFS= read -r entry; do
     case "${entry}" in
-        package.json | README.md | LICENSE | out/src/*.js) ;;
+        package.json | README.md | CHANGELOG.md | LICENSE | out/src/*.js) ;;
         '') ;;
         *)
             echo "UNEXPECTED in the package: ${entry}"

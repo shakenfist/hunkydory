@@ -403,6 +403,11 @@ deliberate:
    would be on the wrong commit. Take the bump through the normal PR
    process.
 
+   In the same pull request, add a section for the new version to
+   `CHANGELOG.md`: what a user would notice, with a link to each issue. It
+   ships in the `.vsix` and is the Marketplace listing's Changelog tab, and
+   the GitHub Release's generated notes are mostly CI and review churn.
+
    Editing `package.json` by hand instead leaves the lockfile's version
    behind, and nothing will tell you: `npm ci` compares dependencies, not
    the package's own version field, so the release still builds and still
