@@ -49,16 +49,8 @@
       "sha": "2468e97c69419c12ec2afd927db7978ba1dd6583",
       "date": "2026-09-22"
     },
-    "docs/hunk-format.md": {
-      "sha": "4d12f2aaee2103ee2326387004e78e330b2dc4aa",
-      "date": "2026-10-16"
-    },
     "src/extension.ts": {
       "sha": "db8cf5f550a469069c594638bf665e7ad0fe223e",
-      "date": "2026-10-16"
-    },
-    "src/recount.ts": {
-      "sha": "703dce99ce482a9091b52d4f2838aeacb020700c",
       "date": "2026-10-16"
     },
     "test/fixtures/crlf-line-endings.patch": {

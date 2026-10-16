@@ -73,19 +73,11 @@
       "author": "mikal"
     },
     {
-      "path": "docs/hunk-format.md",
-      "author": "mikal"
-    },
-    {
       "path": ".github/actionlint.yaml",
       "author": "mikal"
     },
     {
       "path": "tools/ci-prune-reviews.sh",
-      "author": "mikal"
-    },
-    {
-      "path": "src/recount.ts",
       "author": "mikal"
     },
     {
