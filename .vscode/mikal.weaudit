@@ -129,19 +129,7 @@
       "author": "mikal"
     },
     {
-      "path": "src/diff.ts",
-      "author": "mikal"
-    },
-    {
-      "path": "test/recount.test.ts",
-      "author": "mikal"
-    },
-    {
       "path": "test/fuzz.test.ts",
-      "author": "mikal"
-    },
-    {
-      "path": "test/fuzz/judge.ts",
       "author": "mikal"
     },
     {
@@ -153,19 +141,7 @@
       "author": "mikal"
     },
     {
-      "path": "docs/ambiguity.md",
-      "author": "mikal"
-    },
-    {
       "path": "docs/hunk-format.md",
-      "author": "mikal"
-    },
-    {
-      "path": "docs/testing.md",
-      "author": "mikal"
-    },
-    {
-      "path": "docs",
       "author": "mikal"
     },
     {
@@ -222,22 +198,6 @@
     },
     {
       "path": "test/fuzz/patch.ts",
-      "author": "mikal"
-    },
-    {
-      "path": "test/fuzz",
-      "author": "mikal"
-    },
-    {
-      "path": "test",
-      "author": "mikal"
-    },
-    {
-      "path": "src/recount.ts",
-      "author": "mikal"
-    },
-    {
-      "path": "src",
       "author": "mikal"
     },
     {

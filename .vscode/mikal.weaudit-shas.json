@@ -69,10 +69,6 @@
       "sha": "2468e97c69419c12ec2afd927db7978ba1dd6583",
       "date": "2026-09-22"
     },
-    "docs/ambiguity.md": {
-      "sha": "c15cb5b1485993dac5d9617d45ee5c0b8426bd41",
-      "date": "2026-10-17"
-    },
     "docs/hunk-format.md": {
       "sha": "32e390db79f736b341f139d44c8d70f0f50e198e",
       "date": "2026-10-17"
@@ -81,21 +77,9 @@
       "sha": "89e476e123dcd1b00c517e93c3a6f2f0b8887bea",
       "date": "2026-10-17"
     },
-    "docs/testing.md": {
-      "sha": "d16c3a8dc886241c63e7319a44e4dd9cd9878457",
-      "date": "2026-10-17"
-    },
-    "src/diff.ts": {
-      "sha": "07bde7df39301cd0ee8fdb78574662c69e4c4116",
-      "date": "2026-10-17"
-    },
     "src/extension.ts": {
       "sha": "db8cf5f550a469069c594638bf665e7ad0fe223e",
       "date": "2026-10-16"
-    },
-    "src/recount.ts": {
-      "sha": "ba94c9c68162aa8d634d855963ef044baf71e348",
-      "date": "2026-10-17"
     },
     "test/corpus.ts": {
       "sha": "c84e999576c529b84566d2dc582f10517bf674b8",
@@ -153,16 +137,8 @@
       "sha": "bbefdf17b9846b5da57409af4ebf9b6b3a3e4ca3",
       "date": "2026-10-17"
     },
-    "test/fuzz/judge.ts": {
-      "sha": "01d5d0946f115e8053bd150cbdcef8b364511dfb",
-      "date": "2026-10-17"
-    },
     "test/fuzz/patch.ts": {
       "sha": "dbae8eef7b88a9e1577bac0cb83b8e30a1400cf1",
-      "date": "2026-10-17"
-    },
-    "test/recount.test.ts": {
-      "sha": "f28238fd674e24980b492ead63a0b4452034f6d8",
       "date": "2026-10-17"
     },
     "test/scripts.test.ts": {
