@@ -74,9 +74,6 @@ export function splitPatch(text: string): SplitPatch {
   return { lines, endings };
 }
 
-/** Lines that end a hunk body even though they may start with a diff marker. */
-const FILE_START = ['--- ', 'diff --git ', 'index ', 'Index: '];
-
 /** git format-patch ends a diff with "-- " followed by the git version. */
 const VERSION_RE = /^\d+\.\d/;
 
@@ -114,8 +111,70 @@ function isSignature(lines: string[], i: number): boolean {
   return lines[i] === '-- ' && i + 1 < lines.length && VERSION_RE.test(lines[i + 1]);
 }
 
-function startsFile(line: string): boolean {
-  return FILE_START.some((p) => line.startsWith(p));
+/**
+ * A line that introduces a file, in the formats that write one: `diff --git`
+ * from git, `diff -r` and its kin from diff when recursing and from hg,
+ * `Index: ` from svn, quilt and CVS, `=== ` from bzr and `==== ` from
+ * Perforce.
+ */
+const INTRODUCES_FILE = /^(?:diff (?:--git |-)|Index: |={3,4} )/;
+
+/**
+ * The other lines that can come between one of those and the `--- ` line.
+ * Anything else, a blank included, means the line above was prose that
+ * happened to look like one.
+ */
+const FILE_PREAMBLE = [
+  'index ',
+  '=====',
+  'new file mode ',
+  'deleted file mode ',
+  'old mode ',
+  'new mode ',
+  'similarity index ',
+  'dissimilarity index ',
+  'rename from ',
+  'rename to ',
+  'copy from ',
+  'copy to ',
+  'RCS file: ',
+  'retrieving revision ',
+];
+
+/** Context, either change, a blank context line, or a `\ No newline` note. */
+function isBodyLine(line: string): boolean {
+  return line === '' || line === '\r' || ' +-\\'.includes(line.charAt(0));
+}
+
+/**
+ * True if the `--- ` at lines[i] starts the next file rather than continuing
+ * the hunk.
+ *
+ * A deleted line that read `-- ` -- an SQL, Lua, Haskell or Ada comment --
+ * starts `--- ` too, and ending the hunk there drops it, and everything after
+ * it, without a word from git. In a file `introduced` by a line of its own,
+ * such as `diff --git`, the next file will be too, and that line ends the
+ * hunk: a `--- ` inside it is always body. Without one, as from a bare
+ * `diff -u`, a file header is `--- ` and then `+++ `, so a lone `--- ` is body
+ * and the pair is a header, unless a body line follows it after any blanks.
+ * The declared counts are never asked, because they may be ones a live
+ * recount wrote a moment ago. docs/ambiguity.md has what that costs.
+ */
+function startsFile(lines: string[], i: number, introduced: boolean): boolean {
+  if (introduced || !lines[i].startsWith('--- ') || !lines[i + 1]?.startsWith('+++ ')) {
+    return false;
+  }
+  let j = i + 2;
+  while (j < lines.length && lines[j].trim() === '') {
+    j += 1;
+  }
+  const next = lines[j];
+  if (next === undefined || !isBodyLine(next)) {
+    return true;
+  }
+  // A file with no hunks is followed by the next file's header, whose `--- `
+  // would otherwise pass for a deleted line.
+  return next.startsWith('--- ') && lines[j + 1]?.startsWith('+++ ') === true;
 }
 
 /**
@@ -131,8 +190,11 @@ export interface BodyCounts {
   byTrailingBlanks: Counts[];
 }
 
-/** Find where the hunk body starting at `start` ends, and count its lines. */
-export function measureBody(lines: string[], start: number): BodyCounts {
+/**
+ * Find where the hunk body starting at `start` ends, and count its lines.
+ * `introduced` is for startsFile.
+ */
+export function measureBody(lines: string[], start: number, introduced: boolean): BodyCounts {
   let i = start;
   let oldCount = 0;
   let newCount = 0;
@@ -140,7 +202,7 @@ export function measureBody(lines: string[], start: number): BodyCounts {
 
   while (i < lines.length) {
     const line = lines[i];
-    if (isSignature(lines, i) || HUNK_RE.test(line) || startsFile(line)) {
+    if (isSignature(lines, i) || HUNK_RE.test(line) || startsFile(lines, i, introduced)) {
       break;
     }
     if (line.startsWith('\\')) {
@@ -211,10 +273,11 @@ export function measureBody(lines: string[], start: number): BodyCounts {
 /**
  * Decide how many trailing whitespace-only lines fall outside the hunk.
  *
- * This is the one genuinely ambiguous part of recounting. git reads a hunk by
- * consuming exactly as many lines as the header declares and ignoring whatever
- * follows, so a blank line between the last real body line and the next
- * `diff --git` may or may not belong to the hunk. The body alone cannot say.
+ * This is the commoner of the two genuinely ambiguous parts of recounting;
+ * startsFile has the other. git reads a hunk by consuming exactly as many
+ * lines as the header declares and ignoring whatever follows, so a blank line
+ * between the last real body line and the next `diff --git` may or may not
+ * belong to the hunk. The body alone cannot say.
  * Before another hunk it usually can, and measureBody then offers only the one
  * reading.
  *
@@ -271,20 +334,59 @@ export function zeroSideWithLines(
   return undefined;
 }
 
+/** A hunk header, what it declares, and the body that follows it. */
+export interface HunkSite {
+  /** Line index of the @@ header. */
+  line: number;
+  declared: Hunk;
+  body: BodyCounts;
+  /** The first hunk of a file, where the running offset between sides restarts. */
+  firstInFile: boolean;
+}
+
+/**
+ * Every hunk in a document, in order, with its body measured. Bodies are
+ * stepped over rather than searched for file headers, because what reads as
+ * one inside a body can be a deleted line.
+ */
+export function* hunkSites(lines: string[]): Generator<HunkSite> {
+  // Whether a line such as `diff --git` has come since the last file header,
+  // and whether one came before the current file's.
+  let introducing = false;
+  let introduced = false;
+  let firstInFile = true;
+  let i = 0;
+  while (i < lines.length) {
+    const declared = parseHeader(lines[i]);
+    if (!declared) {
+      if (INTRODUCES_FILE.test(lines[i])) {
+        introducing = true;
+      } else if (lines[i].startsWith('--- ')) {
+        introduced = introducing;
+        introducing = false;
+        firstInFile = true;
+      } else if (!FILE_PREAMBLE.some((p) => lines[i].startsWith(p))) {
+        introducing = false;
+      }
+      i += 1;
+      continue;
+    }
+    const body = measureBody(lines, i + 1, introduced);
+    yield { line: i, declared, body, firstInFile };
+    firstInFile = false;
+    i = body.end;
+  }
+}
+
 /** Parse every hunk in a document, in order. */
 export function parseHunks(lines: string[]): Hunk[] {
   const hunks: Hunk[] = [];
-  for (let i = 0; i < lines.length; i += 1) {
-    const declared = parseHeader(lines[i]);
-    if (!declared) {
-      continue;
-    }
-    const body = measureBody(lines, i + 1);
+  for (const { line, declared, body } of hunkSites(lines)) {
     const resolved = resolveCounts(body, declared);
     hunks.push({
       ...declared,
-      headerLine: i,
-      bodyStart: i + 1,
+      headerLine: line,
+      bodyStart: line + 1,
       bodyEnd: body.end,
       oldCount: resolved.oldCount,
       newCount: resolved.newCount,

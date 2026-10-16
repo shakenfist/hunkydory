@@ -1,0 +1,42 @@
+From c45308fff6cd76c65d43e5ccdfcd6c9bdd73465b Mon Sep 17 00:00:00 2001
+From: t <t@t>
+Date: Thu, 1 Jan 2026 00:00:00 +0000
+Subject: [PATCH] Drop an old comment.
+
+---
+ mod.lua    | 2 +-
+ schema.sql | 3 +--
+ 2 files changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/mod.lua b/mod.lua
+index b7e3adc..fbacee4 100644
+--- a/mod.lua
++++ b/mod.lua
+@@ -1,4 +1,4 @@
+ local M = {}
+--- helper
++-- a helper
+ function M.f() return 1 end
+ return M
+diff --git a/schema.sql b/schema.sql
+index 20401e6..2648f73 100644
+--- a/schema.sql
++++ b/schema.sql
+@@ -1,7 +1,6 @@
+ -- schema for widgets
+ CREATE TABLE widgets (
+   id INTEGER PRIMARY KEY,
+--- old comment
+   name TEXT
+ );
+ INSERT INTO widgets VALUES (1, 'w1');
+@@ -23,5 +22,5 @@ INSERT INTO widgets VALUES (16, 'w16');
+ INSERT INTO widgets VALUES (17, 'w17');
+ INSERT INTO widgets VALUES (18, 'w18');
+ INSERT INTO widgets VALUES (19, 'w19');
+--- trailing note
++++ trailing note
+ SELECT 1;
+-- 
+2.47.3
+

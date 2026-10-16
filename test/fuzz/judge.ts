@@ -280,15 +280,41 @@ export function checkFile(hunks: HunkItem[], info: FileInfo, dir: string): strin
 }
 
 /**
+ * True for a hunk in a file without a `diff --git` line, as a bare `diff -u`
+ * writes, whose last lines but blanks are a deleted `-- ` line and an added
+ * `++ ` line. There those two read as a file header by design, whatever the
+ * counts say, and git has nothing true to say about the result
+ * (docs/ambiguity.md).
+ */
+function endsLikeFileHeader(patch: Patch, index: number): boolean {
+  const hunk = patch.items[index] as HunkItem;
+  const body = hunk.body.map((line) => line.text);
+  let end = body.length;
+  while (end > 0 && body[end - 1].trim() === '') {
+    end -= 1;
+  }
+  return (
+    !patch.files[hunk.file].introduced &&
+    end >= 2 &&
+    body[end - 2].startsWith('--- ') &&
+    body[end - 1].startsWith('+++ ')
+  );
+}
+
+/**
  * How much of the judging git got to do. A judge that steps aside more and
  * more often is one that is quietly checking less, so `npm run fuzz` prints it.
  */
-export const coverage = { patches: 0, byGit: 0, filesApplied: 0, filesSkipped: 0 };
+export const coverage = { patches: 0, ambiguous: 0, byGit: 0, filesApplied: 0, filesSkipped: 0 };
 
 /** Everything wrong with how `text`, the rendering of `patch`, is recounted. */
 export function judge(patch: Patch, text: string): string[] {
   const failures: string[] = [];
   coverage.patches += 1;
+  if (patch.items.some((item, index) => item.kind === 'hunk' && endsLikeFileHeader(patch, index))) {
+    coverage.ambiguous += 1;
+    return failures;
+  }
   const recounted = recountText(text);
   const outLines = splitLines(recounted);
   const refused = new Set(

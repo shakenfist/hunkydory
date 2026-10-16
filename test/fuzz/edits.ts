@@ -67,19 +67,26 @@ const OPS: Array<[Op, number]> = [
   ['crlf', 1],
 ];
 
-const WORDS = ['alpha', 'beta', 'gamma', 'delta', 'kolla', 'nova', 'spice', 'value: 1', 'x'];
-
-/** Lines that would stop being body lines, or start a file. */
-function unsafe(text: string): boolean {
-  return (
-    text.startsWith('--- ') ||
-    text === '-- ' ||
-    text.startsWith('@@') ||
-    text.startsWith('diff --git ') ||
-    text.startsWith('index ') ||
-    text.startsWith('Index: ')
-  );
-}
+/**
+ * What body lines say. The last three make lines that look like something
+ * else: deleted, `-- note` is `--- note`, the start of a file header; added,
+ * `++ note` is `+++ note`, the rest of one; and deleted, `- ` is `-- `, the
+ * start of git's signature.
+ */
+const WORDS = [
+  'alpha',
+  'beta',
+  'gamma',
+  'delta',
+  'kolla',
+  'nova',
+  'spice',
+  'value: 1',
+  'x',
+  '-- note',
+  '++ note',
+  '- ',
+];
 
 /** Edits go mostly to the last hunk, and to creations and deletions. */
 function pickHunk(patch: Patch, r: number): number | undefined {
@@ -169,10 +176,7 @@ function applyEdit(patch: Patch, edit: Edit): void {
         ],
         r2,
       );
-      const text = marker + line.text.slice(1);
-      if (!unsafe(text)) {
-        line.text = text;
-      }
+      line.text = marker + line.text.slice(1);
       return;
     }
     case 'gapBlank': {

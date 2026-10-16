@@ -1,4 +1,4 @@
-# The one ambiguous case
+# The ambiguous cases
 
 Consider the end of a hunk:
 
@@ -65,9 +65,59 @@ file has a blank line after it, so git searches for somewhere that does. That
 is safe exactly as far as the rest of the hunk's context is distinctive, which
 is why a stray blank is still best deleted rather than left to a recount.
 
-In practice this is why a patch git accepts is never rewritten — the tie-break
-reproduces whatever the file already said — while an edited one gets a header
-that is, at worst, conservative.
+In practice this is why trailing blanks never get a patch git accepts
+rewritten — the tie-break reproduces whatever the file already said — while an
+edited one gets a header that is, at worst, conservative.
+
+## Lines that read as a file header
+
+A rarer case, in rarer patches. A deleted `-- ` line, which is how SQL, Lua,
+Haskell and Ada comments start, is a body line beginning `--- `; an added
+`++ ` line begins `+++ `. Together they are what a file header looks like.
+
+Most patches settle it by structure. git writes `diff --git` before every
+file, `diff -r` writes a `diff` line, svn, quilt and CVS write `Index:`, bzr
+`===` and Perforce `====`, so in a patch whose files start that way the next
+file will too, and that line ends the hunk before it. A `--- ` inside a hunk
+there is always body. Only lines straight before a file's `--- ` count, so a
+commit message that happens to start a line with `Index:` does not.
+
+A bare `diff -u` patch has nothing between its files but the header itself.
+There a lone `--- ` is body, and the pair is a file header unless a body line
+follows it after any blank lines -- so a file whose hunks were all deleted, or
+a header still being typed, is not read into the hunk above.
+
+That gets one case wrong: a bare hunk that ends in a deleted `-- ` line and an
+added `++ ` one, at the end of the file or right before the next hunk, which
+takes `-U0` or a change to a file's last line:
+
+```diff
+@@ -2 +2 @@
+--- old
++++ new
+@@ -5 +5 @@
+```
+
+git reads those two as body, because it goes by the counts. Hunky Dory reads
+them as a header and recounts the hunk without them, or reports it if that
+leaves the hunk empty. git then takes them for a file header too. With
+another hunk after them, it applies that hunk to the `+++ ` file if there is
+one and the hunk fits there, and fails if not; with none, it applies the rest
+of the patch without them. Both can be silent, and both need an added line
+that starts `++ `, which is rare outside a hand-made test.
+
+The declared counts could settle it, as they do for blanks, but they are
+deliberately not asked. In live mode they can be counts Hunky Dory wrote a
+moment ago: while a file header is being retyped, a lone `--- ` is a deleted
+line, the hunk above is recounted to include it, and once the `+++ ` is back
+the counts would agree that it belongs there. A deleted line that one edit to
+a hunk left one short on each side would agree the same way. Either would read
+the next file's header into the hunk above, which is a much commoner way to be
+wrong than the one above.
+
+A patch that mixes the two, with a `diff --git` file followed by a bare one,
+reads the bare file's header as the last lines of the hunk before it; git then
+rejects the patch.
 
 ## What cannot be fixed this way
 

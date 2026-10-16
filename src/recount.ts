@@ -10,8 +10,7 @@ import {
   formatHeader,
   HUNK_RE,
   type Hunk,
-  measureBody,
-  parseHeader,
+  hunkSites,
   resolveCounts,
   splitPatch,
   zeroSideWithLines,
@@ -70,19 +69,11 @@ export function checkHeaders(lines: string[]): HeaderCheck {
   // Running difference between old-side and new-side line numbering. It
   // accumulates across the hunks of one file and resets at each new file.
   let delta = 0;
-  let i = 0;
 
-  while (i < lines.length) {
-    const declared = parseHeader(lines[i]);
-    if (!declared) {
-      if (lines[i].startsWith('--- ')) {
-        delta = 0;
-      }
-      i += 1;
-      continue;
+  for (const { line: i, declared, body, firstInFile } of hunkSites(lines)) {
+    if (firstInFile) {
+      delta = 0;
     }
-
-    const body = measureBody(lines, i + 1);
     const counts = resolveCounts(body, declared);
 
     // An empty range is written as the line before it, so an empty side moves
@@ -98,7 +89,6 @@ export function checkHeaders(lines: string[]): HeaderCheck {
       // The header stays as written, and git will read it that way, so later
       // hunks in this file are numbered from what it declares.
       delta += declared.newCount - declared.oldCount;
-      i = body.end;
       continue;
     }
     delta += counts.newCount - counts.oldCount;
@@ -125,8 +115,6 @@ export function checkHeaders(lines: string[]): HeaderCheck {
     if (corrected !== lines[i]) {
       fixes.push({ line: i, current: lines[i], corrected });
     }
-
-    i = body.end;
   }
 
   return { fixes, refused };

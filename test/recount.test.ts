@@ -282,6 +282,134 @@ describe('a blank before the next hunk', () => {
   });
 });
 
+describe('a deleted line that reads like a file header', () => {
+  // A deleted SQL or Lua comment, `-- note`, is the body line `--- note`.
+  const comment = [
+    '--- a/schema.sql',
+    '+++ b/schema.sql',
+    '@@ -1,7 +1,6 @@',
+    ' -- schema for widgets',
+    ' CREATE TABLE widgets (',
+    '   id INTEGER PRIMARY KEY,',
+    '--- old comment',
+    '   name TEXT',
+    ' );',
+    " INSERT INTO widgets VALUES (1, 'w1');",
+    '@@ -23,3 +22,3 @@',
+    ' x',
+    '--- y',
+    '+++ z',
+    ' w',
+    '',
+  ].join('\n');
+
+  test('leaves a correct patch alone', () => {
+    // This was rewritten to -1,4 +1,4, and git applied it without the
+    // deletion; the second hunk's offset was reset as if a file had started.
+    assert.equal(recountText(comment), comment);
+  });
+
+  test('counts it after an edit', () => {
+    const text = recountText(comment.replace(' );\n', ' );\n+  added TEXT,\n'));
+    assert.match(text, /^@@ -1,7 \+1,7 @@$/m);
+    assert.match(text, /^@@ -23,3 \+23,3 @@$/m);
+  });
+
+  test('reads a deletion and an addition before a hunk as a header in diff -u', () => {
+    // diff -U0 replacing `-- old` with `++ new`, then changing line 5. With
+    // nothing between files but their headers, these two lines and the next
+    // @@ are read as one, as they nearly always are; that leaves the hunk
+    // empty, so it is reported rather than rewritten (docs/ambiguity.md).
+    const u0 = [
+      '--- a/f',
+      '+++ b/f',
+      '@@ -2 +2 @@',
+      '--- old',
+      '+++ new',
+      '@@ -5 +5 @@',
+      '-e',
+      '+E',
+    ];
+    const { fixes, refused } = checkHeaders(u0);
+    assert.deepEqual(fixes, []);
+    assert.deepEqual(
+      refused.map((r) => r.line),
+      [2],
+    );
+  });
+
+  test('counts them in, in a patch whose files each start with diff --git', () => {
+    // The next file would start with its own diff line, so these are body
+    // whatever the counts say. Read as a file header, git would apply the
+    // next hunk to any file they happened to name.
+    const git = (header: string, next: string) =>
+      [
+        'diff --git a/f b/f',
+        '--- a/f',
+        '+++ b/f',
+        header,
+        '+added',
+        '--- old',
+        '+++ new',
+        next,
+        '-e',
+        '+E',
+        '',
+      ].join('\n');
+    assert.equal(
+      recountText(git('@@ -2 +2 @@', '@@ -5 +5 @@')),
+      git('@@ -2 +2,2 @@', '@@ -5 +6 @@'),
+    );
+  });
+
+  // diff -u output for two files has nothing between them but the headers.
+  const f = ['--- a/f', '+++ b/f', '@@ -1,3 +1,3 @@', ' a', '-b', '+B', ' c'];
+  const g = ['--- a/g', '+++ b/g', '@@ -10,2 +10,2 @@', ' x', '-y', '+Y'];
+
+  test('ends a hunk at a file header with no hunks of its own', () => {
+    const text = [...f, '--- a/h', '+++ b/h', ...g, ''].join('\n');
+    assert.equal(recountText(text), text);
+    const spaced = [...f, '--- a/h', '+++ b/h', '', ...g, ''].join('\n');
+    assert.equal(recountText(spaced), spaced);
+  });
+
+  test('reads prose that looks like a diff line as prose', () => {
+    // Only lines straight before a file's headers introduce it.
+    const text = ['Index: lookups by hash rather than by scan', '', ...f, ...g, ''].join('\n');
+    assert.equal(recountText(text), text);
+  });
+
+  test('ends a hunk at a file header still being typed', () => {
+    const text = [...f, '--- a/g', '+++ b/g', '@@ -10,2', ''].join('\n');
+    assert.equal(recountText(text), text);
+  });
+
+  test('still ends a hunk at a file header after an edit', () => {
+    // diff -u output has nothing between files but the --- and +++ lines.
+    const files = (header: string, extra: string) =>
+      [
+        '--- a/f',
+        '+++ b/f',
+        header,
+        ' a',
+        '-b',
+        '+B',
+        ...extra.split(' '),
+        ' c',
+        '--- a/g',
+        '+++ b/g',
+        '@@ -10,2 +10,2 @@',
+        ' x',
+        '-y',
+        '+Y',
+        '',
+      ].join('\n');
+    // One added line: counted through the next file's header, the hunk would
+    // be one more on each side, which is not what it declares either.
+    assert.equal(recountText(files('@@ -1,3 +1,3 @@', '+x')), files('@@ -1,3 +1,4 @@', '+x'));
+  });
+});
+
 describe('line endings', () => {
   // A CRLF patch used to be a total silent no-op: recountText split on '\n'
   // alone, so every line kept its CR, '@@ ... @@\r' matched no header, and the

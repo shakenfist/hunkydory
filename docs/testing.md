@@ -21,7 +21,9 @@ have been. So the fuzzer (`test/fuzz.ts` and `test/fuzz/`) takes correct
 patches, makes the edits a person might -- adding, deleting and retyping body
 lines, mostly in the last hunk and in file creations and deletions; blank lines
 after a hunk; a signature added or removed; the final newline toggled; CRLF --
-and recounts.
+and recounts. Some of the lines it adds look like something else: deleted,
+`-- note` reads as the start of a file header, and `- ` as git's signature;
+added, `++ note` reads as the rest of a file header.
 
 It is judged from outside the rules under test wherever it can be:
 
@@ -41,7 +43,9 @@ It is judged from outside the rules under test wherever it can be:
 
 Where git has nothing true to say -- a header that was refused, a hunk that
 changes nothing, which git calls corrupt however it is counted -- the git
-checks stand aside, and `npm run fuzz` reports how often that happened.
+checks stand aside, and `npm run fuzz` reports how often that happened. A
+patch is set aside entirely, as ambiguous, where a hunk in a bare `diff -u`
+file ends in what reads as a file header, which is read as one by design.
 
 ### Running it
 
@@ -59,11 +63,6 @@ in `test/recount.test.ts` along with the fix.
 never depends on a corpus and a failure is always reproducible. That slice is
 all CI runs; the corpus, and the variety of real patches it brings, is only in
 `npm run fuzz` by hand.
-
-Not generated yet: body lines that look like something else -- a deleted
-`-- comment` that reads as `--- comment`, an added `+++ x` -- which is
-[#85](https://github.com/shakenfist/hunkydory/issues/85)'s territory and will
-fail until that is fixed.
 
 ## The editor tests
 
