@@ -21,6 +21,10 @@
       "sha": "09e5f8048d911f5e16f455508d63e101b1fee2ce",
       "date": "2026-09-23"
     },
+    ".github/workflows/ci.yml": {
+      "sha": "bae8ea5213d5d7f70519c21567f2ea65246e27f0",
+      "date": "2026-10-17"
+    },
     ".github/workflows/pr-re-review.yml": {
       "sha": "68425cd384443ae15a909832693af1df01414c38",
       "date": "2026-10-04"
@@ -41,6 +45,22 @@
       "sha": "50f8e9027318ae590250421cf55ba39290a299f1",
       "date": "2026-09-15"
     },
+    "AGENTS.md": {
+      "sha": "5db57030d621fea9a762f6873e0af078b5837bfa",
+      "date": "2026-10-17"
+    },
+    "ARCHITECTURE.md": {
+      "sha": "bc87d2220e9e1f387178df9deb2f508fd4393dbb",
+      "date": "2026-10-17"
+    },
+    "PUSH-AUDIT.md": {
+      "sha": "f8ced8ebbb86e7001e5e2cebfb431a5671916e73",
+      "date": "2026-10-17"
+    },
+    "README.md": {
+      "sha": "8f88a95e27dfd48903b3a6ed341b631b775ee098",
+      "date": "2026-10-17"
+    },
     "RELEASE-SETUP.md": {
       "sha": "5583edf9a7aaa2f648e0cc10652cb09de1617552",
       "date": "2026-09-24"
@@ -49,21 +69,101 @@
       "sha": "2468e97c69419c12ec2afd927db7978ba1dd6583",
       "date": "2026-09-22"
     },
+    "docs/ambiguity.md": {
+      "sha": "c15cb5b1485993dac5d9617d45ee5c0b8426bd41",
+      "date": "2026-10-17"
+    },
+    "docs/hunk-format.md": {
+      "sha": "32e390db79f736b341f139d44c8d70f0f50e198e",
+      "date": "2026-10-17"
+    },
+    "docs/index.md": {
+      "sha": "89e476e123dcd1b00c517e93c3a6f2f0b8887bea",
+      "date": "2026-10-17"
+    },
+    "docs/testing.md": {
+      "sha": "d16c3a8dc886241c63e7319a44e4dd9cd9878457",
+      "date": "2026-10-17"
+    },
+    "src/diff.ts": {
+      "sha": "07bde7df39301cd0ee8fdb78574662c69e4c4116",
+      "date": "2026-10-17"
+    },
     "src/extension.ts": {
       "sha": "db8cf5f550a469069c594638bf665e7ad0fe223e",
       "date": "2026-10-16"
+    },
+    "src/recount.ts": {
+      "sha": "ba94c9c68162aa8d634d855963ef044baf71e348",
+      "date": "2026-10-17"
+    },
+    "test/corpus.ts": {
+      "sha": "c84e999576c529b84566d2dc582f10517bf674b8",
+      "date": "2026-10-17"
+    },
+    "test/editor/index.ts": {
+      "sha": "9af53a98e48a620ace26269b579954b81e6e219f",
+      "date": "2026-10-17"
+    },
+    "test/editor/recount.ts": {
+      "sha": "c80e2d1ab6638ab218a9054d6bdf969394d50af6",
+      "date": "2026-10-17"
+    },
+    "test/editor/undo.ts": {
+      "sha": "3818c5861c58e5a6109215d568f2646652d670d4",
+      "date": "2026-10-17"
+    },
+    "test/fixtures/blank-before-hunk.patch": {
+      "sha": "a01307abe3d1b038703231b16f17a9f737ab0ad2",
+      "date": "2026-10-17"
     },
     "test/fixtures/crlf-line-endings.patch": {
       "sha": "71b2f0a05e8fe2b27de0a5713541dec60409092d",
       "date": "2026-09-22"
     },
+    "test/fixtures/dash-comments-diff-u.patch": {
+      "sha": "9c575a0db27250265b12a63461f149a1fcbbdbf2",
+      "date": "2026-10-17"
+    },
+    "test/fixtures/dash-comments.patch": {
+      "sha": "f6b99b1903d99a2fc5cf6150ecb9ddd8e9d03611",
+      "date": "2026-10-17"
+    },
     "test/fixtures/empty-sides-u0.patch": {
       "sha": "c174e5a008c4d504f5d7f2c11e0341febd47a4fe",
       "date": "2026-10-16"
     },
+    "test/fixtures/format-patch-signature.patch": {
+      "sha": "045ed783a33cbd8a4bf131d8e744c767c2a2d82b",
+      "date": "2026-10-17"
+    },
     "test/fixtures/zero-start-sides.patch": {
       "sha": "3076fe5d8c32c1c30a16244d90d849bc9b333fba",
       "date": "2026-10-16"
+    },
+    "test/fuzz.test.ts": {
+      "sha": "b6c21f71fafa71d61d5c81afb734fac0ce77c9ac",
+      "date": "2026-10-17"
+    },
+    "test/fuzz.ts": {
+      "sha": "5c5f6d538eba1a6b39f989b7ab892f60aaf2f79f",
+      "date": "2026-10-17"
+    },
+    "test/fuzz/edits.ts": {
+      "sha": "bbefdf17b9846b5da57409af4ebf9b6b3a3e4ca3",
+      "date": "2026-10-17"
+    },
+    "test/fuzz/judge.ts": {
+      "sha": "01d5d0946f115e8053bd150cbdcef8b364511dfb",
+      "date": "2026-10-17"
+    },
+    "test/fuzz/patch.ts": {
+      "sha": "dbae8eef7b88a9e1577bac0cb83b8e30a1400cf1",
+      "date": "2026-10-17"
+    },
+    "test/recount.test.ts": {
+      "sha": "f28238fd674e24980b492ead63a0b4452034f6d8",
+      "date": "2026-10-17"
     },
     "test/scripts.test.ts": {
       "sha": "ac7b7a556e07d7567d6fdd9976c4042686b0c03b",
@@ -88,6 +188,18 @@
     "tools/container-image.sh": {
       "sha": "5efb1953611739f95b923930f7a99fbc8afd6fcb",
       "date": "2026-09-23"
+    },
+    "tools/editor-test-docker.sh": {
+      "sha": "0df0cc6bc0c097f588796edf3921d9615896e2f2",
+      "date": "2026-10-17"
+    },
+    "tools/editor-test.Dockerfile": {
+      "sha": "3dcf7dc30082d8fcd955d14e03551e640f144344",
+      "date": "2026-10-17"
+    },
+    "tools/editor-test.sh": {
+      "sha": "8aa13b735c4c03607ed2bb9672d396d670878d48",
+      "date": "2026-10-17"
     },
     "tools/marketplace-profile-id.sh": {
       "sha": "5bff663717d8ca39ea2a5477351364d8a536b53a",

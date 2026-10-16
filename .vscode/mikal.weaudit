@@ -111,6 +111,142 @@
     {
       "path": "test/fixtures/zero-start-sides.patch",
       "author": "mikal"
+    },
+    {
+      "path": "test/fixtures/dash-comments.patch",
+      "author": "mikal"
+    },
+    {
+      "path": "test/editor/recount.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/editor-test.Dockerfile",
+      "author": "mikal"
+    },
+    {
+      "path": "docs/index.md",
+      "author": "mikal"
+    },
+    {
+      "path": "src/diff.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test/recount.test.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fuzz.test.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fuzz/judge.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fixtures/blank-before-hunk.patch",
+      "author": "mikal"
+    },
+    {
+      "path": "test/editor/index.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "docs/ambiguity.md",
+      "author": "mikal"
+    },
+    {
+      "path": "docs/hunk-format.md",
+      "author": "mikal"
+    },
+    {
+      "path": "docs/testing.md",
+      "author": "mikal"
+    },
+    {
+      "path": "docs",
+      "author": "mikal"
+    },
+    {
+      "path": "test/editor/undo.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test/editor",
+      "author": "mikal"
+    },
+    {
+      "path": "PUSH-AUDIT.md",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fuzz/edits.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test/corpus.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fixtures/dash-comments-diff-u.patch",
+      "author": "mikal"
+    },
+    {
+      "path": "README.md",
+      "author": "mikal"
+    },
+    {
+      "path": "AGENTS.md",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/editor-test.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fuzz.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fixtures/format-patch-signature.patch",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fixtures",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/editor-test-docker.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fuzz/patch.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fuzz",
+      "author": "mikal"
+    },
+    {
+      "path": "test",
+      "author": "mikal"
+    },
+    {
+      "path": "src/recount.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "src",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "author": "mikal"
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "author": "mikal"
     }
   ],
   "partiallyAuditedFiles": [],
