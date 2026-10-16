@@ -16,6 +16,7 @@
 
 !package.json
 !README.md
+!CHANGELOG.md
 !LICENSE
 !out/src/**/*.js
 

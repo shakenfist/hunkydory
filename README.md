@@ -25,7 +25,7 @@ Emacs has had this in `diff-mode` for decades. VS Code did not, so here it is.
 git clone https://github.com/shakenfist/hunkydory
 cd hunkydory
 npm install && npm run package
-code --install-extension hunkydory-0.1.0.vsix
+code --install-extension hunkydory-*.vsix
 ```
 
 ## Use
