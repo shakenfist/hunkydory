@@ -39,6 +39,26 @@ counting every line. That is deliberate: over-counting makes git reject the
 patch loudly, while under-counting makes it silently apply the wrong content.
 Failing safe means erring large.
 
+Except for a hunk that cannot own its trailing blanks. git and diff write
+context above a hunk wherever there is a line to write, so a hunk with no
+context at all above its trailing blanks, starting below the first line, was
+made with `git diff -U0`, which writes none below it either. A header such as
+`-1,0 +2` starts below it too, since an empty side names the line before it,
+and is the one place the header has to say so: its body can be the same as
+that of an insertion before line 1 whose context is three blank lines. Its
+trailing blanks are the gap before whatever follows, and they are left out
+whatever the header says. Counted in, they would be all git had to place the
+hunk by: an edited `-U0` insertion recounted that way was applied by
+`git apply --unidiff-zero` three lines from where its header said, without a
+word. Not even a header that already counts them in is kept, because an edit
+can make that reading match the old header by chance.
+
+A hunk whose only context is blank lines, or one at the top of the file, may
+own its trailing blanks, and the usual rule stands. Leaving them out would be
+the silent mistake there instead: with context above a hunk and none below,
+git and GNU patch insist that it match at the end of the file, and apply it
+there if the end of the file happens to fit.
+
 The exception is a hunk whose old side starts at 0, as a file creation's does.
 That side must be empty, so a reading that counts a trailing blank into it is
 not a reading at all, and the fallback takes the first one that leaves it
@@ -60,14 +80,21 @@ hunk too, but the rule asks for context and goes no further than it must:
 there the old reading stands, and git rejects the patch, which is the better
 way to be wrong.
 
+A hunk with no context at all, which cannot own the blank as above, is
+reported instead of recounted. The blank belongs to neither hunk: counted
+in, git places the hunk by it alone, and left out, git rejects the patch while
+GNU patch skips every later hunk of the file without a word. The thing to fix
+is the blank line.
+
 Even with context, counting the blank in means the hunk only fits where the
 file has a blank line after it, so git searches for somewhere that does. That
 is safe exactly as far as the rest of the hunk's context is distinctive, which
 is why a stray blank is still best deleted rather than left to a recount.
 
 In practice this is why trailing blanks never get a patch git accepts
-rewritten — the tie-break reproduces whatever the file already said — while an
-edited one gets a header that is, at worst, conservative.
+rewritten, unless it was made with `-U0`: the tie-break reproduces whatever the
+file already said. An edited one gets a header that is, at worst,
+conservative, wherever the hunk could own its blanks at all.
 
 ## Lines that read as a file header
 

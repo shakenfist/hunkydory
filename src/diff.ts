@@ -184,10 +184,16 @@ function startsFile(lines: string[], i: number, introduced: boolean): boolean {
  * Index 0 is "count every line"; index k is "ignore the last k blank lines".
  * Before another hunk with context of its own, only index 0 exists.
  * See resolveCounts for why more than one answer exists.
+ *
+ * `contextless` is whether no line before the trailing blanks is context of
+ * any kind, which disownsBlanks needs, and `blankBeforeHunk` whether there are
+ * trailing blanks and another hunk straight after them.
  */
 export interface BodyCounts {
   end: number;
   byTrailingBlanks: Counts[];
+  contextless: boolean;
+  blankBeforeHunk: boolean;
 }
 
 /**
@@ -245,7 +251,8 @@ export function measureBody(lines: string[], start: number, introduced: boolean)
   // silently at the first matching run of blank lines. A deleted line does
   // pin a hunk too, but the rule asks for context and goes no further than
   // it must: left out, the blank makes git reject the patch, and loud is the
-  // better way to be wrong.
+  // better way to be wrong. A hunk with no context at all is refused there
+  // instead; disownsBlanks has why.
   let trailing = perLine.length;
   while (trailing > 0 && perLine[trailing - 1].line.trim() === '') {
     trailing -= 1;
@@ -253,7 +260,9 @@ export function measureBody(lines: string[], start: number, introduced: boolean)
   const anchored = perLine
     .slice(0, trailing)
     .some((entry) => entry.old && entry.nw && entry.line.trim() !== '');
-  const beforeHunk = i < lines.length && HUNK_RE.test(lines[i]) && anchored;
+  const contextless = !perLine.slice(0, trailing).some((entry) => entry.old && entry.nw);
+  const nextIsHunk = i < lines.length && HUNK_RE.test(lines[i]);
+  const beforeHunk = nextIsHunk && anchored;
   const last = beforeHunk ? -1 : perLine.length - 1;
   let o = oldCount;
   let n = newCount;
@@ -267,7 +276,12 @@ export function measureBody(lines: string[], start: number, introduced: boolean)
     byTrailingBlanks.push({ oldCount: o, newCount: n });
   }
 
-  return { end: i, byTrailingBlanks };
+  return {
+    end: i,
+    byTrailingBlanks,
+    contextless,
+    blankBeforeHunk: nextIsHunk && trailing < perLine.length,
+  };
 }
 
 /**
@@ -294,11 +308,19 @@ export function measureBody(lines: string[], start: number, introduced: boolean)
  * empty, which is to say the trailing blanks are the gap before the next file.
  * If none does, every line is counted and checkHeaders, which tests the result
  * with the same zeroSideWithLines, refuses to write it.
+ *
+ * And except where the hunk cannot own its trailing blanks at all, which
+ * disownsBlanks decides. Then they are left out whatever the header says.
  */
 export function resolveCounts(
   counts: BodyCounts,
   declared: Counts & { oldStart: number; newStart: number },
 ): Counts {
+  if (disownsBlanks(counts, declared)) {
+    // Not even the declared header is asked: an edit can make the reading
+    // that counts them in match it by chance.
+    return counts.byTrailingBlanks[counts.byTrailingBlanks.length - 1];
+  }
   const valid = counts.byTrailingBlanks.filter((c) => zeroSideWithLines(declared, c) === undefined);
   for (const candidate of valid) {
     if (candidate.oldCount === declared.oldCount && candidate.newCount === declared.newCount) {
@@ -306,6 +328,35 @@ export function resolveCounts(
     }
   }
   return valid[0] ?? counts.byTrailingBlanks[0];
+}
+
+/**
+ * True where a hunk's trailing blank lines cannot be its own context: it has
+ * no context before them, and starts below the first line -- which a header
+ * whose old side is empty, as `-1,0`, does too, since it names the line
+ * before the insertion.
+ *
+ * git and diff write context above a hunk wherever there is a line to write,
+ * so such a hunk was made with -U0, which writes none below it either, and
+ * its trailing blanks are the gap before whatever follows. Counted in, they
+ * would be all git had to place the hunk by, and it would go silently at the
+ * first matching blank line in the file. A hunk with blank lines of context
+ * above, or one at the top of the file, may own them, and is left to
+ * resolveCounts' usual rule.
+ *
+ * At line 1 only the header can tell them apart: `-1,0 +2` inserts after the
+ * first line, and `-1,3 +1` before it with three blank lines of context, and
+ * their bodies can be the same. It is asked only whether the old side was
+ * empty, which an edit to the body cannot change, and which a recount of such
+ * a hunk keeps empty, so it is stable in live mode.
+ */
+export function disownsBlanks(
+  counts: BodyCounts,
+  declared: { oldStart: number; oldCount: number },
+): boolean {
+  const belowFirstLine =
+    declared.oldStart > 1 || (declared.oldStart === 1 && declared.oldCount === 0);
+  return counts.contextless && belowFirstLine;
 }
 
 /** How many lines a hunk occupies on each side. */

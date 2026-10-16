@@ -216,6 +216,123 @@ describe('trailing blank ambiguity', () => {
     // an over-large count is rejected loudly, an under-large one truncates.
     assert.match(recountText(patch), /^@@ -7,3 \+7,4 @@$/m);
   });
+
+  test('leaves it out of an edited hunk with no other context', () => {
+    // git diff -U0 inserting x and y after line 5, then z typed after them.
+    // Counted in, the blank would be all git had to place the hunk by, and
+    // git apply --unidiff-zero put all three after the first blank line.
+    const patch = [
+      'diff --git a/f b/f',
+      '--- a/f',
+      '+++ b/f',
+      '@@ -5,0 +6,2 @@',
+      '+x',
+      '+y',
+      '+z',
+      '',
+      'diff --git a/g b/g',
+      '',
+    ].join('\n');
+    assert.match(recountText(patch), /^@@ -5,0 \+6,3 @@$/m);
+  });
+
+  test('leaves it out of an edited -U0 deletion', () => {
+    const patch = [
+      '--- a/f',
+      '+++ b/f',
+      '@@ -5,2 +4,0 @@',
+      '-a',
+      '-b',
+      '-c',
+      ' ',
+      '--- a/g',
+      '+++ b/g',
+      '',
+    ];
+    assert.match(recountText(patch.join('\n')), /^@@ -5,3 \+4,0 @@$/m);
+  });
+
+  test('leaves several out', () => {
+    const patch = [
+      '--- a/f',
+      '+++ b/f',
+      '@@ -5,0 +6 @@',
+      '+x',
+      '+y',
+      '',
+      ' ',
+      '',
+      '--- a/g',
+      '+++ b/g',
+    ];
+    assert.match(recountText(patch.join('\n')), /^@@ -5,0 \+6,2 @@$/m);
+  });
+
+  test('leaves it out even where the old header counted it in', () => {
+    // A -U0 deletion of a and b replaced by c, then the b and c lines
+    // deleted: counting the blank in matches the old header by chance, and
+    // git apply --unidiff-zero deleted the next `a` followed by a blank.
+    const patch = ['--- a/f', '+++ b/f', '@@ -5,2 +5 @@', '-a', '', '--- a/g', '+++ b/g', ''];
+    assert.match(recountText(patch.join('\n')), /^@@ -5 \+4,0 @@$/m);
+  });
+
+  test('counts it into a hunk whose only context is blank', () => {
+    // git diff -U1 inserting between two blank lines, then y typed. The
+    // trailing blank is real context: left out, git would insist the hunk
+    // match at the end of the file, and apply it there if the file ends in
+    // a blank line.
+    const patch = [
+      '--- a/f',
+      '+++ b/f',
+      '@@ -5,2 +5,3 @@',
+      ' ',
+      '+x',
+      '+y',
+      ' ',
+      '--- a/g',
+      '+++ b/g',
+    ];
+    assert.match(recountText(patch.join('\n')), /^@@ -5,2 \+5,4 @@$/m);
+  });
+
+  test('counts it into a hunk at the top of the file', () => {
+    // git diff -U3 inserting before three blank lines, then y typed. Above
+    // the first line there is nothing to write as context, so the blanks
+    // can be all a correct hunk has.
+    const patch = ['--- a/f', '+++ b/f', '@@ -1,3 +1,4 @@', '+x', '+y', ' ', ' ', ' ', '--- a/g'];
+    assert.match(recountText([...patch, '+++ b/g'].join('\n')), /^@@ -1,3 \+1,5 @@$/m);
+  });
+
+  test('refuses a hunk of nothing but blanks below the first line', () => {
+    // Left out, the blanks leave no lines on either side. Counted in, they
+    // are a hunk that changes nothing, placed only by blank lines. Whether
+    // the header matches them or not.
+    for (const header of ['@@ -5,3 +5,3 @@', '@@ -5,2 +5,2 @@']) {
+      const check = checkHeaders(['--- a/f', '+++ b/f', header, '', ' ', 'diff --git a/g b/g']);
+      assert.deepEqual(check.fixes, []);
+      assert.equal(check.refused[0].line, 2);
+    }
+  });
+
+  test('leaves it out of an edited -U0 insertion after the first line', () => {
+    // -1,0 names the line before the insertion, so this hunk is below line 1
+    // too; its body is the same as the top-of-file one above, so only the
+    // empty old side tells them apart.
+    const patch = [
+      '--- a/f',
+      '+++ b/f',
+      '@@ -1,0 +2,2 @@',
+      '+x',
+      '+y',
+      '+z',
+      '',
+      '--- a/g',
+      '+++ b/g',
+    ];
+    const fixed = recountText(patch.join('\n'));
+    assert.match(fixed, /^@@ -1,0 \+2,3 @@$/m);
+    assert.equal(recountText(fixed), fixed);
+  });
 });
 
 describe('a blank before the next hunk', () => {
@@ -248,13 +365,38 @@ describe('a blank before the next hunk', () => {
     assert.match(text, /^@@ -1,4 \+1,4 @@$/m);
   });
 
-  test('leaves a blank out of a hunk with no other context', () => {
+  test('refuses a hunk with no context at all', () => {
     // Counted in, the blank would be all git had to place the insertion by,
     // and it would apply it silently at the first blank line in the file.
-    // Left out, git rejects the patch, which is the better way to be wrong.
+    // Left out, git rejects the patch, but GNU patch skips the next hunk
+    // without a word. Either way the blank is the thing to fix.
     const u0 = ['--- a/f', '+++ b/f', '@@ -5 +5 @@', '-a', '+x', '', '@@ -30 +30 @@', '-b', '+y'];
-    const text = `${u0.join('\n')}\n`;
-    assert.equal(recountText(text), text);
+    const check = checkHeaders(u0);
+    assert.deepEqual(check.fixes, []);
+    assert.deepEqual(
+      check.refused.map((r) => r.line),
+      [2],
+    );
+    assert.match(check.refused[0].reason, /delete the blank line/);
+  });
+
+  test('refuses it after an edit too', () => {
+    // With no header to match, the fallback once counted every line.
+    const u0 = [
+      '--- a/f',
+      '+++ b/f',
+      '@@ -5 +5 @@',
+      '-a',
+      '+x',
+      '+z',
+      '',
+      '@@ -30 +30 @@',
+      '-b',
+      '+y',
+    ];
+    const check = checkHeaders(u0);
+    assert.deepEqual(check.fixes, []);
+    assert.equal(check.refused[0].line, 2);
   });
 
   test('leaves a blank out of a hunk whose only context is blank', () => {

@@ -23,7 +23,7 @@ import {
 } from './patch';
 
 function isBlankContext(text: string): boolean {
-  return text === '' || (text.charAt(0) === ' ' && text.trim() === '');
+  return text === '' || text === '\r' || (text.charAt(0) === ' ' && text.trim() === '');
 }
 
 function bodyCounts(body: Line[]): { old: number; nw: number; added: number; deleted: number } {
@@ -51,6 +51,11 @@ function bodyCounts(body: Line[]): { old: number; nw: number; added: number; del
  * another hunk, where git takes any line that is not a header as part of the
  * hunk before, and the blanks cannot be left out. Unless nothing else in the
  * hunk anchors it, which is strandsBlank.
+ *
+ * A hunk with no context above its trailing blanks, below the first line,
+ * was made with -U0, and the blanks cannot be its own: counted in, git would
+ * place the hunk by them alone. They must be left out, and before another
+ * hunk, where that leaves them in neither, the header must be refused.
  */
 function acceptableCounts(patch: Patch, index: number): Array<[number, number]> {
   const hunk = patch.items[index] as HunkItem;
@@ -77,9 +82,19 @@ function acceptableCounts(patch: Patch, index: number): Array<[number, number]> 
     above += 1;
   }
 
+  let most = above;
+  // An empty old side names the line before it, so -1,0 inserts below line 1.
+  const { oldStart, oldCount } = hunk.declared;
+  if (isContextless(hunk) && (oldStart > 1 || (oldStart === 1 && oldCount === 0))) {
+    if (below > 0 && patch.items[index + 1]?.kind === 'hunk') {
+      return [];
+    }
+    most = -below;
+  }
+
   const zero = isZeroStart(hunk);
   const counts: Array<[number, number]> = [];
-  for (let d = -below; d <= above; d += 1) {
+  for (let d = -below; d <= most; d += 1) {
     const o = old + d;
     const n = nw + d;
     if ((o === 0 && n === 0) || (zero === 'old' && o !== 0) || (zero === 'new' && n !== 0)) {
@@ -98,7 +113,9 @@ function acceptableCounts(patch: Patch, index: number): Array<[number, number]> 
  * nothing true to say about where the hunk goes.
  *
  * Counting them in is accepted too, because after an edit elsewhere in the
- * hunk the fallback still does, which is the silent way: deferred to #86.
+ * hunk the fallback still does. That is only safe as far as the hunk's other
+ * context, blank or at the top of the file, places it; a hunk with none is
+ * isContextless, and is held to leaving them out.
  */
 function strandsBlank(patch: Patch, index: number): boolean {
   const hunk = patch.items[index] as HunkItem;
@@ -114,6 +131,18 @@ function strandsBlank(patch: Patch, index: number): boolean {
     .slice(0, end)
     .some((line) => line.text.charAt(0) === ' ' && line.text.trim() !== '');
   return end < counted.length && !anchored;
+}
+
+/** True if no line before the blanks that end a hunk is context of any kind. */
+function isContextless(hunk: HunkItem): boolean {
+  const counted = hunk.body.filter((line) => !line.text.startsWith('\\'));
+  let end = counted.length;
+  while (end > 0 && isBlankContext(counted[end - 1].text)) {
+    end -= 1;
+  }
+  return !counted
+    .slice(0, end)
+    .some((line) => line.text === '' || line.text === '\r' || line.text.charAt(0) === ' ');
 }
 
 function scratchDir(): string {
