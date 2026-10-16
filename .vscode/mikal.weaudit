@@ -17,10 +17,6 @@
       "author": "mikal"
     },
     {
-      "path": "tools/check-package-contents.sh",
-      "author": "mikal"
-    },
-    {
       "path": "tools/marketplace-token.mjs",
       "author": "mikal"
     },
@@ -62,10 +58,6 @@
     },
     {
       "path": ".github/exported-config",
-      "author": "mikal"
-    },
-    {
-      "path": "RELEASE-SETUP.md",
       "author": "mikal"
     },
     {
@@ -166,10 +158,6 @@
     },
     {
       "path": "test/fixtures/dash-comments-diff-u.patch",
-      "author": "mikal"
-    },
-    {
-      "path": "README.md",
       "author": "mikal"
     },
     {
