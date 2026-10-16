@@ -6,7 +6,9 @@
  */
 
 import {
+  type BodyCounts,
   type Counts,
+  disownsBlanks,
   formatHeader,
   HUNK_RE,
   type Hunk,
@@ -83,7 +85,7 @@ export function checkHeaders(lines: string[]): HeaderCheck {
     const beforeEmptyNew = counts.newCount === 0 ? 1 : 0;
     const newStart = declared.oldStart + delta + afterEmptyOld - beforeEmptyNew;
 
-    const reason = refusal(declared, counts, newStart);
+    const reason = refusal(declared, body, counts, newStart);
     if (reason !== undefined) {
       refused.push({ line: i, current: lines[i], reason });
       // The header stays as written, and git will read it that way, so later
@@ -129,8 +131,24 @@ export function checkHeaders(lines: string[]): HeaderCheck {
  * fall before the first line. For a hunk with an empty old side that would be
  * placed silently at the top of the file, where a header git rejects outright
  * is the better outcome; refusing is better still.
+ *
+ * A blank line between a hunk that disowns it and the next hunk belongs to
+ * neither. Counted in, git places the hunk by it alone; left out, git rejects
+ * the patch, and GNU patch skips every later hunk of the file without a word.
+ * No header makes that right, so the blank is reported instead.
  */
-function refusal(declared: Hunk, counts: Counts, newStart: number): string | undefined {
+function refusal(
+  declared: Hunk,
+  body: BodyCounts,
+  counts: Counts,
+  newStart: number,
+): string | undefined {
+  if (body.blankBeforeHunk && disownsBlanks(body, declared)) {
+    return (
+      'the blank line before the next hunk belongs to neither, and this hunk has no ' +
+      'context to place it by; delete the blank line'
+    );
+  }
   const side = zeroSideWithLines(declared, counts);
   if (side !== undefined) {
     const count = side === 'old' ? counts.oldCount : counts.newCount;

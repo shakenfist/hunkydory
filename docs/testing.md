@@ -32,7 +32,10 @@ It is judged from outside the rules under test wherever it can be:
   are made to that structure rather than to text. A recounted header must
   match its body, give or take blank lines at its end where
   [the ambiguity](https://github.com/shakenfist/hunkydory/blob/develop/docs/ambiguity.md)
-  allows, or be refused if no valid header exists.
+  allows, or be refused if no valid header exists. A hunk made with `-U0`
+  must leave its trailing blanks out. That one is held by rule: the old file
+  the next checks build has no other blank for git to find, so git would
+  place such a hunk right however it was counted.
 - `git apply --numstat` must parse the whole recounted patch and agree on how
   many lines it adds and deletes.
 - For each file, an old file is built from the recounted hunks, and
