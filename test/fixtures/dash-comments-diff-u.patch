@@ -1,0 +1,25 @@
+--- a/mod.lua
++++ b/mod.lua
+@@ -1,4 +1,4 @@
+ local M = {}
+--- helper
++-- a helper
+ function M.f() return 1 end
+ return M
+--- a/schema.sql
++++ b/schema.sql
+@@ -1,7 +1,6 @@
+ -- schema for widgets
+ CREATE TABLE widgets (
+   id INTEGER PRIMARY KEY,
+--- old comment
+   name TEXT
+ );
+ INSERT INTO widgets VALUES (1, 'w1');
+@@ -23,5 +22,5 @@
+ INSERT INTO widgets VALUES (17, 'w17');
+ INSERT INTO widgets VALUES (18, 'w18');
+ INSERT INTO widgets VALUES (19, 'w19');
+--- trailing note
++++ trailing note
+ SELECT 1;

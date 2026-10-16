@@ -39,7 +39,7 @@ the same goes for a hunk left with no lines on either side.
 **A range that starts at 0 must be empty.** Line 0 only exists as "before the
 first line", so `-0` with any count but 0 is invalid -- `-0 +1,6` is a corrupt
 patch to git. Trailing blank lines after a creation are therefore never counted
-into it (see [the ambiguous case](ambiguity.md)). If the body still implies old
+into it (see [the ambiguous cases](ambiguity.md)). If the body still implies old
 lines, Hunky Dory leaves the header alone and reports it rather than writing
 it: the body has stopped being a creation, and the right start is not
 something a recounter can guess.
@@ -52,6 +52,18 @@ something a recounter can guess.
 ```
 
 That `-- ` starts with a `-`, and a naive counter reads it as a deleted line.
+It is only the signature when a version follows it, which no body line can.
+
+**A deleted `-- ` line is not a file header.** A deleted SQL, Lua, Haskell or
+Ada comment is a body line starting `--- `, which is how a file header starts
+too. Ending the hunk there dropped the deletion and everything after it, and
+git applied what was left without complaint. Where each file starts with a
+line of its own -- `diff --git` from git, a `diff` line from `diff -r`,
+`Index:` from svn and quilt -- the next file will too, and a `--- ` inside a hunk is
+always body. A bare `diff -u` patch has nothing between files but `--- ` and
+`+++ `, so there a lone `--- ` is body and the pair is a file header, unless a
+body line follows it. That misreads a bare hunk ending in a deleted `-- ` line
+and an added `++ ` one (see [the ambiguous cases](ambiguity.md)).
 
 **A bare empty line is a context line.** git writes a blank context line as a
 single space, but editors and mail paths strip trailing whitespace, so patches
@@ -64,7 +76,7 @@ line above it.
 **Offsets accumulate within a file and reset between files.** The new-side
 start of each hunk is its old-side start plus the running total of
 `(additions - deletions)` from earlier hunks in the same file, adjusted by one
-for an empty side as above. That total must reset at each `--- ` line or the
+for an empty side as above. That total must reset at each file header or the
 second file in a patch comes out shifted.
 
 ## Why the direction of an error matters

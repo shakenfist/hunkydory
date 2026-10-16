@@ -15,9 +15,9 @@
  * been scrambled. The second check is the one that has teeth, because a
  * recounter that does not recognise a file at all passes the first one
  * perfectly. That is also a constraint on what belongs here: a fixture must
- * contain no trailing-blank ambiguity (docs/ambiguity.md), because scrambling
- * destroys the declared counts that ambiguity is resolved from, and such a
- * fixture would fail for a reason that is not a bug.
+ * contain neither ambiguity in docs/ambiguity.md, because scrambling destroys
+ * the declared counts they are resolved from, and such a fixture would fail
+ * for a reason that is not a bug.
  *
  * The external corpus is a directory of real patches, and is where most of the
  * edge cases the unit tests now cover were found -- file creations, deletions,

@@ -74,13 +74,15 @@ are easy to miss, each of which broke a real patch:
 
 - git's `-- ` signature before the version trailer starts with `-` but is not a
   deletion.
+- A deleted `-- comment` is the body line `--- comment`. Where files start with
+  `diff --git`, a `--- ` in a hunk is always body; bare `diff -u` is harder.
 - A bare empty line is a context line that lost its leading space.
 - `\ No newline at end of file` counts on neither side.
 - A count of exactly 1 is elided: `-1,1` is written `-1`.
 - An empty range names the line before it: creation is `-0,0 +1,N`, deletion
   `-1,N +0,0`, and a `-U0` insertion after line 3 `-3,0 +4,2`.
-- One case is genuinely ambiguous. Read [docs/ambiguity.md](docs/ambiguity.md)
-  before touching `resolveCounts`.
+- Two cases are genuinely ambiguous. Read [docs/ambiguity.md](docs/ambiguity.md)
+  before touching `resolveCounts` or `startsFile`.
 - Lines reach the rules with their terminators already removed. Split a patch
   string with `splitPatch`, never `split('\n')`: the leftover CR of a CRLF
   file is content as far as the rules are concerned, and reading it as such

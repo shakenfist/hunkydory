@@ -25,20 +25,14 @@ meet the editor's undo stack, which no plain node test can reach, so
 
 ## How data moves
 
-```
-document text
-     |
-     v
-parseHunks / measureBody      (diff.ts)   what does the body actually contain?
-     |
-     v
-resolveCounts                 (diff.ts)   settle the one ambiguous case
-     |
-     v
-computeFixes                  (recount.ts) which header lines disagree?
-     |
-     v
-WorkspaceEdit                 (extension.ts) replace only those lines
+```mermaid
+flowchart TD
+  text[document text]
+  sites["hunkSites / measureBody (diff.ts)<br>where does each hunk end, and what does it contain?"]
+  resolve["resolveCounts (diff.ts)<br>settle the trailing-blank ambiguity"]
+  fixes["computeFixes (recount.ts)<br>which header lines disagree?"]
+  edit["WorkspaceEdit (extension.ts)<br>replace only those lines"]
+  text --> sites --> resolve --> fixes --> edit
 ```
 
 `computeFixes` returns *only* the headers that need changing rather than a

@@ -35,6 +35,8 @@ type Item = HunkItem | TextItem;
 export interface FileInfo {
   creates: boolean;
   deletes: boolean;
+  /** A line such as `diff --git` came before its header, as git writes. */
+  introduced: boolean;
 }
 
 export interface Patch {
@@ -100,16 +102,22 @@ export function readPatch(text: string): Patch {
   const lines = splitLines(text);
   const items: Item[] = [];
   const files: FileInfo[] = [];
+  let introducing = false;
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
     const declared = parseHeaderLine(line.text);
     if (!declared) {
+      if (/^(?:diff (?:--git |-)|Index: )/.test(line.text)) {
+        introducing = true;
+      }
       if (line.text.startsWith('--- ') && lines[i + 1]?.text.startsWith('+++ ')) {
         files.push({
           creates: line.text === '--- /dev/null',
           deletes: lines[i + 1].text === '+++ /dev/null',
+          introduced: introducing,
         });
+        introducing = false;
       }
       items.push({ kind: 'text', line });
       i += 1;

@@ -49,8 +49,9 @@ that one is left alone until you move away, so it never fights you.
 
 The counting rules have more edge cases than they look like they do: empty
 ranges (file creation and deletion, `git diff -U0` insertions), the elided
-`,1`, git's `-- ` signature line, missing trailing newlines, blank context
-lines that lost their leading space, and one case that is genuinely ambiguous.
+`,1`, git's `-- ` signature line, deleted comments that read as file headers,
+missing trailing newlines, blank context lines that lost their leading space,
+and two cases that are genuinely ambiguous.
 
 So the tests are concrete cases rather than opinions. Most of them are
 patches that actually broke, down to scrambling every count in one and
@@ -69,9 +70,9 @@ HUNKYDORY_CORPUS=/path/to/patches npm run corpus # regression corpus
 
 - [Hunk header format](https://github.com/shakenfist/hunkydory/blob/develop/docs/hunk-format.md)
   -- what the numbers mean and every rule that turned out to matter.
-- [The ambiguous case](https://github.com/shakenfist/hunkydory/blob/develop/docs/ambiguity.md) --
-  why one blank line cannot be resolved from the body alone, and what we do
-  about it.
+- [The ambiguous cases](https://github.com/shakenfist/hunkydory/blob/develop/docs/ambiguity.md) --
+  why a blank line, and rarely a deleted comment, cannot be resolved from the
+  body alone, and what we do about it.
 - [Testing](https://github.com/shakenfist/hunkydory/blob/develop/docs/testing.md) -- the
   tests, the corpus, and the edit fuzzer that has git judge an edited patch.
 - [Architecture](https://github.com/shakenfist/hunkydory/blob/develop/ARCHITECTURE.md) -- how the

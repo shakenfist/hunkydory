@@ -177,7 +177,8 @@ function main(): number {
   }
   console.log('');
   console.log(
-    `${coverage.patches} patches judged, ${coverage.byGit} of them by git as well; ` +
+    `${coverage.patches} patches judged, ${coverage.ambiguous} of them ambiguous, ` +
+      `${coverage.byGit} of them by git as well; ` +
       `${coverage.filesApplied} files applied by git, ${coverage.filesSkipped} skipped`,
   );
   console.log(failures.length === 0 ? 'ok   no failures' : `FAIL ${failures.length} cases failed`);
