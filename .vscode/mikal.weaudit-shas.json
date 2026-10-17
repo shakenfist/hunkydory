@@ -25,9 +25,21 @@
       "sha": "bae8ea5213d5d7f70519c21567f2ea65246e27f0",
       "date": "2026-10-17"
     },
+    ".github/workflows/codeql-analysis.yml": {
+      "sha": "975f656d8135aefe12ba2f2094d8671460ef1a8a",
+      "date": "2026-10-18"
+    },
+    ".github/workflows/export-repo-config.yml": {
+      "sha": "b9b3936053b8685ef0ae47f656b2f35aa62ba637",
+      "date": "2026-10-18"
+    },
     ".github/workflows/pr-re-review.yml": {
       "sha": "68425cd384443ae15a909832693af1df01414c38",
       "date": "2026-10-04"
+    },
+    ".github/workflows/pr-retest.yml": {
+      "sha": "dab99349ea1867e984ae0e5fc73f70ec00cb519b",
+      "date": "2026-10-18"
     },
     ".github/workflows/prune-reviews.yml": {
       "sha": "91ff1783e6589e198ce5d14aab473112761b7ce2",
@@ -36,6 +48,10 @@
     ".github/workflows/release.yml": {
       "sha": "11b20579fc34f25e9015c26a8229c63e13c0cfcb",
       "date": "2026-10-16"
+    },
+    ".github/workflows/renovate.yml": {
+      "sha": "0984c9837bea9f5354034dc5811257b3c0f13882",
+      "date": "2026-10-18"
     },
     ".github/workflows/secret-scan.yml": {
       "sha": "50f8e9027318ae590250421cf55ba39290a299f1",
@@ -53,9 +69,25 @@
       "sha": "f8ced8ebbb86e7001e5e2cebfb431a5671916e73",
       "date": "2026-10-17"
     },
+    "README.md": {
+      "sha": "75b178917b4cb3d8f10b72b587b0d29a992c5ad9",
+      "date": "2026-10-18"
+    },
+    "RELEASE-SETUP.md": {
+      "sha": "8bbd26237251f68fff469d68ca5f1e6d88e117f8",
+      "date": "2026-10-18"
+    },
     "biome.json": {
       "sha": "2468e97c69419c12ec2afd927db7978ba1dd6583",
       "date": "2026-09-22"
+    },
+    "docs/ambiguity.md": {
+      "sha": "91c54c6bd79f2bd79b7e274874db9a9449e799c5",
+      "date": "2026-10-18"
+    },
+    "docs/component.yml": {
+      "sha": "67837160fbf50a8b3bf4da01988e86085699d052",
+      "date": "2026-10-18"
     },
     "docs/hunk-format.md": {
       "sha": "32e390db79f736b341f139d44c8d70f0f50e198e",
@@ -65,9 +97,21 @@
       "sha": "89e476e123dcd1b00c517e93c3a6f2f0b8887bea",
       "date": "2026-10-17"
     },
+    "docs/testing.md": {
+      "sha": "2f920f43025c1b532836dbea10f0152977aded2d",
+      "date": "2026-10-18"
+    },
+    "src/diff.ts": {
+      "sha": "efe474657505b3ccd7cf282f960f292a341d999c",
+      "date": "2026-10-18"
+    },
     "src/extension.ts": {
       "sha": "db8cf5f550a469069c594638bf665e7ad0fe223e",
       "date": "2026-10-16"
+    },
+    "src/recount.ts": {
+      "sha": "ae4c853428ebad85b2463031303897b2fd180d87",
+      "date": "2026-10-18"
     },
     "test/corpus.ts": {
       "sha": "c84e999576c529b84566d2dc582f10517bf674b8",
@@ -125,9 +169,17 @@
       "sha": "bbefdf17b9846b5da57409af4ebf9b6b3a3e4ca3",
       "date": "2026-10-17"
     },
+    "test/fuzz/judge.ts": {
+      "sha": "f778329979e2830a14c2f09a4dd8736434f89211",
+      "date": "2026-10-18"
+    },
     "test/fuzz/patch.ts": {
       "sha": "dbae8eef7b88a9e1577bac0cb83b8e30a1400cf1",
       "date": "2026-10-17"
+    },
+    "test/recount.test.ts": {
+      "sha": "cbbd0f5e81489e1d9bbf275c9133cb22c3e1cbb7",
+      "date": "2026-10-18"
     },
     "test/scripts.test.ts": {
       "sha": "ac7b7a556e07d7567d6fdd9976c4042686b0c03b",
@@ -140,6 +192,10 @@
     "tools/check-node.sh": {
       "sha": "77606633dea10f2833a8fb2f466284078db94ae0",
       "date": "2026-10-16"
+    },
+    "tools/check-package-contents.sh": {
+      "sha": "17037c7e004b678d921adc767012f0f1f46c0bde",
+      "date": "2026-10-18"
     },
     "tools/ci-prune-reviews.sh": {
       "sha": "b4ce5b64c79afb01e07b98f43457fa5ff842e896",

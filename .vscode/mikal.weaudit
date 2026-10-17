@@ -191,6 +191,86 @@
     {
       "path": "ARCHITECTURE.md",
       "author": "mikal"
+    },
+    {
+      "path": ".github/workflows/renovate.yml",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/workflows/codeql-analysis.yml",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/workflows/export-repo-config.yml",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/workflows/pr-retest.yml",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/workflows",
+      "author": "mikal"
+    },
+    {
+      "path": ".github",
+      "author": "mikal"
+    },
+    {
+      "path": "src/recount.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "tools/check-package-contents.sh",
+      "author": "mikal"
+    },
+    {
+      "path": "README.md",
+      "author": "mikal"
+    },
+    {
+      "path": "docs/testing.md",
+      "author": "mikal"
+    },
+    {
+      "path": "RELEASE-SETUP.md",
+      "author": "mikal"
+    },
+    {
+      "path": "docs/component.yml",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fuzz/judge.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test/fuzz",
+      "author": "mikal"
+    },
+    {
+      "path": "docs/ambiguity.md",
+      "author": "mikal"
+    },
+    {
+      "path": "docs",
+      "author": "mikal"
+    },
+    {
+      "path": "src/diff.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "src",
+      "author": "mikal"
+    },
+    {
+      "path": "test/recount.test.ts",
+      "author": "mikal"
+    },
+    {
+      "path": "test",
+      "author": "mikal"
     }
   ],
   "partiallyAuditedFiles": [],
