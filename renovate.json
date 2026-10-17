@@ -29,6 +29,11 @@
       "prBodyNotes": [
         ":warning: Before merging, check this version's `engines.node` (`npm view renovate@<version> engines`) against `node-version` in `.github/workflows/renovate.yml`. If it no longer accepts that Node major, raise `node-version` in the same pull request, and in shakenfist/development's `templates/renovate/renovate.yml`, which every repository copies verbatim."
       ]
+    },
+    {
+      "description": "Tell Renovate how to read shellcheck-py's four-component tags. Upstream tags a fourth component -- v0.11.0.1 is shellcheck 0.11.0, packaging revision 1 -- which is not semver, so the github-tags datasource behind the pre-commit hook could not resolve the current value, reported \"Can't find version matching v0.11.0.1\" on the dependency dashboard, and never proposed an update. The fourth group is named build rather than revision even though it is a packaging revision: Renovate's regex versioning only appends revision to the comparison when a build group matched too, so naming it revision would make v0.11.0.2 compare equal to v0.11.0.1 and a packaging-only release, which is most of them, would never be proposed. The regex is anchored to exactly four numeric components so that re-tags such as v0.11.0.1-1 are ignored. Copied from shakenfist/kerbside, which hit this first.",
+      "matchPackageNames": ["shellcheck-py/shellcheck-py"],
+      "versioning": "regex:^v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d+)$"
     }
   ],
   "minimumReleaseAge": "3 days",
