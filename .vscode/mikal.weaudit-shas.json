@@ -25,9 +25,21 @@
       "sha": "bae8ea5213d5d7f70519c21567f2ea65246e27f0",
       "date": "2026-10-17"
     },
+    ".github/workflows/codeql-analysis.yml": {
+      "sha": "975f656d8135aefe12ba2f2094d8671460ef1a8a",
+      "date": "2026-10-18"
+    },
+    ".github/workflows/export-repo-config.yml": {
+      "sha": "b9b3936053b8685ef0ae47f656b2f35aa62ba637",
+      "date": "2026-10-18"
+    },
     ".github/workflows/pr-re-review.yml": {
       "sha": "68425cd384443ae15a909832693af1df01414c38",
       "date": "2026-10-04"
+    },
+    ".github/workflows/pr-retest.yml": {
+      "sha": "dab99349ea1867e984ae0e5fc73f70ec00cb519b",
+      "date": "2026-10-18"
     },
     ".github/workflows/prune-reviews.yml": {
       "sha": "91ff1783e6589e198ce5d14aab473112761b7ce2",
@@ -36,6 +48,10 @@
     ".github/workflows/release.yml": {
       "sha": "11b20579fc34f25e9015c26a8229c63e13c0cfcb",
       "date": "2026-10-16"
+    },
+    ".github/workflows/renovate.yml": {
+      "sha": "0984c9837bea9f5354034dc5811257b3c0f13882",
+      "date": "2026-10-18"
     },
     ".github/workflows/secret-scan.yml": {
       "sha": "50f8e9027318ae590250421cf55ba39290a299f1",
