@@ -75,6 +75,8 @@ HUNKYDORY_CORPUS=/path/to/patches npm run corpus # regression corpus
   body alone, and what we do about it.
 - [Testing](https://github.com/shakenfist/hunkydory/blob/develop/docs/testing.md) -- the
   tests, the corpus, and the edit fuzzer that has git judge an edited patch.
+- [Merging and releasing](https://github.com/shakenfist/hunkydory/blob/develop/docs/development.md)
+  -- the merge queue, and the CI gate a release checks before it publishes.
 - [Architecture](https://github.com/shakenfist/hunkydory/blob/develop/ARCHITECTURE.md) -- how the
   pieces fit together.
 
