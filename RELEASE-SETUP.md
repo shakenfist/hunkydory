@@ -27,10 +27,14 @@ The release process uses:
   subject names the environment and carries no ref, so Entra cannot
   distinguish one ref from another, and the ability to create a `v*` tag is
   therefore the ability to publish. Step 6 is where that is addressed.
+- **A CI gate**: before anything is built, the release checks that `ci.yml`
+  succeeded on the tagged commit in its merge queue run, and stops if it did
+  not. There is no override. See [Cutting a Release](#cutting-a-release).
 - **Split build/publish jobs**: Building the `.vsix` and publishing it happen
   in different jobs, so the publishing credential is present in only one of
-  them. No job runs on the shared static runner pool, and each checks the
-  artifact against the digest the build recorded. See
+  them. No job that holds a credential or touches the artifact runs on the
+  shared static runner pool, and each checks the artifact against the digest
+  the build recorded. See
   [What the Workflow Then Does](#what-the-workflow-then-does) for why.
 - **A GitHub Release**: Each publish also attaches the `.vsix` that was
   shipped to the Marketplace to a GitHub Release, so it can be downloaded
@@ -58,8 +62,8 @@ existing in the pinned version. See the header of
 
 ## One-Time Setup Steps
 
-These steps are ordered, and steps 5 and 6 must both be complete before any
-`v*` tag is pushed.
+These steps are ordered, and steps 5, 6 and 7 must all be complete before
+any `v*` tag is pushed.
 
 The Azure and Marketplace web interfaces are re-arranged from time to time,
 so treat the menu names below as a description of what you are looking for
@@ -298,25 +302,56 @@ true of the PAT setup — it is not a regression introduced by moving to
 Entra — but moving to Entra is what makes it the *only* remaining
 distinction between "a release" and "anyone with push".
 
+### 7. Merge through a merge queue
+
+The release gate counts a CI run only from the merge queue, or from a push
+to `develop`, and `ci.yml` no longer runs on push. So `develop`'s ruleset
+(**Settings** > **Rules** > **Rulesets** > `Develop branch`) needs a merge
+queue. Add it only once `ci.yml`'s "Can enqueue" and "Can merge" jobs are on
+`develop`, or the queue waits for checks that never report.
+
+**What must be true:** the ruleset requires a merge queue with merge method
+**Merge**, **Build concurrency** 1 and **Minimum group size** 1 (a serial
+queue, which is what the consistency audit's `merge-queue-config` criterion
+accepts, and which `ci.yml`'s concurrency groups depend on); and it requires
+"Can enqueue" and "Can merge" as status checks. Every other check it
+requires must report on a merge queue entry: `ci.yml`, `secret-scan.yml`
+and `codeql-analysis.yml` all run on `merge_group` for that reason.
+
+Keep the bypass list short. A merge that bypasses the queue gets no CI run,
+so it cannot be released until a later commit has gone through the queue.
+The one actor that must stay on it is the `sf-can-skip-merge-queue` team,
+for its `shakenfist-bot` member: `prune-reviews.yml` pushes the daily review
+mark commits to `develop` directly with `DEPENDENCIES_TOKEN` as that bot, and
+fails with the ruleset's refusal if it loses the bypass. Those commits touch
+only `REVIEWS.md` and the weAudit files under `.vscode/`, and the release
+gate steps across them (see [docs/development.md](docs/development.md)).
+
 ## What the Workflow Then Does
 
-`release.yml` triggers on push of a tag matching `v*` and runs three jobs:
+`release.yml` triggers on push of a tag matching `v*` and runs four jobs:
 
-1. **`build`**, on `[self-hosted, vm, debian-13-docker, s]`: checks out the
+1. **`ci-gate`**, on `[self-hosted, static]`: checks that `ci.yml`
+   succeeded on the tagged commit, using
+   [`require-ci-success`](https://github.com/shakenfist/actions/blob/main/docs/actions.md#require-ci-success).
+   Nothing else runs unless it passes. It holds a read-only token and
+   produces nothing that ships, which is why it is the one job left on
+   `static`.
+2. **`build`**, on `[self-hosted, vm, debian-13-docker, s]`: checks out the
    tag and runs `tools/build-vsix.sh`, which inside a pinned `node:22`
    container checks that the tag matches the version in `package.json`, runs
    `npm ci --ignore-scripts` and then `npm run package` (`vsce package`). The
    job uploads the resulting `.vsix` as a workflow artifact.
-2. **`publish-marketplace`**, on `[self-hosted, vm, debian-13-docker, s]`,
+3. **`publish-marketplace`**, on `[self-hosted, vm, debian-13-docker, s]`,
    with `environment: release`: downloads the artifact from `build` and runs
    `tools/publish-marketplace.sh`, which does the rest inside a pinned
    `node:22` container. It is the only job that can obtain a publishing
    credential.
-3. **`github-release`**, on `[self-hosted, vm, debian-13-docker, s]`:
+4. **`github-release`**, on `[self-hosted, vm, debian-13-docker, s]`:
    attaches the same artifact to a GitHub Release, and runs only once the
    Marketplace publish has succeeded.
 
-All three check the `.vsix` they hold against the digest `build` recorded,
+The last three check the `.vsix` they hold against the digest `build` recorded,
 so "the same artifact" above is a fact rather than a hope. Five details are
 deliberate:
 
@@ -337,9 +372,10 @@ deliberate:
   first one again rather than the second: it holds `contents: write` with
   `secrets.GITHUB_TOKEN`, which is a credential on shared infrastructure by
   the same reasoning that moved `publish-marketplace`. Issue #32. Nothing in
-  `release.yml` now runs on `static`. That job needs no docker of its own —
-  its actions are JavaScript and run on the runner's own bundled node — but
-  it shares the lane so the workflow names one runner.
+  `release.yml` but `ci-gate` now runs on `static`. That job needs no docker
+  of its own — its actions are JavaScript and run on the runner's own
+  bundled node — but it shares the lane so that nothing holding a write
+  credential, or touching the artifact, runs on `static`.
 - **The container.** That VM lane carries neither node nor npm — this was
   measured, in run 35141854203, after an earlier version of this workflow
   asserted the opposite in a comment and could never have published.
@@ -425,21 +461,44 @@ deliberate:
    already declares `0.1.0`, so there is nothing to bump and step 2 is
    where you start.
 
-2. Once the version bump is on `develop`, tag it and push the tag:
+2. Once the version bump has merged through the queue, and its `ci.yml`
+   merge queue run has finished, tag that commit and push the tag:
    ```bash
    git checkout develop && git pull
    git tag v0.1.0
    git push origin v0.1.0
    ```
-3. Watch the `release.yml` run in the Actions tab. `build` produces the
-   `.vsix`, `publish-marketplace` ships it to the Marketplace, and
-   `github-release` attaches it to a new GitHub Release.
+   `ci-gate` refuses a commit that did not go through the queue, such as
+   one an administrator merged around it, so tag the merge the queue made.
+   A daily prune-reviews commit on top of it is the exception: the gate
+   steps across it to the merge beneath, so tagging `develop`'s tip then
+   is fine.
+3. Watch the `release.yml` run in the Actions tab. `ci-gate` checks CI on
+   the tagged commit, `build` produces the `.vsix`, `publish-marketplace`
+   ships it to the Marketplace, and `github-release` attaches it to a new
+   GitHub Release.
 4. Confirm the new version shows up on the
    [Marketplace listing](https://marketplace.visualstudio.com/items?itemName=shakenfist.hunkydory)
    — Marketplace indexing can lag a few minutes behind a successful
    `vsce publish`.
 
 ## Troubleshooting
+
+### `ci-gate` fails
+
+Nothing was built or published, so every cause is recoverable. The gate's
+message says what it found. If the commit bypassed the queue, or is not on
+`develop`'s first-parent history, move the tag to a commit that went
+through the queue. A queue run that fails, flaky or not, ejects its entry,
+so the commit it built never reaches `develop` and re-running that run
+cannot make any tag pass: re-queue the pull request and tag the commit
+that merges. Re-running a queue run helps only when the tagged commit's
+run was re-run after it merged and that later attempt failed, because the
+gate judges each run at its latest attempt; then use **Re-run jobs** on it
+(a `pr-retest.yml` dispatch does not count), then re-run `ci-gate`. The
+template's
+[recovery table](https://github.com/shakenfist/development/blob/main/templates/release-automation/README.md#recovering-from-a-gate-failure)
+covers each case.
 
 ### `AZURE_CLIENT_ID is not set`, or the same for `AZURE_TENANT_ID`
 

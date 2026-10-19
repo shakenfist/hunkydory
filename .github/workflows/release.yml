@@ -9,28 +9,30 @@
 # reasoning where it still applies and deviates where it does not. The
 # deviations:
 #
-# * Only three jobs, not the template's four. The template's sign-tag job
-#   Sigstore-signs the release tag with gitsign before publishing. This
-#   workflow was designed with a three-job shape (build,
-#   publish-marketplace, github-release) and sign-tag was not considered.
+# * Only three jobs below the CI gate, not the template's four. The
+#   template's sign-tag job Sigstore-signs the release tag with gitsign
+#   before publishing. This workflow was designed with a three-job shape
+#   (build, publish-marketplace, github-release) and sign-tag was not
+#   considered.
 #   That is a known gap, not an oversight: hunkydory's release tags are
 #   therefore UNSIGNED, where the rest of the fleet's release tags are
 #   signed with Sigstore. Revisit this if/when the fleet's tag-signing
 #   convention gets applied here.
 #
-# * All three jobs run on [self-hosted, vm, debian-13-docker, s] rather
-#   than the template's [self-hosted, static]. static is a shared,
-#   persistent bare-metal pool -- other repositories' jobs run on the
-#   same machines between releases -- and each job had its own reason to
-#   leave it. publish-marketplace holds a credential that can publish
-#   under the shakenfist publisher id, matching the reasoning
-#   .github/actionlint.yaml already documents for secret-scan.yml's use
-#   of vm + debian-13. build holds no credential, but it produces the
-#   .vsix publish-marketplace ships, and an artifact built on a pool with
-#   state that outlives the job is reachable by a compromise of that
-#   pool; issue #23 is that argument in full. github-release holds
-#   contents: write, which is a credential on shared infrastructure by
-#   the same reasoning as the first; issue #32.
+# * Those three jobs run on [self-hosted, vm, debian-13-docker, s]
+#   rather than the template's [self-hosted, static]. ci-gate, the
+#   template's job, stays on static, for the reason given where it is
+#   defined. static is a shared, persistent bare-metal pool -- other
+#   repositories' jobs run on the same machines between releases -- and
+#   each job had its own reason to leave it. publish-marketplace holds a
+#   credential that can publish under the shakenfist publisher id,
+#   matching the reasoning .github/actionlint.yaml already documents for
+#   secret-scan.yml's use of vm + debian-13. build holds no credential,
+#   but it produces the .vsix publish-marketplace ships, and an artifact
+#   built on a pool with state that outlives the job is reachable by a
+#   compromise of that pool; issue #23 is that argument in full.
+#   github-release holds contents: write, which is a credential on
+#   shared infrastructure by the same reasoning as the first; issue #32.
 #
 #   The three jobs also now agree on *which* bytes. build publishes the
 #   sha256 of the .vsix it produced as a job output, and the other two
@@ -81,12 +83,62 @@ on:
 
   # Allow manual trigger for testing. github.event_name == 'push' in the
   # guards below means a workflow_dispatch run only ever exercises the
-  # build job -- it never publishes, whether or not it's aimed at a tag.
+  # build job -- it never publishes, whether or not it's aimed at a tag,
+  # and it skips ci-gate.
   workflow_dispatch:
 
 jobs:
+  # Fails the release unless ci.yml succeeded on the tagged commit, in
+  # its merge queue run, so that nothing is published from code CI did
+  # not pass. It carries the same push and tag guard as the publishing
+  # jobs, so a workflow_dispatch dry run skips it and still exercises
+  # the build. See the template's README.md (in shakenfist/development,
+  # templates/release-automation/) for what counts as CI, and
+  # https://github.com/shakenfist/actions/blob/main/docs/actions.md
+  # (the require-ci-success section) for how the gate works.
+  #
+  # ci.yml alone is named. secret-scan.yml runs on the daily review-mark
+  # commits that ci.yml does not, and codeql-analysis.yml skips docs-only
+  # pushes, so naming either would fail a tag on such a commit as
+  # part-tested rather than walking past it.
+  #
+  # This is the one job here on [self-hosted, static], where the
+  # template puts it. It holds a read-only token and produces nothing
+  # that ships; the action needs gh, which static carries. What a
+  # compromise of the pool could do here is pass a gate that should have
+  # failed, and the tag rule, the release environment and tag protection
+  # (RELEASE-SETUP.md) still stand between that and a publish.
+  ci-gate:
+    name: Require CI success on the tagged commit
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: [self-hosted, static]
+
+    permissions:
+      actions: read
+      contents: read
+
+    steps:
+      - name: Require CI success
+        uses: shakenfist/actions/require-ci-success@main
+        # A few API calls per commit, at most 21 commits, and up to
+        # five pages of the default branch's history.
+        timeout-minutes: 5
+        with:
+          workflows: |
+            ci.yml
+
   build:
     name: Build the .vsix
+    needs: ci-gate
+    # A skipped ci-gate would otherwise skip this job too, so the
+    # guard lets a skipped gate through, but only on a run that
+    # publishes nothing. A tag push always runs the gate, and this job
+    # then needs its success. A workflow_dispatch skips the gate by
+    # design, and never reaches a publishing job. The ${{ }} wrapper
+    # is required: YAML reads a bare value starting with "!" as a tag.
+    if: >-
+      ${{ !cancelled() && (needs.ci-gate.result == 'success' ||
+      (github.event_name != 'push' && needs.ci-gate.result == 'skipped')) }}
     # Not [self-hosted, static], and not because of the credential --
     # there is none in this job. The .vsix the publish job ships is
     # produced here, and static is the persistent pool shared by every
@@ -256,8 +308,8 @@ jobs:
     # credential sitting where other repositories' jobs run. It needs no
     # docker itself -- the actions below are JavaScript and run on the
     # runner's own bundled node -- but it shares the lane with build and
-    # publish-marketplace so that release.yml names one runner and
-    # nothing here runs on static at all. Issue #32.
+    # publish-marketplace so that nothing holding a write credential, or
+    # touching the artifact, runs on static. Issue #32.
     runs-on: [self-hosted, vm, debian-13-docker, s]
     timeout-minutes: 5
 

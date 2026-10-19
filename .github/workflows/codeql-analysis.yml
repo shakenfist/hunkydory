@@ -7,6 +7,12 @@
 # its C file) or runs a language matrix (actions) keeps a documented
 # per-repository copy instead; see the template's README.
 #
+# This is such a copy. It differs from the template only in its
+# merge_group trigger and the analyze job's concurrency key: Analyze is
+# a required status check here, and develop merges through a merge
+# queue, which waits for every required check to report on the queue
+# entry.
+#
 # Review-only changes cannot affect code analysis, and neither can
 # docs/, so neither runs it. Analyze is a required status check in
 # some repositories that carry this file, which rules out a
@@ -34,6 +40,7 @@ on:
       - 'docs/**'
   pull_request:
     branches: [main, develop]
+  merge_group:
   schedule:
     - cron: '0 17 * * 2'
 
@@ -42,8 +49,9 @@ jobs:
   # them. There is no checkout: dorny/paths-filter reads a pull
   # request's changed files from the API, so a fork's content never
   # reaches the runner and the job needs only pull-requests: read. On
-  # push and the weekly schedule the filter step is skipped and the
-  # output falls back to code_changed=true, so both always analyze.
+  # push, merge queue entries and the weekly schedule the filter step
+  # is skipped and the output falls back to code_changed=true, so all
+  # three always analyze.
   check_paths:
     name: "Check paths"
     runs-on: [self-hosted, static]
@@ -89,10 +97,11 @@ jobs:
     # The fork guard: a fork pull request does not run this job.
     # Autobuild executes the pull request's build on the shared static
     # pool, and running a stranger's build there is the worse risk. The
-    # cost is that a fork's change is not scanned before it merges -- the
-    # skipped job satisfies a required check -- but the push after merge
-    # scans it. A fork's token cannot hold security-events: write
-    # either, so the analysis would have nowhere to upload.
+    # cost is that a fork's pull request is not scanned -- the skipped
+    # job satisfies a required check -- but its merge queue entry is,
+    # once someone with write access has enqueued it. A fork's token
+    # cannot hold security-events: write either, so the analysis would
+    # have nowhere to upload.
     if: |
       !cancelled()
       && needs.check_paths.outputs.code_changed != 'false'
@@ -108,9 +117,27 @@ jobs:
     # discard an earlier one's analysis. (GitHub still lets a newer run
     # displace one that is queued behind it in the group, but that newer
     # run analyses the later tree, so nothing is left unscanned.)
+    #
+    # Merge queue runs cancel too, keyed on the base branch rather than
+    # github.ref, which is a new queue branch on every rebuild, so a
+    # superseded run is cancelled. That is safe because the queue is
+    # serial (max_entries_to_build: 1): any other first attempt of a
+    # merge_group run has already been abandoned. A re-run is not a
+    # queue build, though. It keeps its original event, so with the
+    # base-branch key a "Re-run jobs" on an old queue run would cancel
+    # the live queue entry or be cancelled by it. Re-runs therefore keep
+    # their own queue branch's group. The merge_group- prefix keeps a
+    # queue run out of the push and schedule runs' group on develop,
+    # whose github.ref is the same string.
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+      group: >-
+        ${{ github.workflow }}-analyze-${{
+        github.event_name == 'merge_group' && github.run_attempt == '1'
+        && format('merge_group-{0}', github.event.merge_group.base_ref)
+        || github.ref }}
+      cancel-in-progress: >-
+        ${{ github.event_name == 'pull_request'
+        || github.event_name == 'merge_group' }}
     permissions:
       # actions: read is required for workflow run telemetry.
       actions: read

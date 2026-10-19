@@ -6,5 +6,7 @@
   from the body alone, and how we settle them.
 - [Testing](testing.md) — the four layers of tests, and the edit fuzzer that
   has git judge what the recounter makes of an edited patch.
+- [Merging and releasing](development.md) — the merge queue, the CI it
+  runs, and the gate a release checks before it publishes.
 - [Architecture](https://github.com/shakenfist/hunkydory/blob/develop/ARCHITECTURE.md) — module
   layout and the editing loop.
