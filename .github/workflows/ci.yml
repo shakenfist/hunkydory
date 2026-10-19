@@ -45,8 +45,9 @@
 # pull request at all. The merge queue is where it is first tested. The
 # guard only stops pull_request events, so enqueueing a fork's pull
 # request runs all of its code -- workflows, package-lock.json and the
-# pre-commit config -- on the static pool. For a merge queue entry,
-# enqueueing is the approval; see docs/development.md.
+# pre-commit config -- on the static pool, with this repository's
+# secrets and a GITHUB_TOKEN its own workflows can widen. For a merge
+# queue entry, enqueueing is the approval; see docs/development.md.
 #
 # Review-only changes -- weAudit marks, their shas sidecars, the scope
 # config and the rendered REVIEWS.md -- cannot change what either job
@@ -360,7 +361,10 @@ jobs:
       # review-only change, through check_paths, and for a fork, through
       # the guard described in the header. Neither skip reaches a
       # release, because "Can merge" requires all three on the queue
-      # entry. check_paths itself must succeed.
+      # entry. check_paths itself must succeed. That is stricter than it
+      # needs to be, since the jobs below fail open when it does not,
+      # but a failed check_paths is rare and a pr-retest.yml run clears
+      # it.
       - name: Transform outcomes
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
@@ -390,7 +394,7 @@ jobs:
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
         run: |
-          echo "ALL_SUCCESS=$(echo "${NEEDS_JSON}" | jq '. | to_entries | map(.value.result == "success") | all')" >> "${GITHUB_ENV}"
+          echo "ALL_SUCCESS=$(echo "${NEEDS_JSON}" | jq 'to_entries | map(.value.result == "success") | all')" >> "${GITHUB_ENV}"
       - name: Check outcomes
         run: |
           [ "${ALL_SUCCESS}" == true ]

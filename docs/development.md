@@ -48,11 +48,18 @@ A new job in `ci.yml` goes in the `needs:` of both "Can enqueue" and
 
 Enqueueing a fork's pull request is the point at which its code first
 runs here. On the pull request itself `ci.yml` skips a fork, but a merge
-queue entry is not a pull request event, so the queued commit runs all of
-its own code -- workflows, `package-lock.json`, the pre-commit config and
-the tests -- on the persistent static runners. Review the whole diff with
-that in mind before enqueueing it; changes under `.github/` and `tools/`
-deserve the closest reading.
+queue entry is not a pull request event: the queue builds the commit on a
+branch of this repository, from the workflow files in that commit. So the
+queued commit runs all of its own code -- workflows, `package-lock.json`,
+the pre-commit config and the tests -- on the persistent static runners,
+and it runs with this repository's secrets. Among them is
+`DEPENDENCIES_TOKEN`, which `prune-reviews.yml` uses to push to `develop`
+as `shakenfist-bot`, around the queue. A workflow the fork edits can also
+ask for any `GITHUB_TOKEN` permission the repository allows. Treat a
+fork's change under `.github/workflows/` as a request for those
+credentials, and review the whole diff with that in mind before
+enqueueing it; changes under `.github/` and `tools/` deserve the closest
+reading.
 
 ## Releasing
 
