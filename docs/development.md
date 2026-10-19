@@ -28,6 +28,14 @@ a release counts (see below), so a change merged around the queue, by an
 administrator bypassing it, cannot be released until a later commit has
 gone through the queue.
 
+One thing does go around the queue routinely: `prune-reviews.yml` pushes
+its daily "Prune and import review marks." commit straight to `develop` as
+`shakenfist-bot`, which is why that bot stays on the ruleset's bypass list.
+Those commits change only `REVIEWS.md` and the weAudit files under
+`.vscode/`, and `ci.yml` does not run on them. The release gate steps
+across exactly such a commit to its first parent, so a tag on one that sits
+on top of a queue merge is judged by that merge's queue run.
+
 The queue builds one entry at a time (`max_entries_to_build: 1` in the
 `develop` ruleset). The concurrency groups in `ci.yml`,
 `secret-scan.yml` and `codeql-analysis.yml` depend on that: a queue run

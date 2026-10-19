@@ -21,10 +21,10 @@
 # need docker -- its actions are JavaScript and run on the runner's own
 # bundled node. It is here because it holds contents: write, which is a
 # credential, and static is shared with every repository in both
-# organisations. It shares this lane rather than taking a third so that
-# release.yml names one runner. So "uses debian-13-docker" no longer
-# implies "needs a docker daemon", which it did when only two jobs were
-# on it.
+# organisations. It shares this lane so that nothing holding a write
+# credential, or touching the artifact, runs on static. So "uses
+# debian-13-docker" no longer implies "needs a docker daemon", which it
+# did when only two jobs were on it.
 #
 # The bookworm labels are deliberately absent, matching
 # shakenfist/development. Debian 12 went end of life on 2026-06-10, and

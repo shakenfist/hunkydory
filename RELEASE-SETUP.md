@@ -320,6 +320,12 @@ and `codeql-analysis.yml` all run on `merge_group` for that reason.
 
 Keep the bypass list short. A merge that bypasses the queue gets no CI run,
 so it cannot be released until a later commit has gone through the queue.
+The one actor that must stay on it is the `sf-can-skip-merge-queue` team,
+for its `shakenfist-bot` member: `prune-reviews.yml` pushes the daily review
+mark commits to `develop` directly with `DEPENDENCIES_TOKEN` as that bot, and
+fails with the ruleset's refusal if it loses the bypass. Those commits touch
+only `REVIEWS.md` and the weAudit files under `.vscode/`, and the release
+gate steps across them (see [docs/development.md](docs/development.md)).
 
 ## What the Workflow Then Does
 
@@ -367,9 +373,9 @@ deliberate:
   `secrets.GITHUB_TOKEN`, which is a credential on shared infrastructure by
   the same reasoning that moved `publish-marketplace`. Issue #32. Nothing in
   `release.yml` but `ci-gate` now runs on `static`. That job needs no docker
-  of its own —
-  its actions are JavaScript and run on the runner's own bundled node — but
-  it shares the lane so the workflow names one runner.
+  of its own — its actions are JavaScript and run on the runner's own
+  bundled node — but it shares the lane so that nothing holding a write
+  credential, or touching the artifact, runs on `static`.
 - **The container.** That VM lane carries neither node nor npm — this was
   measured, in run 35141854203, after an earlier version of this workflow
   asserted the opposite in a comment and could never have published.
@@ -464,6 +470,9 @@ deliberate:
    ```
    `ci-gate` refuses a commit that did not go through the queue, such as
    one an administrator merged around it, so tag the merge the queue made.
+   A daily prune-reviews commit on top of it is the exception: the gate
+   steps across it to the merge beneath, so tagging `develop`'s tip then
+   is fine.
 3. Watch the `release.yml` run in the Actions tab. `ci-gate` checks CI on
    the tagged commit, `build` produces the `.vsix`, `publish-marketplace`
    ships it to the Marketplace, and `github-release` attaches it to a new

@@ -58,7 +58,9 @@
 # forever, whereas a skipped job satisfies a required check. A merge
 # queue entry is not filtered, so every job runs on every entry, which
 # is what lets "Can merge" require each of them to succeed, and what
-# makes a review-only merge releasable. Keep the path list in sync with
+# makes a review-only merge releasable. The daily prune-reviews commits
+# do not come through the queue at all; the release gate steps across
+# them instead (docs/development.md). Keep the path list in sync with
 # codeql-analysis.yml's copy.
 #
 # secret-scan.yml deliberately has no filter. gitleaks exists to read
