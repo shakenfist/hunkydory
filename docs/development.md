@@ -65,10 +65,15 @@ It has no override.
 
 So tag the merge commit the queue made, after its `ci.yml` run has
 finished. A run started by hand, as `pr-retest.yml` does with
-`workflow_dispatch`, does not count, so to recover from a flaky queue
-run, use "Re-run jobs" on that merge queue run itself, then re-run
-`ci-gate`. A gate failure means nothing was published, so every failure
-is recoverable; the template's
+`workflow_dispatch`, does not count. A queue run that fails, flaky or
+not, ejects its entry, so the commit it built never reaches `develop`
+and re-running that run cannot make any tag pass: re-queue the pull
+request and tag the commit that merges. Re-running a queue run helps
+only when the tagged commit's run was re-run after it merged and that
+later attempt failed, because the gate judges each run at its latest
+attempt; then use "Re-run jobs" on it, then re-run `ci-gate`. A gate
+failure means nothing was published, so every failure is recoverable;
+the template's
 [recovery table](https://github.com/shakenfist/development/blob/main/templates/release-automation/README.md#recovering-from-a-gate-failure)
 says what to do for each cause.
 

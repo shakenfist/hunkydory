@@ -489,9 +489,14 @@ deliberate:
 Nothing was built or published, so every cause is recoverable. The gate's
 message says what it found. If the commit bypassed the queue, or is not on
 `develop`'s first-parent history, move the tag to a commit that went
-through the queue. If the queue run failed or was flaky, use
-**Re-run jobs** on that merge queue run itself (a `pr-retest.yml` dispatch
-does not count), then re-run `ci-gate`. The template's
+through the queue. A queue run that fails, flaky or not, ejects its entry,
+so the commit it built never reaches `develop` and re-running that run
+cannot make any tag pass: re-queue the pull request and tag the commit
+that merges. Re-running a queue run helps only when the tagged commit's
+run was re-run after it merged and that later attempt failed, because the
+gate judges each run at its latest attempt; then use **Re-run jobs** on it
+(a `pr-retest.yml` dispatch does not count), then re-run `ci-gate`. The
+template's
 [recovery table](https://github.com/shakenfist/development/blob/main/templates/release-automation/README.md#recovering-from-a-gate-failure)
 covers each case.
 
