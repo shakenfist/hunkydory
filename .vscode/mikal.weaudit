@@ -5,10 +5,6 @@
   "treeEntries": [],
   "auditedFiles": [
     {
-      "path": ".github/workflows/secret-scan.yml",
-      "author": "mikal"
-    },
-    {
       "path": ".github/exported-config/repository-settings.json",
       "author": "mikal"
     },
@@ -65,10 +61,6 @@
       "author": "mikal"
     },
     {
-      "path": ".github/actionlint.yaml",
-      "author": "mikal"
-    },
-    {
       "path": "tools/ci-prune-reviews.sh",
       "author": "mikal"
     },
@@ -93,10 +85,6 @@
       "author": "mikal"
     },
     {
-      "path": ".github/workflows/release.yml",
-      "author": "mikal"
-    },
-    {
       "path": "test/fixtures/zero-start-sides.patch",
       "author": "mikal"
     },
@@ -110,10 +98,6 @@
     },
     {
       "path": "tools/editor-test.Dockerfile",
-      "author": "mikal"
-    },
-    {
-      "path": "docs/index.md",
       "author": "mikal"
     },
     {
@@ -157,10 +141,6 @@
       "author": "mikal"
     },
     {
-      "path": "AGENTS.md",
-      "author": "mikal"
-    },
-    {
       "path": "tools/editor-test.sh",
       "author": "mikal"
     },
@@ -185,15 +165,7 @@
       "author": "mikal"
     },
     {
-      "path": ".github/workflows/ci.yml",
-      "author": "mikal"
-    },
-    {
       "path": "ARCHITECTURE.md",
-      "author": "mikal"
-    },
-    {
-      "path": ".github/workflows/codeql-analysis.yml",
       "author": "mikal"
     },
     {
@@ -213,15 +185,7 @@
       "author": "mikal"
     },
     {
-      "path": "README.md",
-      "author": "mikal"
-    },
-    {
       "path": "docs/testing.md",
-      "author": "mikal"
-    },
-    {
-      "path": "RELEASE-SETUP.md",
       "author": "mikal"
     },
     {
@@ -238,10 +202,6 @@
     },
     {
       "path": "docs/ambiguity.md",
-      "author": "mikal"
-    },
-    {
-      "path": "docs",
       "author": "mikal"
     },
     {
@@ -262,14 +222,6 @@
     },
     {
       "path": ".github/workflows/renovate.yml",
-      "author": "mikal"
-    },
-    {
-      "path": ".github/workflows",
-      "author": "mikal"
-    },
-    {
-      "path": ".github",
       "author": "mikal"
     }
   ],
