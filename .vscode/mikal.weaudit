@@ -49,14 +49,6 @@
       "author": "mikal"
     },
     {
-      "path": ".github/exported-config/ruleset-develop-branch.json",
-      "author": "mikal"
-    },
-    {
-      "path": ".github/exported-config",
-      "author": "mikal"
-    },
-    {
       "path": ".github/workflows/pr-re-review.yml",
       "author": "mikal"
     },
