@@ -1,6 +1,10 @@
 {
   "version": 1,
   "files": {
+    ".github/actionlint.yaml": {
+      "sha": "c84fd804ff99aa56fa31512f501f557dd6e9c20d",
+      "date": "2026-10-21"
+    },
     ".github/exported-config/repository-settings.json": {
       "sha": "e1e9f80b8dfc29fbc9440143fd2f804d43bace80",
       "date": "2026-09-16"
@@ -12,6 +16,14 @@
     ".github/exported-config/rulesets-summary.json": {
       "sha": "09e5f8048d911f5e16f455508d63e101b1fee2ce",
       "date": "2026-09-23"
+    },
+    ".github/workflows/ci.yml": {
+      "sha": "2922e7e3af9b07f4b5351595a672648f509e3de6",
+      "date": "2026-10-21"
+    },
+    ".github/workflows/codeql-analysis.yml": {
+      "sha": "f7cf4dfeeb4b243b650448f4fd3baa581158e29a",
+      "date": "2026-10-21"
     },
     ".github/workflows/export-repo-config.yml": {
       "sha": "b9b3936053b8685ef0ae47f656b2f35aa62ba637",
@@ -29,9 +41,21 @@
       "sha": "91ff1783e6589e198ce5d14aab473112761b7ce2",
       "date": "2026-10-16"
     },
+    ".github/workflows/release.yml": {
+      "sha": "50c9210696eeced839c47c639d0dfbf3f4272022",
+      "date": "2026-10-21"
+    },
     ".github/workflows/renovate.yml": {
       "sha": "dd00a27b7aaaca4d85ea774ff2a9158d136eaa40",
       "date": "2026-10-20"
+    },
+    ".github/workflows/secret-scan.yml": {
+      "sha": "445bfe913dde157016f45ff6c93b7e78819e9f75",
+      "date": "2026-10-21"
+    },
+    "AGENTS.md": {
+      "sha": "804a65f1943a2c913610ee53257d5e7f190f3774",
+      "date": "2026-10-21"
     },
     "ARCHITECTURE.md": {
       "sha": "bc87d2220e9e1f387178df9deb2f508fd4393dbb",
@@ -40,6 +64,14 @@
     "PUSH-AUDIT.md": {
       "sha": "f8ced8ebbb86e7001e5e2cebfb431a5671916e73",
       "date": "2026-10-17"
+    },
+    "README.md": {
+      "sha": "af2e70e27edc8d6fb30d4959c48b23c35c47f891",
+      "date": "2026-10-21"
+    },
+    "RELEASE-SETUP.md": {
+      "sha": "b422060ecf4fc801462dbfb2e7dda182c5326597",
+      "date": "2026-10-21"
     },
     "biome.json": {
       "sha": "2468e97c69419c12ec2afd927db7978ba1dd6583",
@@ -53,9 +85,17 @@
       "sha": "67837160fbf50a8b3bf4da01988e86085699d052",
       "date": "2026-10-18"
     },
+    "docs/development.md": {
+      "sha": "2956fbf915ed65497d1ad435ad3d566f0bc5a1ca",
+      "date": "2026-10-21"
+    },
     "docs/hunk-format.md": {
       "sha": "32e390db79f736b341f139d44c8d70f0f50e198e",
       "date": "2026-10-17"
+    },
+    "docs/index.md": {
+      "sha": "45d2b2e5d3fac5bd6f2d6722c1c3ba2f20721e5e",
+      "date": "2026-10-21"
     },
     "docs/testing.md": {
       "sha": "2f920f43025c1b532836dbea10f0152977aded2d",
