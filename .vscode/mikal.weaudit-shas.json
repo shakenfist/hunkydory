@@ -9,6 +9,10 @@
       "sha": "e1e9f80b8dfc29fbc9440143fd2f804d43bace80",
       "date": "2026-09-16"
     },
+    ".github/exported-config/ruleset-develop-branch.json": {
+      "sha": "b6d029b0c8d63789aef97859950638ad2dfea1b0",
+      "date": "2026-10-22"
+    },
     ".github/exported-config/ruleset-release-tags.json": {
       "sha": "f563227f0416ea9e7320ea9107d73fb612024342",
       "date": "2026-09-23"

@@ -255,6 +255,18 @@
     {
       "path": ".github/actionlint.yaml",
       "author": "mikal"
+    },
+    {
+      "path": ".github",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/exported-config/ruleset-develop-branch.json",
+      "author": "mikal"
+    },
+    {
+      "path": ".github/exported-config",
+      "author": "mikal"
     }
   ],
   "partiallyAuditedFiles": [],
