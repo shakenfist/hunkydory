@@ -44,6 +44,6 @@ repos:
   # `pre-commit run --all-files`. Removing either half turns that
   # criterion red again.
   - repo: https://github.com/stbenjam/skillsaw
-    rev: v0.21.0
+    rev: v0.22.0
     hooks:
       - id: skillsaw
