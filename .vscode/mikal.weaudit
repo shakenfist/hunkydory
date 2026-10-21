@@ -213,10 +213,6 @@
       "author": "mikal"
     },
     {
-      "path": ".github/workflows/renovate.yml",
-      "author": "mikal"
-    },
-    {
       "path": "docs/index.md",
       "author": "mikal"
     },
@@ -257,15 +253,7 @@
       "author": "mikal"
     },
     {
-      "path": ".github/workflows",
-      "author": "mikal"
-    },
-    {
       "path": ".github/actionlint.yaml",
-      "author": "mikal"
-    },
-    {
-      "path": ".github",
       "author": "mikal"
     }
   ],
