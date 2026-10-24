@@ -35,43 +35,29 @@ Guidance for agents working in this repository. See
   config and then falls back to its *defaults*, which silently lints `out/`
   and `node_modules/` as well.
 
-## Testing
+## What to run before committing
 
-```bash
-npm test                                          # unit tests, and a fuzz slice
-HUNKYDORY_CORPUS=/path/to/_patches npm run corpus # real-world regression
-HUNKYDORY_CORPUS=/path/to/_patches npm run fuzz   # edit fuzzer, judged by git
-tools/check-package-contents.sh                   # what the .vsix would hold
-tools/editor-test.sh                              # real VS Code (needs a display)
-```
+[docs/testing.md](docs/testing.md) has the test layers, what each checks and
+how to replay a fuzzer failure. What a change owes them:
 
-[docs/testing.md](docs/testing.md) has what each checks and how to replay a
-fuzzer failure. CI runs the editor tests in a container
-(`tools/editor-test-docker.sh`); run them yourself if you touch how
-`extension.ts` reads a document or applies edits.
-
-The first two must pass before a commit, and the fuzzer must come back clean if
-you change counting behaviour. `pre-commit run --all-files` covers
-`npm test` (via `tools/check-node.sh`, which also runs the build and Biome)
-but not the corpus, whose external half depends on a sibling checkout — run
-that by hand. The packaging check runs in CI on every pull request; run it
-yourself if you touch `.vscodeignore` or add a module under `src/`, because
-what ships is decided by vsce's matcher and no test can reach it.
+- `npm test` and `npm run corpus` must pass before a commit.
+  `pre-commit run --all-files` covers `npm test` (via `tools/check-node.sh`,
+  which also runs the build and Biome) but not the corpus, whose external half
+  depends on a sibling checkout -- run that by hand.
+- If you change counting behaviour, `npm run fuzz` must come back clean, and
+  the corpus must be run against a real patch set, not just the fixtures. It
+  is easy to under-value: most of the edge cases in `diff.ts` were found that
+  way rather than by reasoning.
+- Do not add a fixture to `test/fixtures/` that turns on either ambiguity in
+  [docs/ambiguity.md](docs/ambiguity.md); `test/corpus.ts` explains why.
+- If you touch how `extension.ts` reads a document or applies edits, run
+  `tools/editor-test.sh` yourself rather than waiting for CI.
+- If you touch `.vscodeignore` or add a module under `src/`, run
+  `tools/check-package-contents.sh`: what ships is decided by vsce's matcher,
+  and no test can reach it.
 
 Before pushing a pull request, work through [PUSH-AUDIT.md](PUSH-AUDIT.md),
 the pre-push review runbook.
-
-The corpus check is the important one and is easy to under-value: it runs the
-recounter over a directory of real patches and requires every one to round
-trip **byte identically**. Most of the edge cases in `diff.ts` were found that
-way rather than by reasoning. If you change counting behaviour, run it against
-a real patch set — the OpenStack set in `shakenfist/kerbside-patches/_patches`
-is what it was developed against.
-
-`test/fixtures/` is the committed half of that check and always runs. Each
-fixture must round trip *and* come back correct after its counts are
-scrambled, so do not add one that turns on the trailing-blank ambiguity;
-`test/corpus.ts` explains why.
 
 ## The thing that will catch you out
 
