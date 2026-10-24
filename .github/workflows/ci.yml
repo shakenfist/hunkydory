@@ -53,7 +53,8 @@
 # rendered REVIEWS.md -- cannot change what either job checks, and the
 # daily prune-reviews run commits exactly those files. The scope config
 # is not one of them: it decides what is reviewed at all, so a change
-# to it is linted and reviewed like code.
+# to it runs the jobs below and so gets the automated review, which
+# waits on them. No hook reads the file itself.
 # The jobs back required status checks on develop, so pull requests
 # skip them at the job level through check_paths below rather than
 # with a trigger-level paths-ignore: a workflow that never starts never
@@ -72,8 +73,12 @@
 # are cheap, and the automated reviewer waits on both passing, so
 # skipping them would cost a docs pull request its review. Keep the
 # editor filter's path list in sync with codeql-analysis.yml's copy,
-# which excludes the same review files and docs/, and the scope config
-# as well, since CodeQL does not read it.
+# with one deliberate difference: CodeQL's also excludes the scope
+# config, which it does not read. The editor tests do not read it
+# either, but the fleet's review-scope-ci audit check fails any `!`
+# pattern for it anywhere in this file, since it cannot tell which
+# filter feeds the reviewer. So a scope-only pull request runs the
+# editor tests too, which happens a few times a year.
 #
 # secret-scan.yml deliberately has no filter. gitleaks exists to read
 # human-written text, and a review note is prose, which is exactly
