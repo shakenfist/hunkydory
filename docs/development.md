@@ -15,8 +15,11 @@ themselves run.
 | `release.yml` | A `v*` tag, dispatch | The release, as below. |
 
 On a pull request, `ci.yml`'s jobs skip a change that touches only review
-marks, and skip a pull request from a fork altogether. A merge queue entry
-skips nothing.
+marks, and skip a pull request from a fork altogether. The editor tests,
+which run on an ephemeral VM rather than the static pool, also skip a change
+that touches only review marks and `docs/`; the other jobs still run for
+one, so that it gets its automated review. A merge queue entry skips
+nothing.
 
 ## Merging
 

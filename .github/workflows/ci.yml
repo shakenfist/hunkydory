@@ -61,8 +61,16 @@
 # is what lets "Can merge" require each of them to succeed, and what
 # makes a review-only merge releasable. The daily prune-reviews commits
 # do not come through the queue at all; the release gate steps across
-# them instead (docs/development.md). Keep the path list in sync with
-# codeql-analysis.yml's copy.
+# them instead (docs/development.md).
+#
+# editor-tests also skips a pull request that touches nothing but
+# docs/, through a second filter. It is the one job here on an
+# ephemeral VM, which is the expensive pool, and nothing under docs/
+# reaches the editor. The two static jobs keep running for docs: they
+# are cheap, and the automated reviewer waits on both passing, so
+# skipping them would cost a docs pull request its review. Keep the
+# editor filter's path list in sync with codeql-analysis.yml's copy,
+# which excludes the same review files and docs/.
 #
 # secret-scan.yml deliberately has no filter. gitleaks exists to read
 # human-written text, and a review note is prose, which is exactly
@@ -101,9 +109,10 @@ permissions:
   contents: read
 
 jobs:
-  # Detect review-only pull requests so the jobs below can skip them.
-  # For every other event the filter step is skipped and the output
-  # defaults to code_changed=true, so merge queue entries and
+  # Detect review-only pull requests so the jobs below can skip them,
+  # and review-and-docs-only ones so editor-tests can. For every other
+  # event the filter step is skipped and both outputs default to
+  # 'true', so merge queue entries and
   # workflow_dispatch both run everything. A merge queue entry is the
   # run a release counts, and "Can merge" requires every job to have
   # succeeded on it, so it is deliberately not filtered.
@@ -118,6 +127,7 @@ jobs:
       pull-requests: read
     outputs:
       code_changed: ${{ steps.filter.outputs.code || 'true' }}
+      editor_changed: ${{ steps.filter.outputs.editor || 'true' }}
     steps:
       # There is deliberately no checkout step. On a pull_request
       # event paths-filter asks the API for the changed files and never
@@ -142,6 +152,13 @@ jobs:
               - '!.vscode/*.weaudit'
               - '!.vscode/*.weaudit-shas.json'
               - '!.vscode/review-scope.toml'
+            editor:
+              - '**'
+              - '!REVIEWS.md'
+              - '!.vscode/*.weaudit'
+              - '!.vscode/*.weaudit-shas.json'
+              - '!.vscode/review-scope.toml'
+              - '!docs/**'
 
   build-test-lint:
     name: Build, test and lint
@@ -286,13 +303,14 @@ jobs:
   editor-tests:
     name: Editor tests
     # No fork pull requests, and the path filter fails open; see the
-    # header and build-test-lint.
+    # header and build-test-lint. Its filter is editor_changed, which
+    # also skips docs-only pull requests.
     needs: [check_paths]
     if: |
       !cancelled()
       && (github.event_name != 'pull_request' ||
           github.event.pull_request.head.repo.full_name == github.repository)
-      && needs.check_paths.outputs.code_changed != 'false'
+      && needs.check_paths.outputs.editor_changed != 'false'
     runs-on: [self-hosted, vm, debian-13-docker, s]
     permissions:
       contents: read
@@ -362,7 +380,8 @@ jobs:
     steps:
       # build-test-lint, pre-commit and editor-tests may be skipped here,
       # because on a pull request each is skipped by design: for a
-      # review-only change, through check_paths, and for a fork, through
+      # review-only change (and editor-tests for a docs-only one too),
+      # through check_paths, and for a fork, through
       # the guard described in the header. Neither skip reaches a
       # release, because "Can merge" requires all three on the queue
       # entry. check_paths itself must succeed. That is stricter than it
