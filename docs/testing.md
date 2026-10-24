@@ -31,7 +31,7 @@ it must round trip, and it must also round trip after every count in it has
 been scrambled. The second check is the one with teeth, since a recounter that
 does not recognise a file at all passes the first perfectly. It also limits
 what can be a fixture: one that turns on either of
-[the two ambiguities](https://github.com/shakenfist/hunkydory/blob/develop/docs/ambiguity.md)
+[the two ambiguities](ambiguity.md)
 would fail for a reason that is not a bug, because scrambling destroys the
 declared counts they are resolved from. `test/corpus.ts` has the detail.
 
@@ -54,7 +54,7 @@ It is judged from outside the rules under test wherever it can be:
   reads it, by consuming as many lines as each header declares, and the edits
   are made to that structure rather than to text. A recounted header must
   match its body, give or take blank lines at its end where
-  [the ambiguity](https://github.com/shakenfist/hunkydory/blob/develop/docs/ambiguity.md)
+  [the ambiguity](ambiguity.md)
   allows, or be refused if no valid header exists. A hunk made with `-U0`
   must leave its trailing blanks out. That one is held by rule: the old file
   the next checks build has no other blank for git to find, so git would
