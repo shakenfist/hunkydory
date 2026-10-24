@@ -11,17 +11,6 @@
         "commit": "d7638dc4b8ea522d3e23e57e56cbf3d79c2c93c1",
         "verified": true
       }
-    },
-    "tools/review-tracking.sh": {
-      "sha": "db83f953a7b90229111cf75bd24504a19a032c2f",
-      "date": "2026-09-27",
-      "imported": {
-        "repo": "shakenfist/development",
-        "reviewer": "mikal",
-        "path": "templates/review-tracking/review-tracking.sh",
-        "commit": "d7718169e6b3517e797d9df99a37c787a0d7b733",
-        "verified": true
-      }
     }
   }
 }
