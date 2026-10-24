@@ -49,9 +49,11 @@
 # secrets and a GITHUB_TOKEN its own workflows can widen. For a merge
 # queue entry, enqueueing is the approval; see docs/development.md.
 #
-# Review-only changes -- weAudit marks, their shas sidecars, the scope
-# config and the rendered REVIEWS.md -- cannot change what either job
-# checks, and the daily prune-reviews run commits exactly those files.
+# Review-only changes -- weAudit marks, their shas sidecars and the
+# rendered REVIEWS.md -- cannot change what either job checks, and the
+# daily prune-reviews run commits exactly those files. The scope config
+# is not one of them: it decides what is reviewed at all, so a change
+# to it is linted and reviewed like code.
 # The jobs back required status checks on develop, so pull requests
 # skip them at the job level through check_paths below rather than
 # with a trigger-level paths-ignore: a workflow that never starts never
@@ -70,7 +72,8 @@
 # are cheap, and the automated reviewer waits on both passing, so
 # skipping them would cost a docs pull request its review. Keep the
 # editor filter's path list in sync with codeql-analysis.yml's copy,
-# which excludes the same review files and docs/.
+# which excludes the same review files and docs/, and the scope config
+# as well, since CodeQL does not read it.
 #
 # secret-scan.yml deliberately has no filter. gitleaks exists to read
 # human-written text, and a review note is prose, which is exactly
@@ -151,13 +154,11 @@ jobs:
               - '!REVIEWS.md'
               - '!.vscode/*.weaudit'
               - '!.vscode/*.weaudit-shas.json'
-              - '!.vscode/review-scope.toml'
             editor:
               - '**'
               - '!REVIEWS.md'
               - '!.vscode/*.weaudit'
               - '!.vscode/*.weaudit-shas.json'
-              - '!.vscode/review-scope.toml'
               - '!docs/**'
 
   build-test-lint:
