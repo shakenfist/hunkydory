@@ -19,10 +19,6 @@
 # visible on the pull request and blocks nothing automatically. Where
 # a repository records which jobs gate a pull request, this one
 # belongs on the list of deliberate exceptions.
-#
-# hunkydory's copy diverges from the template in two places, both in
-# the job below: it refuses pull requests from forks, and its checkout
-# does not persist the token. Keep both when syncing from upstream.
 name: Mermaid lint
 
 on:
@@ -87,10 +83,16 @@ permissions:
 jobs:
   mermaid-lint:
     name: Mermaid lint
-    # No fork pull requests on the fleet's runners, for the reason
-    # ci.yml's header gives: the job runs the pull request's own copy
-    # of tools/mermaid-lint.sh on the host, where --network none and the
-    # read-only mount do not reach, and a fork can edit that script.
+    # No pull requests from forks. The job runs the checkout's own
+    # tools/mermaid-lint.sh, a fork can edit it, and editing it runs
+    # this lane. The script's bash runs on the runner host: --network
+    # none and the read-only mount only constrain the container it
+    # starts. This is defence in depth rather than the boundary. The
+    # virtual machine is discarded after the job, and the guard lives
+    # in a file the pull request can edit, so it stops a fork that
+    # changes the script, not one that also deletes the guard. GitHub's
+    # fork workflow approval covers that, if the repository requires it
+    # for all external contributors rather than only first-time ones.
     if: |
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.repository
