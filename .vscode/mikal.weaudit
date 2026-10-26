@@ -9,10 +9,6 @@
       "author": "mikal"
     },
     {
-      "path": "biome.json",
-      "author": "mikal"
-    },
-    {
       "path": "tools/marketplace-token.mjs",
       "author": "mikal"
     },
