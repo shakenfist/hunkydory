@@ -21,6 +21,10 @@
       "sha": "09e5f8048d911f5e16f455508d63e101b1fee2ce",
       "date": "2026-09-23"
     },
+    ".github/workflows/ci.yml": {
+      "sha": "f34949b1cc4647e279c228a4702e672d61c3ffa9",
+      "date": "2026-10-28"
+    },
     ".github/workflows/codeql-analysis.yml": {
       "sha": "f7cf4dfeeb4b243b650448f4fd3baa581158e29a",
       "date": "2026-10-21"
@@ -28,6 +32,10 @@
     ".github/workflows/export-repo-config.yml": {
       "sha": "b9b3936053b8685ef0ae47f656b2f35aa62ba637",
       "date": "2026-10-18"
+    },
+    ".github/workflows/mermaid-lint.yml": {
+      "sha": "29408a6b2da8760271d2614561adff59683f53f7",
+      "date": "2026-10-28"
     },
     ".github/workflows/pr-re-review.yml": {
       "sha": "68425cd384443ae15a909832693af1df01414c38",
@@ -45,9 +53,17 @@
       "sha": "50c9210696eeced839c47c639d0dfbf3f4272022",
       "date": "2026-10-21"
     },
+    ".github/workflows/renovate.yml": {
+      "sha": "f155c416068eb4189c463906afd1755c7dda933e",
+      "date": "2026-10-28"
+    },
     ".github/workflows/secret-scan.yml": {
       "sha": "445bfe913dde157016f45ff6c93b7e78819e9f75",
       "date": "2026-10-21"
+    },
+    "AGENTS.md": {
+      "sha": "d6e4ef769e6b7380cc8193bb4a67a53769460174",
+      "date": "2026-10-28"
     },
     "ARCHITECTURE.md": {
       "sha": "bc87d2220e9e1f387178df9deb2f508fd4393dbb",
@@ -65,6 +81,10 @@
       "sha": "b422060ecf4fc801462dbfb2e7dda182c5326597",
       "date": "2026-10-21"
     },
+    "biome.json": {
+      "sha": "8681a31e942f3ef80632c087fe86eb0c057401ba",
+      "date": "2026-10-28"
+    },
     "docs/ambiguity.md": {
       "sha": "91c54c6bd79f2bd79b7e274874db9a9449e799c5",
       "date": "2026-10-18"
@@ -73,9 +93,21 @@
       "sha": "67837160fbf50a8b3bf4da01988e86085699d052",
       "date": "2026-10-18"
     },
+    "docs/development.md": {
+      "sha": "a03d5297074f341649083a01243eca3a0b3f2183",
+      "date": "2026-10-28"
+    },
     "docs/hunk-format.md": {
       "sha": "32e390db79f736b341f139d44c8d70f0f50e198e",
       "date": "2026-10-17"
+    },
+    "docs/index.md": {
+      "sha": "6e6248fdcf6a6359d0a5c290e1d1e4e6041f7a28",
+      "date": "2026-10-28"
+    },
+    "docs/testing.md": {
+      "sha": "93403f8a2255b477b485c56d0785ed3582c1905a",
+      "date": "2026-10-28"
     },
     "src/diff.ts": {
       "sha": "efe474657505b3ccd7cf282f960f292a341d999c",
@@ -201,9 +233,17 @@
       "sha": "2cf09e86506733658f02f79dda4f7d7b09ca9c1f",
       "date": "2026-09-22"
     },
+    "tools/mermaid-lint.sh": {
+      "sha": "22f14bf915f76875950bb5589212b55ab0a91db1",
+      "date": "2026-10-28"
+    },
     "tools/publish-marketplace.sh": {
       "sha": "ef061e2182ca6833515a7282d4bd957264228953",
       "date": "2026-10-16"
+    },
+    "tools/review-tracking.sh": {
+      "sha": "fcadd30b9cea7aec8c747c7f43ef1864bc01bbef",
+      "date": "2026-10-28"
     },
     "tools/vsix-digest.sh": {
       "sha": "2ab84621062c3dcb55f5d483d2c381bf8f7650ad",
