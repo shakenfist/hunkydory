@@ -225,14 +225,6 @@
       "author": "mikal"
     },
     {
-      "path": ".github/exported-config/ruleset-develop-branch.json",
-      "author": "mikal"
-    },
-    {
-      "path": ".github/exported-config",
-      "author": "mikal"
-    },
-    {
       "path": ".github/workflows/mermaid-lint.yml",
       "author": "mikal"
     },
@@ -249,19 +241,11 @@
       "author": "mikal"
     },
     {
-      "path": "docs/development.md",
-      "author": "mikal"
-    },
-    {
       "path": "docs/index.md",
       "author": "mikal"
     },
     {
       "path": "docs/testing.md",
-      "author": "mikal"
-    },
-    {
-      "path": "docs",
       "author": "mikal"
     },
     {
