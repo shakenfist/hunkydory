@@ -67,7 +67,7 @@ for how this works, including how to verify the attestations.
 | tools/build-vsix.sh | mikal | 2026-09-23 | 0b4bbe02781d | - |
 | tools/check-node.sh | mikal | 2026-10-16 | 77606633dea1 | - |
 | tools/check-package-contents.sh | mikal | 2026-10-18 | 17037c7e004b | - |
-| tools/ci-prune-reviews.sh | mikal | 2026-10-16 | b4ce5b64c79a | - |
+| tools/ci-prune-reviews.sh | mikal | 2026-10-30 | d58e2363ab02 | development@a2837f2dc7cf |
 | tools/container-image.sh | mikal | 2026-09-23 | 5efb19536117 | - |
 | tools/editor-test-docker.sh | mikal | 2026-10-17 | 0df0cc6bc0c0 | - |
 | tools/editor-test.Dockerfile | mikal | 2026-10-17 | 3dcf7dc30082 | - |

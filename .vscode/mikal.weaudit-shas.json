@@ -201,10 +201,6 @@
       "sha": "17037c7e004b678d921adc767012f0f1f46c0bde",
       "date": "2026-10-18"
     },
-    "tools/ci-prune-reviews.sh": {
-      "sha": "b4ce5b64c79afb01e07b98f43457fa5ff842e896",
-      "date": "2026-10-16"
-    },
     "tools/container-image.sh": {
       "sha": "5efb1953611739f95b923930f7a99fbc8afd6fcb",
       "date": "2026-09-23"

@@ -49,10 +49,6 @@
       "author": "mikal"
     },
     {
-      "path": "tools/ci-prune-reviews.sh",
-      "author": "mikal"
-    },
-    {
       "path": ".github/workflows/prune-reviews.yml",
       "author": "mikal"
     },
@@ -250,10 +246,6 @@
     },
     {
       "path": "tools/review-tracking.sh",
-      "author": "mikal"
-    },
-    {
-      "path": "tools",
       "author": "mikal"
     },
     {
