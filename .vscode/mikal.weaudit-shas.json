@@ -9,6 +9,10 @@
       "sha": "e1e9f80b8dfc29fbc9440143fd2f804d43bace80",
       "date": "2026-09-16"
     },
+    ".github/exported-config/ruleset-develop-branch.json": {
+      "sha": "700dbd6adc6b116b2b90eea88a1d22b7e95cda4b",
+      "date": "2026-11-01"
+    },
     ".github/exported-config/ruleset-release-tags.json": {
       "sha": "f563227f0416ea9e7320ea9107d73fb612024342",
       "date": "2026-09-23"
@@ -88,6 +92,10 @@
     "docs/component.yml": {
       "sha": "67837160fbf50a8b3bf4da01988e86085699d052",
       "date": "2026-10-18"
+    },
+    "docs/development.md": {
+      "sha": "fdad542d0b9fca38176a9b29d41df24698b1f3e7",
+      "date": "2026-11-01"
     },
     "docs/hunk-format.md": {
       "sha": "32e390db79f736b341f139d44c8d70f0f50e198e",
