@@ -49,6 +49,10 @@
       "sha": "50c9210696eeced839c47c639d0dfbf3f4272022",
       "date": "2026-10-21"
     },
+    ".github/workflows/renovate.yml": {
+      "sha": "d80459b0a415576de106c1a06e4b1d33abf20ca7",
+      "date": "2026-10-31"
+    },
     ".github/workflows/secret-scan.yml": {
       "sha": "445bfe913dde157016f45ff6c93b7e78819e9f75",
       "date": "2026-10-21"
