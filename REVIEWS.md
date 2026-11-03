@@ -28,7 +28,7 @@ for how this works, including how to verify the attestations.
 | .github/workflows/mermaid-lint.yml | mikal | 2026-10-28 | 29408a6b2da8 | - |
 | .github/workflows/pr-re-review.yml | mikal | 2026-10-04 | 68425cd38444 | - |
 | .github/workflows/pr-retest.yml | mikal | 2026-10-18 | dab99349ea18 | - |
-| .github/workflows/prune-reviews.yml | mikal | 2026-10-16 | 91ff1783e658 | - |
+| .github/workflows/prune-reviews.yml | mikal | 2026-11-01 | 0c0cfe362b24 | development@d8055a5e1696 |
 | .github/workflows/release.yml | mikal | 2026-10-21 | 50c9210696ee | - |
 | .github/workflows/secret-scan.yml | mikal | 2026-10-21 | 445bfe913dde | - |
 | AGENTS.md | mikal | 2026-10-28 | d6e4ef769e6b | - |
@@ -67,7 +67,7 @@ for how this works, including how to verify the attestations.
 | tools/build-vsix.sh | mikal | 2026-09-23 | 0b4bbe02781d | - |
 | tools/check-node.sh | mikal | 2026-10-16 | 77606633dea1 | - |
 | tools/check-package-contents.sh | mikal | 2026-10-18 | 17037c7e004b | - |
-| tools/ci-prune-reviews.sh | mikal | 2026-10-30 | d58e2363ab02 | development@a2837f2dc7cf |
+| tools/ci-prune-reviews.sh | mikal | 2026-11-01 | 3c00a9489c0b | development@d8055a5e1696 |
 | tools/container-image.sh | mikal | 2026-09-23 | 5efb19536117 | - |
 | tools/editor-test-docker.sh | mikal | 2026-10-17 | 0df0cc6bc0c0 | - |
 | tools/editor-test.Dockerfile | mikal | 2026-10-17 | 3dcf7dc30082 | - |

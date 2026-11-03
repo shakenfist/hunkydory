@@ -49,10 +49,6 @@
       "author": "mikal"
     },
     {
-      "path": ".github/workflows/prune-reviews.yml",
-      "author": "mikal"
-    },
-    {
       "path": "test/fixtures/empty-sides-u0.patch",
       "author": "mikal"
     },
