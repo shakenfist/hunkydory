@@ -267,10 +267,6 @@
     {
       "path": ".github/exported-config",
       "author": "mikal"
-    },
-    {
-      "path": ".github/workflows/renovate.yml",
-      "author": "mikal"
     }
   ],
   "partiallyAuditedFiles": [],
