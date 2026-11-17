@@ -53,6 +53,10 @@
       "sha": "50c9210696eeced839c47c639d0dfbf3f4272022",
       "date": "2026-10-21"
     },
+    ".github/workflows/renovate.yml": {
+      "sha": "cd350d540f3312c15558ed1ffda14d26565f3c30",
+      "date": "2026-11-18"
+    },
     ".github/workflows/secret-scan.yml": {
       "sha": "445bfe913dde157016f45ff6c93b7e78819e9f75",
       "date": "2026-10-21"
@@ -64,6 +68,10 @@
     "ARCHITECTURE.md": {
       "sha": "bc87d2220e9e1f387178df9deb2f508fd4393dbb",
       "date": "2026-10-17"
+    },
+    "PUSH-AUDIT.md": {
+      "sha": "3819776cef81360f60785cf381e6d964ae2d0ebb",
+      "date": "2026-11-18"
     },
     "README.md": {
       "sha": "af2e70e27edc8d6fb30d4959c48b23c35c47f891",
