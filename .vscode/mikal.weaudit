@@ -105,10 +105,6 @@
       "author": "mikal"
     },
     {
-      "path": "PUSH-AUDIT.md",
-      "author": "mikal"
-    },
-    {
       "path": "test/fuzz/edits.ts",
       "author": "mikal"
     },
