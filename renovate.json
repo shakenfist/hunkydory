@@ -1,51 +1,15 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["customManagers:githubActionsVersions"],
-  "gitAuthor": "shakenfist-bot <bot@shakenfist.com>",
-  "dependencyDashboard": true,
-  "assignees": ["mikalstill"],
-  "schedule": ["after 9pm"],
-  "pre-commit": {
-    "description": "Renovate's pre-commit manager is opt-in. Without this the hook revisions in .pre-commit-config.yaml are the one dependency file nobody is watching.",
-    "enabled": true
-  },
+  "extends": ["local>shakenfist/development:renovate-fleet"],
   "packageRules": [
-    {
-      "description": "Minor, patch and digest updates are not merged automatically: every update needs review",
-      "matchUpdateTypes": ["minor", "patch", "digest"],
-      "automerge": false
-    },
     {
       "description": "The Entra publishing path reads two files inside vsce that no public API covers, so a bump can break releases silently. This note reaches the reviewer of the bump, which the script headers do not: a bump touches package.json, not tools/.",
       "matchPackageNames": ["@vscode/vsce"],
       "prBodyNotes": [
         ":warning: Before merging, re-read two files in the new version. `out/auth.js`: if `WorkloadIdentityCredential` has joined the `ChainedTokenCredential`, `tools/marketplace-token.mjs` can be deleted in favour of `vsce publish --azure-credential`. `out/publish.js`: if `getPAT()` no longer routes `-p`/`VSCE_PAT` and `--azure-credential` into the same value, publishing is broken and there will be no other signal until a release is attempted. Also confirm `out/auth.js` still requests the scope `499b84ac-1321-427f-aa17-267ca6975798/.default`, which `tools/marketplace-token.mjs` holds a copy of. See that file and RELEASE-SETUP.md."
       ]
-    },
-    {
-      "description": "A Renovate major can raise engines.node past the node-version that .github/workflows/renovate.yml sets up, leaving every hourly run on a Node that Renovate does not support. This note reaches the reviewer of the bump.",
-      "matchDepNames": ["renovate"],
-      "matchUpdateTypes": ["major"],
-      "prBodyNotes": [
-        ":warning: Before merging, check this version's `engines.node` (`npm view renovate@<version> engines`) against `node-version` in `.github/workflows/renovate.yml`. If it no longer accepts that Node major, raise `node-version` in the same pull request, and in shakenfist/development's `templates/renovate/renovate.yml`, which every repository copies verbatim."
-      ]
-    },
-    {
-      "description": "Renovate's github-actions manager proposes Node majors for setup-node, and .github/workflows/renovate.yml must stay on a Node that the pinned Renovate's engines.node accepts, or every hourly run fails with \"Unsupported node environment detected\". That Node is raised by hand, in the pull request for the Renovate major that needs it (see the rule above), never on its own. Node in other workflows is unaffected.",
-      "matchManagers": ["github-actions"],
-      "matchFileNames": [".github/workflows/renovate.yml"],
-      "matchDepNames": ["node"],
-      "matchUpdateTypes": ["major"],
-      "enabled": false
-    },
-    {
-      "description": "Tell Renovate how to read shellcheck-py's four-component tags. Upstream tags a fourth component -- v0.11.0.1 is shellcheck 0.11.0, packaging revision 1 -- which is not semver, so the github-tags datasource behind the pre-commit hook could not resolve the current value, reported \"Can't find version matching v0.11.0.1\" on the dependency dashboard, and never proposed an update. The fourth group is named build rather than revision even though it is a packaging revision: Renovate's regex versioning only appends revision to the comparison when a build group matched too, so naming it revision would make v0.11.0.2 compare equal to v0.11.0.1 and a packaging-only release, which is most of them, would never be proposed. The regex is anchored to exactly four numeric components so that re-tags such as v0.11.0.1-1 are ignored. Copied from shakenfist/kerbside, which hit this first.",
-      "matchPackageNames": ["shellcheck-py/shellcheck-py"],
-      "versioning": "regex:^v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d+)$"
     }
   ],
-  "minimumReleaseAge": "3 days",
-  "rollbackPrs": true,
   "customManagers": [
     {
       "description": "The node:22 image that tools/build-vsix.sh and tools/publish-marketplace.sh run in is pinned by digest in a shell script, which none of the stock managers read. Both source the pin from tools/container-image.sh, so there is one line here to keep current rather than two that could drift. Without this the pin ages until a release fails on a digest upstream has garbage-collected, which RELEASE-SETUP.md already lists as a troubleshooting case.",
