@@ -249,23 +249,11 @@
       "author": "mikal"
     },
     {
-      "path": "docs/development.md",
-      "author": "mikal"
-    },
-    {
-      "path": "docs",
-      "author": "mikal"
-    },
-    {
       "path": ".github/exported-config/ruleset-develop-branch.json",
       "author": "mikal"
     },
     {
       "path": ".github/exported-config",
-      "author": "mikal"
-    },
-    {
-      "path": ".github/workflows/renovate.yml",
       "author": "mikal"
     },
     {

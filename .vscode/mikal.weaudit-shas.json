@@ -53,10 +53,6 @@
       "sha": "50c9210696eeced839c47c639d0dfbf3f4272022",
       "date": "2026-10-21"
     },
-    ".github/workflows/renovate.yml": {
-      "sha": "cd350d540f3312c15558ed1ffda14d26565f3c30",
-      "date": "2026-11-18"
-    },
     ".github/workflows/secret-scan.yml": {
       "sha": "445bfe913dde157016f45ff6c93b7e78819e9f75",
       "date": "2026-10-21"
@@ -92,10 +88,6 @@
     "docs/component.yml": {
       "sha": "67837160fbf50a8b3bf4da01988e86085699d052",
       "date": "2026-10-18"
-    },
-    "docs/development.md": {
-      "sha": "fdad542d0b9fca38176a9b29d41df24698b1f3e7",
-      "date": "2026-11-01"
     },
     "docs/hunk-format.md": {
       "sha": "32e390db79f736b341f139d44c8d70f0f50e198e",
