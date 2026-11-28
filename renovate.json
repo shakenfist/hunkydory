@@ -1,5 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Renovate is not run from this repository. The fleet runner in shakenfist/development (.github/workflows/renovate-fleet.yml) runs it over every managed repository, and the policy comes from the preset extended here, renovate-fleet.json in that repository: the schedule, automerge policy, release-age delay and rollbacks, the pre-commit manager that keeps the hook revisions in .pre-commit-config.yaml current, the shellcheck-py tag versioning those hooks need, digest pinning of third-party actions, and the dashboard, assignee and git author. None of those belong at the top level here: a local value replaces the preset's outright, and the consistency audit reports it. What this repository needs differently goes in a packageRules entry scoped to what it is about, as the two below are. docs/development.md says how to run Renovate by hand.",
   "extends": ["local>shakenfist/development:renovate-fleet"],
   "packageRules": [
     {
