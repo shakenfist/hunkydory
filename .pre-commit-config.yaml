@@ -1,5 +1,5 @@
 repos:
-  # This repository now ships seven workflows and nothing else checks
+  # This repository ships several workflows and nothing else checks
   # them. actionlint earned its place here immediately: it caught a
   # job-level `env:` block reading the `runner` context, which is not
   # available there and would have resolved to an empty cache path at
@@ -37,7 +37,8 @@ repos:
 
   # Lints the agent context (AGENTS.md and anything else an agent is
   # given) for malformed structure, smuggled instructions and the like.
-  # Renovate's pre-commit manager keeps the rev current.
+  # Renovate's pre-commit manager keeps the rev current; the fleet preset
+  # that renovate.json extends is what enables it.
   #
   # This is only half of the fleet's llm-context-lint-ci audit criterion:
   # it also requires a CI route, which is ci.yml's pre-commit job running
